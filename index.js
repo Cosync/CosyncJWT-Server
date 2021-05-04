@@ -121,3 +121,19 @@ function normalizePort(val) {
   return false;
 }
 
+
+let indexRouter = require('./routes/index');
+let appRouter = require('./routes/app');
+
+app.use('', indexRouter); 
+app.use('/api/app', appRouter); 
+
+
+
+require('./libs/cosync/databaseService').init(function(res){
+
+  
+ 
+ 
+});
+ 
