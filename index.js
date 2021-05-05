@@ -1,34 +1,33 @@
 
-const fs = require('fs');
-const express = require("express"); 
-const jwt = require('jsonwebtoken'); 
+ 
+const express = require("express");  
 const cors = require('cors');
 
-global.publicKey = './config/publickey.pem';
-global.privateKey = './config/privateKey.pem';
-global.__config = require('./config/config.js');
 
-const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
+global.publicKey = './config/publickey.pem';
+global.privateKey = './config/privatekey.pem';
+global.__config = require('./config/config.js'); 
 
 let key = process.argv[2];
 
-if(process.env.AES_KEY) global.__aesKey = process.env.AES_KEY;
-else if(key) global.__aesKey = key;
+if(process.env.PASS_KEY) global.__passKey = process.env.PASS_KEY;
+else if(key) global.__passKey = key;
 
 
-if(!global.__aesKey){
-    console.log("Please provide aes key to start the service ");
-    console.log("Service is shutdown! ");
-    return;
-  }
+if(!global.__passKey){
+  console.log("Please provide pass key to start the service ");
+  console.log("Service is shutdown! ");
+  return; 
+}
 
+const util = require('./libs/util');
 let app = express(); 
 let port = normalizePort(process.env.PORT || '3000');  
 app.listen(port); 
 console.log("server is starting at port: ", port);
 
 app.use(function(req, res, next){
-    next();
+  next();
 })
 
 
@@ -81,12 +80,7 @@ app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
     next();
 });
-
-// // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-	util.responseFormat(res, "Service Not found", 0, util.HTTP_STATUS_CODE.BAD_REQUEST);
-	next();
-});
+ 
 
 // error handler
 app.use(function(err, req, res, next) {
@@ -129,11 +123,13 @@ app.use('', indexRouter);
 app.use('/api/app', appRouter); 
 
 
+let secret = util.generateServerSecretToken();
+console.warn('Here is your server secret token: ', secret);
+ 
+
 
 require('./libs/cosync/databaseService').init(function(res){
 
   
- 
- 
 });
  

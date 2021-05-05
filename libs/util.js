@@ -1,9 +1,9 @@
  
-let uuidv4 = require('uuid/v4')
+const uuidv4 = require('uuid/v4')
 const jwt = require('jsonwebtoken');  
 const fs = require('fs');   
 const cert = fs.readFileSync(global.privateKey, 'utf8'); 
-const serverPrivateKey = { key: cert, passphrase: global.__aesKey }; 
+const serverPrivateKey = { key: cert, passphrase: global.__passKey }; 
  
 
 function setHeader(res){
@@ -106,17 +106,42 @@ exports.generateSigninToken = function(item){
     };
     const accessToken = jwt.sign(payload, serverPrivateKey, { algorithm: 'RS256' });
     return accessToken;
-  }
+}
+
+
+exports.generateAppToken = function(item){
+    const payload = { 
+      appId: item.appId,
+      scope: 'app'
+    };
+    const token = jwt.sign(payload, serverPrivateKey, { algorithm: 'RS256' });
+    return token;
+}
    
 
-exports.generateSecretToken = function(item, scope){
-    const payload = {
-      uid: item.uid,
+exports.generateAppSecretToken = function(item){
+    const payload = { 
       appId: item.appId,
-      scope: scope ? scope : 'user'
+      scope: 'appSecret'
     };
-    const accessToken = jwt.sign(payload, serverPrivateKey, { algorithm: 'RS256' });
-    return accessToken;
+    const token = jwt.sign(payload, serverPrivateKey, { algorithm: 'RS256' });
+    return token;
+}
+   
+
+exports.generateServerSecretToken = function(){
+	try { 
+		
+		const payload = {
+			name: global.__config.serverName,
+			scope: 'server'
+		};
+		const accessToken = jwt.sign(payload, serverPrivateKey, { algorithm: 'RS256' });
+
+		return accessToken;
+	} catch (error) {
+		console.log(error);
+	}
 }
  
  
