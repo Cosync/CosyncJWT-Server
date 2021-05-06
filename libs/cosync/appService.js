@@ -84,9 +84,12 @@ class AppService {
   async deleteApp( appId, callback) { 
     
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);  
-    await _app.deleteOne({ appId: appId});  
-    this.deleteAppData(appId); 
-    callback(true);
+    let app = await _app.deleteOne({ appId: appId});  
+    if(app.deletedCount){
+      this.deleteAppData(appId); 
+      callback(true);
+    } 
+    else callback(false);
   }
 
 
@@ -110,14 +113,17 @@ class AppService {
   async editAppName(data, callback) { 
    
       let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-      app = await _app.findOne({ name: data.name});
+      let app = await _app.findOne({ name: data.name});
 
       if (!app) {
         app = await _app.findOne({ appId: data.appId });
-        app.name = data.name;
-        app.updatedAt = util.getCurrentTime();
-        app.save(); 
-        callback(app); 
+        if(!app) callback(null, `App ID '${data.appId}' is not found.`); 
+        else{ 
+          app.name = data.name;
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          callback(app); 
+        }
       } 
       else callback(null, `App '${data.name}' already exists.`);
      

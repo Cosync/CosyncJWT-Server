@@ -16,26 +16,35 @@ router.post("/", async (req, res) => {
     }
 
     appService.addApp(req.body, function(result, err){
-        if(err){ 
-          util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        if(err){  
+            util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
         } 
         else util.responseFormat(res, result);
       });
 });
 
 
-router.get("/", async function (req, res) { 
+router.get("/:appId", async function (req, res) { 
 
-    let valid = req.query.appId;
+    let valid = req.params.appId;
     if(!valid) {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       return;
     }
+    if(valid == 'allApps'){
+        appService.getApps(function(apps, err){
+            if(apps) util.responseFormat(res, apps);
+            else util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        });
+    }
+    else{
+        appService.getApp(req.params.appId, function(app, err){
+            if(app) util.responseFormat(res, app);
+            else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+          });
+    }
 
-    appService.getApp(req.query.appId, function(app, err){
-      if(app) util.responseFormat(res, app);
-      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
-    });
+    
   }
 );
 
@@ -50,25 +59,29 @@ router.post("/update", async (req, res) => {
 
     appService.editAppName(req.body, function(result, err){
         if(err){ 
-          util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
+            _error.message = err;
+            util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
         } 
         else util.responseFormat(res, result);
       });
 });
 
 
-router.delete("/",
+router.delete("/:appId",
   async function (req, res) {
      
-    let valid = req.body.appId;
+    let valid = req.params.appId
     if(!valid) {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       return;
     }
 
     try {
-      appService.deleteApp(req.body.appId, function(result, error) {
-        if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      appService.deleteApp(req.params.appId, function(result, error) {
+        if(error){
+            _error.message = error;
+            util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        } 
         else util.responseFormat(res, result);
       });
       
@@ -81,16 +94,6 @@ router.delete("/",
 
 
 
-
  
-router.get("/allApps",
-  async function (req, res) { 
-
-    appService.getApps(function(apps, err){
-      if(apps) util.responseFormat(res, apps);
-      else util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    });
-  }
-);
 
 module.exports = router;
