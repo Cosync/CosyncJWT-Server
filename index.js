@@ -2,11 +2,13 @@
  
 const express = require("express");  
 const cors = require('cors');
-
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
 global.publicKey = './config/publickey.pem';
 global.privateKey = './config/privatekey.pem';
 global.__config = require('./config/config.js'); 
+const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
 
 let key = process.argv[2];
 
@@ -35,26 +37,29 @@ app.use(function(req, res, next){
 // TODO: Check headers and bearer token
 app.use((req, res, next) => {
     try {  
-  
-        if (req.headers['access-token'] !== undefined && req.headers['access-token'] != '') {
-            
-            
-             
-            
-        } 
+   
         
-        if (req.headers['app-token'] !== undefined) { 
     
-             
+        if(req.headers['server-secret']) {  
+          try {
+            let verified  = jwt.verify(req.headers['server-secret'], serverPublicKey); 
+            if (verified && verified.scope == 'server') {
+              // good to go...
+            } 
+            else{
+              util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+              return;
+            } 
+          } catch (error) {
+            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+            return;
+          }
+          
+         
         }
-    
-    
-        if (req.headers['admin-token'] !== undefined) { 
-     
-        }
-    
-        if (req.headers['app-secret'] !== undefined) { 
-     
+        else {
+          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+          return;
         }
     
     

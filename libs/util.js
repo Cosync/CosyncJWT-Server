@@ -37,6 +37,13 @@ exports.HTTP_STATUS_CODE = {
   
 };
 
+
+exports.INTERNAL_STATUS_CODE = {
+	INVALID_SERVER_TOKEN:{code:400, message:"invalid server token"},
+	 
+};
+
+
 exports.getCurrentTime = function() { 
 	let now = new Date().toUTCString(); 
 	return now;
