@@ -7,5 +7,6 @@ module.exports.TABLE = {
     "RESET_PASSWORDS":"resetpasswords", 
     "SIGNUPS":"signups",  
     "USERS":"users", 
+    "EMAIL_TEMPLATES":"emailtemplates", 
 }
    

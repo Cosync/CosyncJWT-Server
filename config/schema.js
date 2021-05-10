@@ -350,3 +350,41 @@ module.exports.resetPassword = new mongooseSchema({
 });
 
  
+
+
+
+module.exports.emailTemplate = new mongooseSchema({
+  appId: { 
+    type: String,
+    required: true,
+    index: true 
+  },
+  templateName: {
+    required: true,
+    type: String,
+    index: true 
+  }, 
+  subject: {
+    required: true,
+    type: String,
+    index: true 
+  },  
+  replyTo: { 
+    type: String,
+    index: true 
+  },  
+  htmlTemplate: {
+    required: true,
+    type: String,
+    index: true 
+  },  
+  createdAt: { 
+    type: Date,
+    default: new Date().toUTCString()
+  },
+  updatedAt: { 
+    type: Date,
+    default: new Date().toUTCString()
+  }
+  
+});

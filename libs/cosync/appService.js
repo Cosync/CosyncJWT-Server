@@ -61,6 +61,7 @@ class AppService {
       app.save();
 
       callback(app); 
+      this.createAppEmailTemplate(app);
     }
     
   }
@@ -80,6 +81,18 @@ class AppService {
     let apps = await _apps.find({}, appProjection).sort({createdAt: 'desc'}); 
     callback(apps); 
   }
+
+
+
+  async search(params, callback) {
+
+    let _apps = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let apps;
+    if(params.case == "true") apps = await _apps.find({name: params.name}, appProjection).sort({createdAt: 'desc'}); 
+    else apps = await _apps.find( { "name" : { $regex : new RegExp(params.name, "i") } }, appProjection).sort({createdAt: 'desc'}); 
+    callback(apps); 
+  }
+
 
   async deleteApp( appId, callback) { 
     
@@ -127,7 +140,84 @@ class AppService {
       } 
       else callback(null, `App '${data.name}' already exists.`);
      
-  }       
+  }
+
+
+
+  async createAppEmailTemplate(app){
+    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+    
+    let signUp = {
+      appId: app.appId,
+      templateName: 'signUp',
+      subject: "Verify your email for %APP_NAME%",
+      replyTo:'',
+      htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Please verify your email address: </p>\n<p><b>%CODE%</b></p>\n<p>If you didn’t ask to verify this address, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+    }
+
+    let template = new _email(signUp); 
+    template.save();
+
+
+    let clickThrough = {
+      appId: app.appId,
+      templateName: 'clickThrough',
+      subject: "clickThrough",
+      replyTo:'',
+      htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have successfully signup.</p>\n<p><b>Please login to %APP_NAME% Application</b></p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+    } 
+
+    template = new _email(clickThrough); 
+    template.save(); 
+
+
+
+    let resetPassword = {
+      appId: app.appId,
+      templateName: 'resetPassword',
+      subject: "Reset your password for %APP_NAME%",
+      replyTo:'',
+      htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Here is your code to reset your %APP_NAME% password for your %HANDLE% account.</p>\n<p><b>%CODE%</b></p>\n<p>If you didn’t ask to reset your password, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+    } 
+
+    template = new _email(resetPassword); 
+    template.save(); 
+
+    let invite = {
+      appId: app.appId,
+      templateName: 'invite',
+      subject: "Account invitation for %APP_NAME%",
+      replyTo:'',
+      htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Someone has invited your %HANDLE%!.</p>\n<p>Here is your register key: <b>%CODE%</b></p>\n<p> If you don't recognize the %APP_NAME% account, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+    } 
+
+    template = new _email(invite); 
+    template.save();
+
+
+    let qrCode = {
+      appId: app.appId,
+      templateName: 'qrCode',
+      subject: "QR Code for login two step verification of %APP_NAME%",
+      replyTo:'',
+      htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have asked for Two Factor Login Verification QR Code for %HANDLE%!.</p>\n<p>Plase scan the QR code or enter the secret key in Google Authenticato</p>\n<p>Here is your secret key: <b>%CODE%</b></p>\n<p> If you don't recognize the %APP_NAME% account, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+    } 
+
+    template = new _email(qrCode); 
+    template.save();
+
+    let sms = {
+      appId: app.appId,
+      templateName: 'sms',
+      subject: "SMS for login two step verification of %APP_NAME%",
+      replyTo:'',
+      htmlTemplate:"%CODE% is your verification code for %APP_NAME%."
+    } 
+
+    template = new _email(sms); 
+    template.save();
+
+  }
 
 }
 

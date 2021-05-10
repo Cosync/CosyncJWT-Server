@@ -1,7 +1,7 @@
 
  
 const express = require("express");  
-const cors = require('cors');
+ 
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 
@@ -10,7 +10,7 @@ global.privateKey = './config/privatekey.pem';
 global.__config = require('./config/config.js'); 
 const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
 
-let key = process.argv[2];
+const key = process.argv[2];
 
 if(process.env.PASS_KEY) global.__passKey = process.env.PASS_KEY;
 else if(key) global.__passKey = key;
@@ -23,49 +23,70 @@ if(!global.__passKey){
 }
 
 const util = require('./libs/util');
-let app = express(); 
-let port = normalizePort(process.env.PORT || '3000');  
+const app = express(); 
+const port = normalizePort(process.env.PORT || '3000');  
 app.listen(port); 
-console.log("server is starting at port: ", port);
+console.log("server is starting at port: ", port); 
+
 
 app.use(function(req, res, next){
   next();
 })
 
 
-
 // TODO: Check headers and bearer token
 app.use((req, res, next) => {
-    try {  
-   
-        
-    
-        if(req.headers['server-secret']) {  
-          try {
-            let verified  = jwt.verify(req.headers['server-secret'], serverPublicKey); 
-            if (verified && verified.scope == 'server') {
-              // good to go...
-            } 
-            else{
-              util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
-              return;
-            } 
-          } catch (error) {
+    try {
+      
+
+      if(req.headers['server-secret']) {
+        try {
+          let verified  = jwt.verify(req.headers['server-secret'], serverPublicKey); 
+          if (verified && verified.scope == 'server') {
+            // good to go... 
+            req.scope = 'server';
+          } 
+          else{
             util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
             return;
-          }
-          
-         
-        }
-        else {
+          } 
+        } catch (error) {
           util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
           return;
         }
+        
+      }
+
+      if(req.headers['app-token']) {  
+        try {
+          let verified  = jwt.verify(req.headers['app-token'], serverPublicKey); 
+          if (verified && verified.scope == 'app') {
+            // good to go...
+            req.appId = verified.appId;
+            if(req.scope != 'server') req.scope = 'app';
+          } 
+          else{
+            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+            return;
+          } 
+        } catch (error) {
+          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+          return;
+        }
+        
+        
+      }
+
+      if(!req.headers['app-token'] && !req.headers['server-secret']) {
+        util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SIGN_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+        return;
+      }
     
     
     
     } catch (error) {
-    
+      util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
+      return;
     }
         
     next();
@@ -75,17 +96,33 @@ app.use((req, res, next) => {
 
 
 
-app.use(cors());
+let cors = require('cors');
+app.use(cors()); 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));  
 
 app.use(function(req, res, next) { 
    
-    //res.header("Access-Control-Allow-Origin", global.__config.allowOriginDomain);
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-    next();
+  //res.header("Access-Control-Allow-Origin", global.__config.allowOriginDomain);
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  next();
 });
- 
+
+
+
+const indexRouter = require('./routes/index');
+const appRouter = require('./routes/app');
+
+app.use('', indexRouter); 
+app.use('/api/app', appRouter); 
+
+
+// // catch 404 and forward to error handler
+app.use(function(req, res, next) {
+	util.responseFormat(res, "Service Not found", 0, util.HTTP_STATUS_CODE.BAD_REQUEST);
+	next();
+});
 
 // error handler
 app.use(function(err, req, res, next) {
@@ -105,7 +142,7 @@ app.use(function(err, req, res, next) {
  */
 
 function normalizePort(val) {
-  var port = parseInt(val, 10);
+  const port = parseInt(val, 10);
 
   if (isNaN(port)) {
     // named pipe
@@ -121,20 +158,11 @@ function normalizePort(val) {
 }
 
 
-let indexRouter = require('./routes/index');
-let appRouter = require('./routes/app');
 
-app.use('', indexRouter); 
-app.use('/api/app', appRouter); 
-
-
-let secret = util.generateServerSecretToken();
+const secret = util.generateServerSecretToken();
 console.warn('Here is your server secret token: ', secret);
  
 
 
-require('./libs/cosync/databaseService').init(function(res){
-
-  
-});
+require('./libs/cosync/databaseService').init(function(res){});
  

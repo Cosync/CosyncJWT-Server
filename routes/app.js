@@ -24,7 +24,7 @@ router.post("/", async (req, res) => {
 });
 
 
-router.get("/:appId", async function (req, res) { 
+router.get(":appId", async function (req, res) { 
 
     let valid = req.params.appId;
     if(!valid) {
@@ -46,6 +46,27 @@ router.get("/:appId", async function (req, res) {
 
     
   }
+);
+
+
+
+router.get("/search", async function (req, res) { 
+
+  let valid = req.query.name;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+   
+  appService.search(req.query, function(apps, err){
+      if(apps) util.responseFormat(res, apps);
+      else util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
+  });
+
+  
+
+  
+}
 );
 
 

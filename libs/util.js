@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');   
 const cert = fs.readFileSync(global.privateKey, 'utf8'); 
 const serverPrivateKey = { key: cert, passphrase: global.__passKey }; 
- 
+const _ = require('lodash'); 
 
 function setHeader(res){
 	res.setHeader("Content-Type", "application/json; charset=UTF-8");
@@ -39,8 +39,27 @@ exports.HTTP_STATUS_CODE = {
 
 
 exports.INTERNAL_STATUS_CODE = {
-	INVALID_SERVER_TOKEN:{code:400, message:"invalid server token"},
-	 
+	INVALID_ADMIN_TOKEN:{code:400, message:"invalid admin token"},
+	INVALID_APP_TOKEN:{code:400, message:"invalid app token"},
+	APP_NOT_FOUND:{code:401, message:"app no longer exist"},
+	APP_IS_SUSPENDED:{code:402, message:"app is suspended"},
+	MISSING_PARAM:{code:403, message:"missing parameter"},
+	USER_IS_SUSPENDED:{code:404, message:"user account is suspended"},
+	INVALID_ACCESS_TOKEN:{code:405, message:"invalid access token"},
+	APP_ISNOT_INVITATBLE:{code:406, message:"app does not support invitaion"},
+	APP_ISNOT_SIGNUPABLE:{code:407, message:"app does not support signup"},
+	APP_NO_GOOGLE_TWO_FACTOR:{code:408, message:"app does not support google two-factor verification"},
+	APP_NO_PHONE_TWO_FACTOR:{code:409, message:"app does not support phone two-factor verification"},
+	USER_NO_VERIFIED_PHONE:{code:410, message:"user does not have verified phone number"},
+	SIGNUP_CODE_EXPRIRED:{code:411, message:"signup code expired."},
+	PHONE_NUMBER_ALREADY_IN_USE:{code:412, message:"phone number already in use"},
+	ACCESS_TOKEN_EXPRIRED:{code:501, message:"access token expired"},
+	INTERNAL_SERVER_ERROR:{code:500, message:"internal server error"}, 
+	INVALID_CREDENTIALS:{code:600, message:"invalid login credentials"},
+	HANDLE_ALREADY_REGISTERED:{code:601, message:"handle already registered"},
+	INVALID_DATA:{code:602, message:"invalid data"},
+	EMAIL_NOT_EXIST:{code:603, message:"email does not exist"},
+	INVALID_METADATA:{code:604, message:"invalid metadata"}
 };
 
 
@@ -94,6 +113,65 @@ exports.getRandomNumber = function() {
 } 
  
 
+
+exports.generateAuthJWTToken = function(user, app){
+
+	let metaData = user.metaData || {}; 
+
+	let payload = {
+		aud: app.realmAppId,
+		sub: user.handle,
+		exp: getTimestamp(app.userJWTExpiration)
+	}; 
+
+	if(app.metaDataEmail)  payload.email = user.handle;
+
+	let finalMetaData = {};
+	
+	for (let index = 0; index < app.metaData.length; index++) {
+		const field = app.metaData[index];  
+		if(field){ 
+			if(field.fieldName == 'email'){ 
+				_.set(finalMetaData, field.path, user.handle);
+				delete payload.email;
+			}
+
+			let value = _.get(metaData, field.path);
+			if(field.required && !value){ 
+				return null;
+			}
+			else if(value) _.set(finalMetaData, field.path, value);
+		}
+	}; 
+
+	for (let index = 0; index < app.metaDataInvite.length; index++) {
+		const field = app.metaDataInvite[index];  
+		if(field){ 
+			let value = _.get(metaData, field.path);
+			if(value) _.set(finalMetaData, field.path, value);
+		}
+	}; 
+
+	for (const key in finalMetaData) {
+		if(finalMetaData[key] !== undefined) payload[key] = finalMetaData[key]; 
+	} 
+
+	 
+	let _privateKey = Buffer.from(app.appPrivateKey, 'base64'); 
+	let appPrivateKey = _privateKey.toString('utf8'); 
+	return jwt.sign(payload, appPrivateKey, { algorithm: 'RS256' });  
+
+}
+
+
+function getTimestamp(hour){
+	hour = hour ? hour : 1; 
+	let plusMiliSecond = hour * (1000*60*60);
+	let timestamp = Date.now() + plusMiliSecond;
+	let timeInSeconds = Math.floor(timestamp/1000); 
+	return timeInSeconds;
+}
+
 exports.generateAccessToken = function(item, scope){
     const payload = {
       handle: item.handle,
@@ -104,6 +182,28 @@ exports.generateAccessToken = function(item, scope){
     return accessToken;
 }
  
+
+exports.generateSignToken = function(data, app){
+
+    const payload = {
+      handle: data.handle,
+      uid: data.uid,
+      appId: data.appId,
+      code: data.code,
+      metaData: data.metaData ? JSON.stringify(data.metaData, null, 10) : "" 
+    };
+
+    if(data.senderHandle)  payload.senderHandle = data.senderHandle;
+    if(data.senderUserId)  payload.senderUserId = data.senderUserId; 
+     
+    let _privateKey = Buffer.from(app.appPrivateKey, 'base64');
+    let appPrivateKey = _privateKey.toString('utf8'); 
+    const token = jwt.sign(payload, appPrivateKey, { algorithm: 'RS256' });
+    return token;
+}
+
+
+
 
 exports.generateSigninToken = function(item){
     const payload = {
