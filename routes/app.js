@@ -24,39 +24,26 @@ router.post("/", async (req, res) => {
 });
 
 
-router.get(":appId", async function (req, res) { 
+router.get("/appId/:appId", async function (req, res) { 
 
     let valid = req.params.appId;
     if(!valid) {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       return;
     }
-    if(valid == 'allApps'){
-        appService.getApps(function(apps, err){
-            if(apps) util.responseFormat(res, apps);
-            else util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
-        });
-    }
-    else{
-        appService.getApp(req.params.appId, function(app, err){
-            if(app) util.responseFormat(res, app);
-            else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
-          });
-    }
+    
+    appService.getApp(req.params.appId, function(app, err){
+      if(app) util.responseFormat(res, app);
+      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    });
+    
 
     
   }
-);
+); 
 
 
-
-router.get("/search", async function (req, res) { 
-
-  let valid = req.query.name;
-  if(!valid) {
-    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    return;
-  }
+router.get("/search", async function (req, res) {  
    
   appService.search(req.query, function(apps, err){
       if(apps) util.responseFormat(res, apps);

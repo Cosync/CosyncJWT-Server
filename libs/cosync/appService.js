@@ -78,7 +78,7 @@ class AppService {
   async getApps(callback) {
 
     let _apps = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-    let apps = await _apps.find({}, appProjection).sort({createdAt: 'desc'}); 
+  
     callback(apps); 
   }
 
@@ -88,8 +88,12 @@ class AppService {
 
     let _apps = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let apps;
-    if(params.case == "true") apps = await _apps.find({name: params.name}, appProjection).sort({createdAt: 'desc'}); 
-    else apps = await _apps.find( { "name" : { $regex : new RegExp(params.name, "i") } }, appProjection).sort({createdAt: 'desc'}); 
+    if(params.name){
+      if(params.case == "true") apps = await _apps.find({name: params.name}, appProjection).sort({createdAt: 'desc'}); 
+      else apps = await _apps.find( { "name" : { $regex : new RegExp(params.name, "i") } }, appProjection).sort({createdAt: 'desc'});
+    }
+    else apps = await _apps.find({}, appProjection).sort({createdAt: 'desc'}); 
+     
     callback(apps); 
   }
 
