@@ -127,22 +127,67 @@ class AppService {
 
   }
    
-  async editAppName(data, callback) { 
+  async updateApp(data, callback) { 
    
       let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-      let app = await _app.findOne({ name: data.name});
+      let app;
+      if(data.name) {
+        app = await _app.findOne({ name: data.name});
+        if(app) callback(null, `App '${data.name}' already exists.`);
 
-      if (!app) {
-        app = await _app.findOne({ appId: data.appId });
-        if(!app) callback(null, `App ID '${data.appId}' is not found.`); 
-        else{ 
-          app.name = data.name;
+        return;
+      } 
+      
+
+      app = await _app.findOne({ appId: data.appId });
+      if(!app) callback(null, `App ID '${data.appId}' is not found.`); 
+      else{
+        
+        let validKey = true;
+        for (const key in data) {
+
+          if (key != 'appId' && data[key]){
+
+            if(key == 'signupEnabled') data[key] = data[key] == 'true' ? true : false;
+
+            else if(key == 'invitationEnabled') data[key] = data[key] == 'true' ? true : false;
+
+            else if(key == 'userJWTExpiration') data[key] = parseInt( data[key]);
+
+            else if(key == 'passwordFilter')  data[key] = data[key] == 'true' ? true : false;
+
+            else if(key == 'passwordMinLength') data[key] = parseInt( data[key]);
+            else if(key == 'passwordMinUpper') data[key] = parseInt( data[key]);
+            else if(key == 'passwordMinLower') data[key] = parseInt( data[key]);
+            else if(key == 'passwordMinDigit') data[key] = parseInt( data[key]);
+            else if(key == 'passwordMinSpecial') data[key] = parseInt( data[key]);
+            
+            else if(key == 'metaDataEmail') data[key] = data[key] == 'true' ? true : false;
+
+
+            if(key == 'metaData' || key == 'metaDataInvite'){
+              let metadata = JSON.parse(data[key]); 
+              app[key].forEach(item => {
+                if(item.path == metadata.path){
+                  callback(null, `Duplicate metadata path '${metadata.path}'.`);
+                  validKey = false; 
+                  return;
+                }
+              });
+              app[key].push(metadata);
+            }  
+            else app[key] = data[key];
+          } 
+        }
+        
+        if(validKey){
           app.updatedAt = util.getCurrentTime();
           app.save(); 
           callback(app); 
         }
-      } 
-      else callback(null, `App '${data.name}' already exists.`);
+        
+      }
+      
      
   }
 

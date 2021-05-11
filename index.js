@@ -55,29 +55,8 @@ app.use((req, res, next) => {
           return;
         }
         
-      }
-
-      if(req.headers['app-token']) {  
-        try {
-          let verified  = jwt.verify(req.headers['app-token'], serverPublicKey); 
-          if (verified && verified.scope == 'app') {
-            // good to go...
-            req.appId = verified.appId;
-            if(req.scope != 'server') req.scope = 'app';
-          } 
-          else{
-            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
-            return;
-          } 
-        } catch (error) {
-          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
-          return;
-        }
-        
-        
-      }
-
-      if(!req.headers['app-token'] && !req.headers['server-secret']) {
+      } 
+      else {
         util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SIGN_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
         return;
       }

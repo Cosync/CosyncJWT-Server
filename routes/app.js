@@ -59,13 +59,16 @@ router.get("/search", async function (req, res) {
 
 router.post("/update", async (req, res) => {
 
-    let valid = req.body.appId && req.body.name;
+ 
+
+    let valid = req.body.appId;
     if(!valid) {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       return;
     }
 
-    appService.editAppName(req.body, function(result, err){
+
+    appService.updateApp(req.body, function(result, err){
         if(err){ 
             _error.message = err;
             util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
