@@ -155,9 +155,12 @@ class AppService {
       let app;
       if(data.name) {
         app = await _app.findOne({ name: data.name});
-        if(app) callback(null, `App '${data.name}' already exists.`);
+        if(app){
+          callback(null, `App '${data.name}' already exists.`);
+          return;
+        } 
 
-        return;
+        
       } 
       
 
