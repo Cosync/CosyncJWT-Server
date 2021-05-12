@@ -126,6 +126,28 @@ class AppService {
     _reset.deleteMany({ "appId": id }, function (err) {}); 
 
   }
+
+  async deleteMetadata(data, callback) { 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+     
+    let app = await _app.findOne({ appId: data.appId });
+    if(!app) callback(null, `App ID '${data.appId}' is not found.`); 
+    else{
+
+      let metaData = app[data.type]; 
+
+      if(metaData && metaData.length > 0 && metaData.length >= parseInt(data.index)){ 
+        metaData.splice(parseInt(data.index), 1);
+        app[data.type] = metaData;
+        app.updatedAt = util.getCurrentTime();
+        app.save(); 
+        callback(app); 
+      }
+      else{
+        callback(null, `App doesn't have ${data.type} - ${data.index}.`);
+      }
+    }
+}
    
   async updateApp(data, callback) { 
    

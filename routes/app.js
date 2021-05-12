@@ -10,7 +10,7 @@ let _error = {status: 'Fails', message: 'Invalid Data'};
 router.post("/", async (req, res) => {
 
     let valid = req.body.name;
-    if(!valid) {
+    if(!valid) { 
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       return;
     }
@@ -48,19 +48,12 @@ router.get("/search", async function (req, res) {
   appService.search(req.query, function(apps, err){
       if(apps) util.responseFormat(res, apps);
       else util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
-  });
-
+  }); 
   
-
-  
-}
-);
+});
 
 
-router.post("/update", async (req, res) => {
-
- 
-
+router.post("/update", async (req, res) => { 
     let valid = req.body.appId;
     if(!valid) {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -75,6 +68,30 @@ router.post("/update", async (req, res) => {
         } 
         else util.responseFormat(res, result);
       });
+});
+
+
+
+router.post("/deleteMetadata", async (req, res) => { 
+
+  let valid = req.body.appId && req.body.index && req.body.type;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  } 
+
+  if(isNaN(req.body.index)){
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  appService.deleteMetadata(req.body, function(result, err){
+      if(err){ 
+          
+          util.responseFormat(res, {status: 'Fails', message:err}, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      } 
+      else util.responseFormat(res, result);
+    });
 });
 
 
