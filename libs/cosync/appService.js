@@ -142,7 +142,7 @@ class AppService {
       app = await _app.findOne({ appId: data.appId });
       if(!app) callback(null, `App ID '${data.appId}' is not found.`); 
       else{
-        
+
         let validKey = true;
         for (const key in data) {
 
@@ -168,13 +168,17 @@ class AppService {
             if(key == 'metaData' || key == 'metaDataInvite'){
               let metadata = JSON.parse(data[key]); 
               app[key].forEach(item => {
-                if(item.path == metadata.path){
-                  callback(null, `Duplicate metadata path '${metadata.path}'.`);
-                  validKey = false; 
-                  return;
-                }
+                metadata.forEach(element => {
+                  if(item.path == element.path){
+                    callback(null, `Duplicate metadata path '${element.path}'.`);
+                    validKey = false; 
+                    return;
+                  }
+                });
+                
               });
-              app[key].push(metadata);
+              if(app[key] && app[key].length) app[key] = app[key].concat(metadata);
+              else app[key] = metadata;
             }  
             else app[key] = data[key];
           } 
