@@ -1,9 +1,7 @@
 
 let config = {
-  serverName: 'JWTServer',
-  apiurl:"http://localhost:3000/",
-  webbaseurl:"http://localhost:4200/",
-  allowOriginDomain: "http://localhost:4200",
+  serverName: 'JWTServer', 
+  port: 3000,
   db: {
     name: "CosyncJWTServer",
     connectionString: 'mongodb://localhost:27017/CosyncJWTServer'

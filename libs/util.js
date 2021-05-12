@@ -247,7 +247,8 @@ exports.generateServerSecretToken = function(){
 
 		return accessToken;
 	} catch (error) {
-		console.log(error);
+		 
+		return null;
 	}
 }
  

@@ -24,7 +24,7 @@ if(!global.__passKey){
 
 const util = require('./libs/util');
 const app = express(); 
-const port = normalizePort(process.env.PORT || '3000');  
+const port = normalizePort(global.__config.port);  
 app.listen(port); 
 console.log("server is starting at port: ", port); 
 
@@ -139,7 +139,11 @@ function normalizePort(val) {
 
 
 const secret = util.generateServerSecretToken();
-console.warn('Here is your server secret token: ', secret);
+if(!secret) {
+  console.info('Look like you provided invalid pass key');
+  process.exit(0);
+}
+else console.warn('Here is your server secret token: ', secret);
  
 
 
