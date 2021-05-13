@@ -24,7 +24,7 @@ if(!global.__passKey){
 
 const util = require('./libs/util');
 const app = express(); 
-const port = normalizePort(global.__config.port);  
+const port = normalizePort(global.__config.serverPort);
 app.listen(port); 
 console.log("server is starting at port: ", port); 
 
