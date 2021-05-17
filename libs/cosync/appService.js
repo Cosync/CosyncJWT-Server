@@ -144,7 +144,7 @@ class AppService {
         callback(app); 
       }
       else{
-        callback(null, `App doesn't have ${data.type} - ${data.index}.`);
+        callback(null, `App doesn't have ${data.type} at index ${data.index}.`);
       }
     }
 }
