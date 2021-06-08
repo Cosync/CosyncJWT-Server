@@ -251,6 +251,19 @@ exports.generateServerSecretToken = function(){
 		return null;
 	}
 }
+
+
+exports.getAppMetaData = function(app){
+
+	if(!app.metaData || app.metaData.length == 0) return null;
+	let metaData = {};
+	app.metaData.forEach(field => {
+		if(field.path) _.set(metaData, field.path);
+	});
+
+	return metaData;
+}
+
  
  
   

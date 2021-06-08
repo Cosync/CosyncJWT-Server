@@ -92,10 +92,11 @@ app.use(function(req, res, next) {
 
 const indexRouter = require('./routes/index');
 const appRouter = require('./routes/app');
+const appUserRouter = require('./routes/appUser');
 
 app.use('', indexRouter); 
 app.use('/api/app', appRouter); 
-
+app.use('/api/appuser', appUserRouter);
 
 // // catch 404 and forward to error handler
 app.use(function(req, res, next) {
