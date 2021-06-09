@@ -1,6 +1,6 @@
 
 module.exports  = {
-
+  noreplyEmail:'noreply@cosync.io',
   serverName: 'JWTServer', 
   serverPort: 3000,
   db: {

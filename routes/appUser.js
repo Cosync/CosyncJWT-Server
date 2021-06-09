@@ -10,12 +10,14 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
  
-
-let _error = {status: 'Fails', message: 'Invalid Data'};
-
-
 router.post("/login", async (req, res) => {
  
+  if (req.scope != "app")
+  {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
   let valid = req.body.handle && req.appId && req.body.password; 
   if (!valid)
   {
@@ -186,7 +188,7 @@ router.post("/register", async (req, res) => {
  
   let valid = req.body.handle && req.body.password && req.appId && req.body.code;
 
-  if (!valid)
+  if (!valid && req.scope != 'app')
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
@@ -209,7 +211,7 @@ router.post("/register", async (req, res) => {
 router.post("/forgotPassword", async (req, res) => {
  
   let valid = req.body.handle; 
-  if (!valid)
+  if (!valid && req.scope != 'app')
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
@@ -384,13 +386,7 @@ router.post("/setTwoFactorGoogleVerification", async (req, res) => {
   req.isGoogle = true;
 
   appUser.requestTwoFactorVerifications(req, function(result, error){ 
-    if(result){
-      // if(result.tfaURL){
-      //   twoFactorService.generateQRImage(res, result.tfaURL);
-      // }  
-      
-      util.responseFormat(res, result);
-    } 
+    if(result) util.responseFormat(res, result);
     else util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
   });
    

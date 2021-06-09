@@ -56,6 +56,43 @@ app.use((req, res, next) => {
         }
         
       } 
+      else if(req.headers['app-token']) {
+        try {
+          let verified  = jwt.verify(req.headers['app-token'], serverPublicKey); 
+          if (verified && verified.scope == 'app') {
+            // good to go... 
+            req.scope = 'app';
+            req.appId = verified.appId;
+          } 
+          else{
+            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+            return;
+          } 
+        } catch (error) {
+          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+          return;
+        }
+        
+      } 
+      else if(req.headers['access-token']) {
+        try {
+          let verified  = jwt.verify(req.headers['app-token'], serverPublicKey); 
+          if (verified && verified.scope == 'user') {
+            // good to go... 
+            req.scope = verified.scope; 
+            req.appId = verified.appId;
+            req.handle = verified.handle;
+          } 
+          else{
+            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+            return;
+          } 
+        } catch (error) {
+          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+          return;
+        }
+        
+      } 
       else {
         util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SIGN_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
         return;
