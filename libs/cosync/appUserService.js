@@ -31,7 +31,7 @@ class AppUserService {
    */
   async signup(req, callback){ 
     
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.applicationlication); 
     let app = await _app.findOne({ appId: req.appId });
 
     if(!app ) {
@@ -233,7 +233,7 @@ class AppUserService {
   async completeSignup(signUpData, callback){
     let that = this;
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: signUpData.appId });
     
     if(!app) {
@@ -345,7 +345,7 @@ class AppUserService {
   
   async getAppUserAuth(params, callback) {
     
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.findOne({ appId: params.appId});
     if(!app){
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -445,7 +445,7 @@ class AppUserService {
       return;
     } 
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.findOne({ appId: data.appId});
          
     if(!data.code){
@@ -481,7 +481,7 @@ class AppUserService {
 
   async forgotPassword(req, callback){
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.applicationlication); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -546,7 +546,7 @@ class AppUserService {
 
   async resetPassword(req, callback){
     
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.applicationlication); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -595,7 +595,7 @@ class AppUserService {
 
   async changePassword(req, callback){
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.applicationlication); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -632,7 +632,7 @@ class AppUserService {
 
   async getUser(req, callback){
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -683,7 +683,7 @@ class AppUserService {
     }
 
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -745,7 +745,7 @@ class AppUserService {
 
   async setPhone(req, callback){
     
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -798,7 +798,7 @@ class AppUserService {
 
   async verifyPhone(req, callback){
     
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -849,7 +849,7 @@ class AppUserService {
 
   async requestTwoFactorVerifications(req, callback){
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -944,7 +944,7 @@ class AppUserService {
 
   async confirmTwoFactorVerifications(req){
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -978,7 +978,7 @@ class AppUserService {
 
       }
       else{
-        
+
         if(user.twoFactorCode == req.body.twoFactorCode) callback(true);
         else callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA); 
       }
