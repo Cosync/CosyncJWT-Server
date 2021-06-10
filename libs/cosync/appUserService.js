@@ -249,14 +249,7 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_SIGNUPABLE);
       return;
     } 
-
-  
     
-    if(err){
-      callback(null, err);
-      return;
-    }
-
     let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup); 
     let signup = await _signupTbl.findOne({ appId: signUpData.appId, handle:signUpData.handle, code: parseInt(signUpData.code) }); 
     
