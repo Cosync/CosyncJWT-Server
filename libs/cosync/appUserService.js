@@ -988,6 +988,107 @@ class AppUserService {
   }
 
 
+  async updateAppUserMetaData(req, callback){
+
+    let data = req.body;
+
+    let error = {status: 'Fails', message: 'Invalid Data'};
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
+    let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
+
+    if(!app ) {
+      callback(null, error); 
+      return;
+    } 
+
+
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user); 
+    let user = await _user.findOne({handle: data.handle, appId: data.appId });
+
+    if(!user){
+      callback(null, error); 
+      return;
+    }
+
+    let valid = await this.validateUserMetaData(data.metaData, app);
+    
+    if(!valid){
+      callback(null, error); 
+      return;
+    }
+
+    user.metaData = valid;
+    app.updatedAt = util.getCurrentTime();
+    user.save();
+    callback(true); 
+  }
+
+
+
+  validateUserMetaData(metaData, app){
+    return new Promise((resolve, reject) => {  
+
+      let finalMetaData = {}; 
+
+      for (let index = 0; index < app.metaData.length; index++) {
+        const field = app.metaData[index]; 
+        let value = _.get(metaData, field.path); 
+        if(value !== undefined && value != "") _.set(finalMetaData, field.path, value);
+      }; 
+
+      for (let index = 0; index < app.metaDataInvite.length; index++) {
+        const field = app.metaDataInvite[index]; 
+        let value = _.get(metaData, field.path); 
+        if(value !== undefined && value != "") _.set(finalMetaData, field.path, value);
+      }; 
+      
+      resolve(finalMetaData);
+
+    })
+  } 
+
+
+  async updateAppUserPasword(data, callback){ 
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
+    let app = await _app.findOne({ appId: data.appId});
+    if(!app){
+      callback(null, _error);
+      return;
+    }
+
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let user = await _user.findOne({_id: data.userId}); 
+    if(user){
+      
+      user.password = hashedPassword;
+      user.updatedAt = util.getCurrentTime();
+      user.save();
+      callback(true); 
+
+      let tml = resetPasswordTemplate.split('%PASSWORD%').join(data.rawValue);
+      tml = tml.split('%HANDLE%').join(user.handle);
+      tml = tml.split('%APP_NAME%').join(app.name);
+      let emailData = {
+        to: user.handle, 
+        subject : `${app.name}: account passowrd has been reset.`,
+        text: `Your login account handle: ${user.handle}
+        Your new account password: ${data.rawValue}
+        Sincerely,
+        ${app.name}`,
+        html: tml
+      };
+
+
+      emailService.send(emailData); 
+
+    }
+    else callback(false);
+
+  }
+
+
   
 
 
