@@ -248,6 +248,13 @@ class AppService {
   }
 
 
+  async getCosyncVersions(callback) {
+    let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);
+    let versions = await _version.find({}).sort({createdAt: 'desc'});
+    callback(versions);
+  }
+
+
 
   async createAppEmailTemplate(app){
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);

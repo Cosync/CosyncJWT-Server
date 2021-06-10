@@ -170,10 +170,10 @@ router.post("/initCosyncJWT", async (req, res) => {
     return;
   } 
 
-  // initCosyncJWT.init(req, function(result, error){
-  //   if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-  //   else util.responseFormat(res, result);
-  // });
+  initCosyncJWT.init(req, function(result, error){
+    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    else util.responseFormat(res, result);
+  });
    
 });
 
@@ -187,10 +187,10 @@ router.post("/reinitCosyncJWT", async (req, res) => {
     return;
   } 
 
-  // initCosyncJWT.reinit(req, function(result, error){
-  //   if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-  //   else util.responseFormat(res, result);
-  // });
+  initCosyncJWT.reinit(req, function(result, error){
+    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    else util.responseFormat(res, result);
+  });
    
 });
 
@@ -205,10 +205,10 @@ router.post("/removeCosyncJWT", async (req, res) => {
     return;
   } 
 
-  // initCosyncJWT.remove(req, function(result, error){
-  //   if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-  //   else util.responseFormat(res, result);
-  // });
+  initCosyncJWT.remove(req, function(result, error){
+    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    else util.responseFormat(res, result);
+  });
    
 });
 
@@ -222,10 +222,10 @@ router.post("/initCosyncEngine", async (req, res) => {
     return;
   } 
 
-  // initCosyncEngine.init(req, function(result, error){
-  //   if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-  //   else util.responseFormat(res, result);
-  // });
+  initCosyncEngine.init(req, function(result, error){
+    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    else util.responseFormat(res, result);
+  });
    
 });
 
@@ -239,10 +239,10 @@ router.post("/reinitCosyncEngine", async (req, res) => {
     return;
   } 
 
-  // initCosyncEngine.reinit(req, function(result, error){
-  //   if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-  //   else util.responseFormat(res, result);
-  // });
+  initCosyncEngine.reinit(req, function(result, error){
+    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    else util.responseFormat(res, result);
+  });
    
 }); 
 

@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@sendgrid/mail": "^7.4.4",
+    "atob": "^2.1.2",
     "authenticator": "^1.1.5",
     "cors": "^2.8.5",
     "express": "^4.17.1",

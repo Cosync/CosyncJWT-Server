@@ -197,6 +197,45 @@ module.exports.invite = new mongooseSchema({
 });
  
 
+
+module.exports.version = new mongooseSchema({
+  name: { 
+    type: String,
+    required: true,
+    index: true 
+  }, 
+  service: { 
+    type: String,
+    required: true,
+    index: true 
+  }, 
+  desc: {
+    required: true,
+    type: String,
+    comment: 'desc of the version.' 
+  }, 
+  versionNumber: { 
+    type: String,
+    required: true,
+    index: true 
+  }, 
+  status: {
+    required: true,
+    type: String,
+    index: true 
+  },  
+  createdAt: { 
+    type: Date,
+    default: new Date().toUTCString()
+  },
+  updatedAt: { 
+    type: Date,
+    default: new Date().toUTCString()
+  }
+  
+});
+
+
 module.exports.signup = new mongooseSchema({ 
     appId: {
       required: true,
