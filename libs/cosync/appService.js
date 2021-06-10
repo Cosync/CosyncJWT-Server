@@ -101,7 +101,7 @@ class AppService {
       type: false
     }; 
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.find({ appId: appId }, appProjection2);
     if(app && app[0]) callback(app[0]);
     else callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
