@@ -264,6 +264,32 @@ exports.getAppMetaData = function(app){
 	return metaData;
 }
 
+
+exports.countHour = function(startDate, endDate){
+
+	const ONE_HOUR = 1000 * 60 * 60;
+
+	startDate = toLocalTimestampt(startDate);
+	endDate = endDate ? toLocalTimestampt(endDate) : new Date().getTime();
+	let difference_ms = Math.abs(startDate - endDate); 
+	// Convert back to hour and return
+	return difference_ms/ONE_HOUR;
+
+}
+
  
+
+function toLocalTimestampt(dateString) {
+	dateString = toLocalTimeString(dateString);
+	let localD = new Date(dateString);
+	return localD.getTime(); 
+};
  
+
+function toLocalTimeString(d) {
+	let date = new Date(); 
+	if(d) date = new Date(d); 
+	return  date.toLocaleString(); 
+}; 
+
   
