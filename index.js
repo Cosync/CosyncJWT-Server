@@ -76,7 +76,7 @@ app.use((req, res, next) => {
       } 
       else if(req.headers['access-token']) {
         try {
-          let verified  = jwt.verify(req.headers['app-token'], serverPublicKey); 
+          let verified  = jwt.verify(req.headers['access-token'], serverPublicKey); 
           if (verified && verified.scope == 'user') {
             // good to go... 
             req.scope = verified.scope; 

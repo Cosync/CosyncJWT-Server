@@ -987,7 +987,7 @@ class AppUserService {
 
     let error = {status: 'Fails', message: 'Invalid Data'};
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
 
     if(!app ) {
@@ -1044,7 +1044,7 @@ class AppUserService {
 
   async updateAppUserPasword(data, callback){ 
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.findOne({ appId: data.appId});
     if(!app){
       callback(null, _error);
@@ -1082,8 +1082,210 @@ class AppUserService {
   }
 
 
+  async inviteUser(req, callback){
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: req.appId });
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    }
+    if(app.status != 'active') {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
+      return;
+    } 
+
+    if(!app.invitationEnabled) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_INVITATBLE);
+      return;
+    }
+
+    let finalMetaData = {};
+    if(app.metaDataInvite.length){ 
+      
+      let metaData = {};
+      let valid = true;
+
+      try {
+        if(req.body.metaData) metaData = JSON.parse(req.body.metaData);
+      } catch (error) {
+        callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+        return;
+      }
+
+      for (let index = 0; index < app.metaDataInvite.length; index++) {
+        let field = app.metaDataInvite[index];
+        let value = _.get(metaData, field.path);
+
+        if(value !== undefined) _.set(finalMetaData, field.path, value); 
+
+        if(field.required && value === undefined){ 
+          valid = false;
+          callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+          return;
+        }
+
+      };
+
+      if(!valid) return;
+    } 
+    this.createInvite(req, app, finalMetaData, callback);  
+  }
+
+
+  async createInvite(req, app, metaData, callback){ 
+
+    let handle = req.body.handle.toLowerCase();
+    let senderUserId = req.body.senderUserId;
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user); 
+    let user = await _user.findOne({ appId: req.appId,  handle: handle});
+    if(user){
+      callback(null, util.INTERNAL_STATUS_CODE.HANDLE_ALREADY_REGISTERED);
+      return;
+    }
+
+    callback(true); 
+
+    let code = util.getRandomNumber();
+
+    let _inviteTbl = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite); 
+    let invite = await _inviteTbl.findOne({ appId: req.appId,  handle: handle, senderHandle: req.handle});
+    if(invite && invite.code) code = invite.code;
+
+    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+    let tempalte = await _email.findOne({ appId: req.appId, templateName: 'invite' }); 
+
+    let tml = tempalte.htmlTemplate.split('%CODE%').join(code);
+    tml = tml.split('%HANDLE%').join(handle);
+    tml = tml.split('%APP_NAME%').join(app.name);
+   
+    let emailData = {
+      to: handle, 
+      from: tempalte.replyTo,
+      subject : tempalte.subject.split('%APP_NAME%').join(app.name),
+      text: `Someone has invited your ${handle} account!
+      Here is your register key: ${code}
+      Sincerely,
+      ${app.name}`,
+      html: tml
+    };
+
+    emailService.send(emailData);
+    
+    
+
+    if(invite && invite.code) invite.save();
+    else{
+      let inviteData = {
+        handle: handle, 
+        appId: req.appId,
+        senderHandle: req.handle,
+        senderUserId: senderUserId,
+        status: 'pending',
+        code: code, 
+        metaData: metaData,
+        createdAt: util.getCurrentTime(),
+        updatedAt: util.getCurrentTime(),
+      };
+      let result = new _inviteTbl(inviteData);
+      result.save();
+    }
+    
+    
+  }
   
 
+  async verifyInvite(req, callback){
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: req.appId });
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    }
+    if(app.status != 'active') {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
+      return;
+    } 
+
+    if(!app.invitationEnabled) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_INVITATBLE);
+      return;
+    }
+    let handle = req.body.handle.toLowerCase();
+
+    let _inviteTbl = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite); 
+    let invite = await _inviteTbl.findOne({ appId: req.appId, handle:handle, code: parseInt(req.body.code) });
+    
+    if(!invite) {
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      return;
+    }
+ 
+
+    subscription.checkAppStatusAsync(app).then(res => {
+
+      if(invite && invite.status == 'pending'){
+
+        let data = req.body;
+        data.appId = req.appId; 
+        data.senderHandle = invite.senderHandle;
+        data.senderUserId = invite.senderUserId;
+          
+        let valid = true;
+        let finalMetaData = {};
+        let metaData = {};
+        try { 
+
+          if(app.metaData.length){
+
+            if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
+
+            for (let index = 0; index < app.metaData.length; index++) {
+              let field = app.metaData[index];
+              let value = _.get(metaData, field.path);
+
+              if(value !== undefined) _.set(finalMetaData, field.path, value); 
+
+              if(field.required && value === undefined){ 
+                valid = false;
+                callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+                return;
+              }
+
+            };
+          }
+
+
+        } catch (error) {
+          callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+          return;
+        } 
+        
+        if(!valid) return;
+
+        if(invite.metaData) _.merge(finalMetaData, invite.metaData);
+
+        invite.status = 'verified';
+        invite.updatedAt = util.getCurrentTime();
+        invite.save();
+
+        data.metaData = finalMetaData;
+        
+        this.addAppUserAccount(data, callback);
+      }
+      else if(invite && invite.status == 'verified'){
+        callback(null, util.INTERNAL_STATUS_CODE.HANDLE_ALREADY_REGISTERED);
+      }
+      else callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+    }).catch(err => {
+      callback(null, err);
+      return;
+    }); 
+  
+    
+
+  }
 
 
   
