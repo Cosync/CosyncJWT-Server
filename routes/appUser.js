@@ -254,7 +254,7 @@ router.post("/resetPassword", async (req, res) => {
 router.post("/changePassword", async (req, res) => {
  
   let valid = req.body.password && req.body.newPassword; 
-  if (!valid || !req.handle)
+  if (!valid || !req.handle || req.body.password == req.body.newPassword)
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_DATA, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
