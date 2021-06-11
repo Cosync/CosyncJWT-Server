@@ -53,7 +53,7 @@ class AppUserService {
 
   
     let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-    let item = await _appUserTbl.findOne({ handle: req.body.handle, appId: req.appId });
+    let item = await _appUserTbl.findOne({ handle: req.body.handle, password:req.body.password, appId: req.appId });
 
     if (!item) { 
       let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
@@ -354,8 +354,7 @@ class AppUserService {
     let user = await _user.findOne({ handle: params.handle, appId:app.appId });
     
     if(!user){
-      let response = util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS;
-
+      let response = util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS; 
       if(app.signupFlow != 'none'){
         let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);  
         let signup = await _signup.findOne({ handle: params.handle, appId:app.appId });
@@ -370,6 +369,10 @@ class AppUserService {
     }
     else{ 
 
+      if(params.password != user.password){
+        callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
+        return; 
+      } 
       
       if(app.twoFactorVerification != 'none' && user.twoFactorGoogleVerification == true || (user.twoFactorPhoneVerification == true && user.phoneVerified == true) ){
         
