@@ -31,7 +31,7 @@ class AppUserService {
    */
   async signup(req, callback){ 
     
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.applicationlication); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
 
     if(!app ) {
@@ -474,7 +474,7 @@ class AppUserService {
 
   async forgotPassword(req, callback){
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.applicationlication); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -539,7 +539,7 @@ class AppUserService {
 
   async resetPassword(req, callback){
     
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.applicationlication); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
@@ -588,7 +588,7 @@ class AppUserService {
 
   async changePassword(req, callback){
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.applicationlication); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: req.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
