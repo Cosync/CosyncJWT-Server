@@ -20,17 +20,11 @@ class InitVersion {
     async init(req, callback){
 
         let error = {status: 'Fails', message: 'Invalid Data'};
-        let _dev = mongoose.model(CONT.TABLE.DEVELOPERS, SCHEMA.developer); 
-        let dev = await _dev.findOne({uid: req.uid });
-
-        if(!dev){
-            callback(null, error); 
-            return;
-        } 
+        
         let data = req.body;
 
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
-        let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
+        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+        let app = await _app.findOne({ appId: data.appId });
 
         if(!app ) {
             callback(null, error); 
@@ -419,7 +413,7 @@ class InitVersion {
                 if(result && result.length){
                     let app;
                     result.forEach(item => { 
-                        if(item.client_app_id == data.app.realmAppId ) app = item;
+                        if(item.client_app_id == data.realmAppId ) app = item;
                     }); 
                     if(app) resolve(app); 
                     else resolve({status:'no_result', message: "MongoDB Realm app is not found" })
@@ -473,17 +467,11 @@ class InitVersion {
     async reinit(req, callback){
 
         let error = {status: 'Fails', message: 'Invalid Data'};
-        let _dev = mongoose.model(CONT.TABLE.DEVELOPERS, SCHEMA.developer); 
-        let dev = await _dev.findOne({uid: req.uid });
-
-        if(!dev){
-            callback(null, error); 
-            return;
-        } 
+       
         let data = req.body;
 
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
-        let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
+        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+        let app = await _app.findOne({ appId: data.appId });
 
         if(!app ) {
             callback(null, error); 
@@ -536,6 +524,7 @@ class InitVersion {
 
 
     async clearEngine(realmConfig, token, app, callback){
+        
         let error = {status: 'Fails', message: 'Invalid Data'};
         let that = this;
         this.deleteJWTAuthProvider(realmConfig, token, app, async function(result, err){ 
@@ -608,17 +597,11 @@ class InitVersion {
     async remove(req, callback){
 
         let error = {status: 'Fails', message: 'Invalid Data'};
-        let _dev = mongoose.model(CONT.TABLE.DEVELOPERS, SCHEMA.developer); 
-        let dev = await _dev.findOne({uid: req.uid });
-
-        if(!dev){
-            callback(null, error); 
-            return;
-        } 
+      
         let data = req.body;
 
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
-        let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
+        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+        let app = await _app.findOne({ appId: data.appId});
 
         if(!app ) {
             callback(null, error); 

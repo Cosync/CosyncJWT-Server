@@ -86,7 +86,7 @@ class InitVersion {
        
         let data = req.body;
 
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
+        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
         let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
 
         if(!app ) {
@@ -451,7 +451,8 @@ class InitVersion {
 
     getApplications(data, token){
 
-        return new Promise((resolve, reject) => { 
+        return new Promise((resolve, reject) => {
+            
             const options = {
                 method: 'GET',
                 url: `${REALM_API_URL}/groups/${data.projectId}/apps`,
@@ -470,12 +471,11 @@ class InitVersion {
                         resolve({status:'fails' ,message: response.statusMessage, statusCode: response.statusCode });
                         return;
                     }
-                    
 
                     if(result && result.length){
                         let app;
                         result.forEach(item => { 
-                            if(item.client_app_id == data.app.realmAppId ) app = item;
+                            if(item.client_app_id == data.realmAppId ) app = item;
                         }); 
 
                         if(app) resolve(app); 
@@ -599,8 +599,8 @@ class InitVersion {
        
         let data = req.body;
 
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
-        let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
+        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+        let app = await _app.findOne({ appId: data.appId});
 
         if(!app ) {
             callback(null, error); 
@@ -669,7 +669,7 @@ class InitVersion {
        
         let data = req.body;
 
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app);
+        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
         let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
 
         if(!app ) {
