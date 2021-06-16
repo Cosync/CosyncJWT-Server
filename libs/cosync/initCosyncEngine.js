@@ -7,6 +7,26 @@ let util = require("../util");
 class InitCosyncEngine {
 
     constructor() {
+        
+    }
+
+    async create() {
+        let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
+        let vesions = await _version.find({service: "CosyncEngine"}).sort({createdAt: 'desc'}); 
+        if(!vesions[0]){
+
+            let item = {
+                "status" : "active", 
+                "name" : "CosyncEngine",
+                "service" : "CosyncEngine",
+                "desc" : "Cosync Engine for Storage Solutions for AWS",
+                "versionNumber" : "1.0.1",
+                "createdAt": util.getCurrentTime(),
+                "updatedAt": util.getCurrentTime()
+            }
+            let version = new _version(item); 
+            version.save();
+        }
     }
  
   
@@ -24,9 +44,9 @@ class InitCosyncEngine {
             return;
         }
        
-        // let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
-        // let vesions = await _version.find({service: "CosyncEngine"}).sort({createdAt: 'desc'}); 
-        let vesions = [];
+        let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
+        let vesions = await _version.find({service: "CosyncEngine"}).sort({createdAt: 'desc'}); 
+       
 
         let requestedVersion;
 
@@ -82,10 +102,10 @@ class InitCosyncEngine {
             return;
         }  
 
-        // let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
-        // let vesions = await _version.find({service: "CosyncEngine"}).sort({createdAt: 'desc'}); 
+        let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
+        let vesions = await _version.find({service: "CosyncEngine"}).sort({createdAt: 'desc'}); 
         
-        let vesions = [];
+       
 
         let requestedVersion;
 

@@ -10,8 +10,32 @@ let util = require("../util");
 
 class InitCosyncJWT {
 
-    constructor() {
+    constructor() { 
     }
+
+    async create() {
+
+        let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
+        let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
+        
+        if(!vesions[0]){
+
+            let item = {
+                "name" : "CosyncJWT",
+                "service" : "CosyncJWT",
+                "status" : "active", 
+                "desc" : "Cosync JWT for JWT Authentication Solutions",
+                "versionNumber" : "1.0.1",
+                "createdAt": util.getCurrentTime(),
+                "updatedAt": util.getCurrentTime()
+            }
+            let version = new _version(item); 
+            version.save();
+        }
+
+    }
+
+
   
     
     async init(req, callback) {
@@ -30,10 +54,9 @@ class InitCosyncJWT {
         }  
 
        
-        // let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
-        // let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
-        let vesions = [];
-
+        let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
+        let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
+        
         let requestedVersion;
 
         if(req.body.version){
@@ -90,9 +113,9 @@ class InitCosyncJWT {
             return;
         }  
 
-        // let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
-        // let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
-        let vesions = [];
+        let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
+        let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
+       
         let requestedVersion;
 
         if(req.body.version){

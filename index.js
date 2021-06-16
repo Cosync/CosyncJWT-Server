@@ -185,5 +185,12 @@ else console.warn('Here is your server secret token: ', secret);
  
 
 
-require('./libs/cosync/databaseService').init(function(res){});
+require('./libs/cosync/databaseService').init(function(res){
+
+  let initCosyncJWT = require('./libs/cosync/initCosyncJWT'); 
+  let initCosyncEngine = require('./libs/cosync/initCosyncEngine'); 
+
+  initCosyncJWT.create();
+  initCosyncEngine.create();
+});
  
