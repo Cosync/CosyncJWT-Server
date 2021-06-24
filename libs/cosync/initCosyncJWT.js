@@ -85,6 +85,7 @@ class InitCosyncJWT {
                 if(app.appData) app.appData = { CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: app.appData.CosyncEngineVersion};
                 else app.appData = {CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: null};
                 app.updatedAt = util.getCurrentTime();
+                app.realmAppId = req.body.realmAppId;
                 app.save();
 
                 callback(app.appData);
@@ -146,7 +147,7 @@ class InitCosyncJWT {
             if(result){
                 if(app.appData) app.appData = { CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: app.appData.CosyncEngineVersion};
                 else app.appData = {CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: null};
-
+                 
                 app.updatedAt = util.getCurrentTime();
                 app.save();
 
