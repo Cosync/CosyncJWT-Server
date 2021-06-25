@@ -7,7 +7,16 @@ const fs = require('fs');
 
 global.publicKey = './config/publickey.pem';
 global.privateKey = './config/privatekey.pem';
-global.__config = require('./config/config.js'); 
+
+if(process.env.NODE_ENV == 'staging'){
+
+  global.__config = require('./config/config_default.js');
+  global.__config.db.connectionString = process.env.DB_CONN_STRING;
+  global.__config.sendGrid.apiKey = process.env.SEND_GRID_API_KEY;
+  
+}
+else global.__config = require('./config/config.js');
+
 const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
 
 const key = process.argv[2];
