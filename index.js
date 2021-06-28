@@ -8,12 +8,13 @@ const fs = require('fs');
 global.publicKey = './config/publickey.pem';
 global.privateKey = './config/privatekey.pem';
 
-if(process.env.NODE_ENV == 'staging'){
+if(process.env.NODE_ENV == 'staging' || process.env.NODE_ENV == 'production'){
 
   global.__config = require('./config/config_default.js');
   global.__config.db.connectionString = process.env.DB_CONN_STRING;
   global.__config.sendGrid.apiKey = process.env.SEND_GRID_API_KEY;
-  
+  if(process.env.PORT) global.__config.serverPort = process.env.PORT;
+
 }
 else global.__config = require('./config/config.js');
 
