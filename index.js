@@ -102,13 +102,7 @@ app.use((req, res, next) => {
           return;
         }
         
-      } 
-      else {
-        util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SIGN_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
-        return;
-      }
-    
-    
+      }  
     
     } catch (error) {
       util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 

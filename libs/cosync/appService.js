@@ -79,6 +79,7 @@ class AppService {
 
     let _apps = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
   
+    let apps = await _apps.find({}); 
     callback(apps); 
   }
 

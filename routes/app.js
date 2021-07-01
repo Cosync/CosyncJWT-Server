@@ -29,6 +29,24 @@ router.post("/", async (req, res) => {
 });
 
 
+
+// GET does not support body. Use post to send uid in body.
+router.get("/allApps",
+  async function (req, res) {
+    if (req.scope != 'server')
+    {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    appService.getApps(function(apps, err){
+      if(apps) util.responseFormat(res, apps);
+      else util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    });
+  }
+);
+
+
 router.get("/appId/:appId", async function (req, res) { 
 
     let valid = req.params.appId;
@@ -259,11 +277,6 @@ router.get("/getCosyncVersions",
       return;
     }
 
-    let valid = req.uid;
-    if(!valid) {
-      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      return;
-    }
 
     appService.getCosyncVersions(function(versions, err){
       if(versions) util.responseFormat(res, versions);
