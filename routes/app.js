@@ -30,6 +30,16 @@ router.post("/", async (req, res) => {
 
 
 
+
+// GET does not support body. Use post to send uid in body.
+router.get("/connection",
+  async function (req, res) {
+    if (req.scope != 'server') util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    else util.responseFormat(res, true);
+  }
+);
+
+
 // GET does not support body. Use post to send uid in body.
 router.get("/allApps",
   async function (req, res) {
