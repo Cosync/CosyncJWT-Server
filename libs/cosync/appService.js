@@ -332,6 +332,251 @@ class AppService {
 
   }
 
+
+
+  async updateAppSetting(req, callback){
+    let error = {status: 'Fails', message: 'Invalid Data'};
+     
+    let data = req.body;
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: data.appId });
+
+    if(!app ) {
+      callback(null, error); 
+      return;
+    } 
+    let that = this; 
+
+      switch (data.setting) {
+
+        case 'status':
+          
+          app.status = data.status;
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app);  
+           
+
+        break;
+ 
+      
+        case 'invite':
+           
+          if(app.invitationEnabled == data.invitationEnabled || typeof(data.invitationEnabled) != "boolean"){
+            callback(null, error);
+            return;
+          } 
+ 
+
+          app.invitationEnabled = data.invitationEnabled;
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app); 
+
+          break;
+
+        case 'jwtEnabled':
+         
+          
+
+          if(app.jwtEnabled == data.jwtEnabled || typeof(data.jwtEnabled) != "boolean"){
+            callback(null, error);
+            return;
+          } 
+ 
+
+          app.jwtEnabled = data.jwtEnabled;
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app); 
+
+          break;
+
+        case 'signup':
+           
+            if(app.signupEnabled == data.signupEnabled || typeof(data.signupEnabled) != "boolean"){
+              callback(null, error);
+              return;
+            } 
+ 
+
+            app.signupEnabled = data.signupEnabled;
+            app.updatedAt = util.getCurrentTime();
+            app.save(); 
+            delete app.appPrivateKey;
+            delete app.appSecret;
+            callback(app); 
+  
+            break;
+          case 'signupFlow':
+           
+              if(app.signupFlow == data.signupFlow || (data.signupFlow != 'code' && data.signupFlow != 'link' && data.signupFlow != 'none')){
+                callback(null, error);
+                return;
+              } 
+   
+              app.signupFlow = data.signupFlow;
+              app.updatedAt = util.getCurrentTime();
+              app.save(); 
+              delete app.appPrivateKey;
+              delete app.appSecret;
+              callback(app); 
+    
+              break; 
+
+        case 'twoFactorVerification': 
+
+          if(data.twoFactorVerification == 'phone'){
+            if(!data.TWILIOAccountSid || !data.TWILIOToken || !data.TWILIOPhoneNumber){
+              error.message = "Invalid Twilio Account.";
+              callback(null, error);
+              return;
+            } 
+            app.TWILIOAccountSid = hashService.aesEncrypt(data.TWILIOAccountSid); 
+            app.TWILIOToken = hashService.aesEncrypt(data.TWILIOToken); 
+            app.TWILIOPhoneNumber = hashService.aesEncrypt(data.TWILIOPhoneNumber);
+          }  
+          else if(data.twoFactorVerification == 'google' && data.googleAPP_NAME) app.googleAPP_NAME = data.googleAPP_NAME;
+ 
+
+
+          app.twoFactorVerification = data.twoFactorVerification; 
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app); 
+
+          break;
+
+        case 'maxUsers':
+           
+          if(app.maxUsers == parseInt(data.maxUsers)){
+            callback(null, error);
+            return;
+          } 
+
+          if(!sub.developerPlanId){
+            callback(null, error);
+            return;
+          }
+ 
+
+          app.maxUsers = parseInt(data.maxUsers); 
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app); 
+
+          break;
+
+        case 'maxLoginAttempts':
+           
+          if(app.maxLoginAttempts == data.maxLoginAttempts){
+            callback(null, error);
+            return;
+          }  
+
+          app.maxLoginAttempts = data.maxLoginAttempts; 
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app); 
+
+          break; 
+
+        case 'realmAppId':
+           
+            if(app.realmAppId == data.realmAppId){
+              callback(null, error);
+              return;
+            } 
+   
+  
+            app.realmAppId = data.realmAppId; 
+            app.updatedAt = util.getCurrentTime();
+            app.save(); 
+            delete app.appPrivateKey;
+            delete app.appSecret;
+            callback(app); 
+  
+            break; 
+          case 'userJWTExpiration':
+           
+              if(app.userJWTExpiration == data.userJWTExpiration){
+                callback(null, error);
+                return;
+              }  
+    
+              app.userJWTExpiration = data.userJWTExpiration; 
+              app.updatedAt = util.getCurrentTime();
+              app.save(); 
+              delete app.appPrivateKey;
+              delete app.appSecret;
+              callback(app); 
+    
+              break;
+
+        case 'passwordFilter':
+         
+
+          app.passwordFilter = data.passwordFilter; 
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app); 
+
+          break; 
+
+        case 'passwordSetting': 
+
+          app.passwordMinLength = data.passwordMinLength; 
+          app.passwordMinUpper = data.passwordMinUpper; 
+          app.passwordMinLower = data.passwordMinLower; 
+          app.passwordMinDigit = data.passwordMinDigit; 
+          app.passwordMinSpecial = data.passwordMinSpecial; 
+
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app); 
+
+          break; 
+
+        case 'metaDataEmail':
+         
+
+          app.metaDataEmail = data.metaDataEmail; 
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app); 
+
+          break; 
+
+        default:
+          callback(null, error);
+        break;
+      } 
+    
+  }
+ 
+
+
+
+
 }
 
 const instance = new AppService()

@@ -78,7 +78,7 @@ router.get("/search", async function (req, res) {
 
 router.post("/update", async (req, res) => { 
     let valid = req.body.appId;
-    if(!valid && req.scope != 'server') {
+    if(!valid || req.scope != 'server') {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       return;
     }
@@ -307,6 +307,26 @@ router.post("/saveUserSchema", async function (req, res) {
     
   }
 );
+
+
+
+ 
+router.post("/updateAppSetting", async (req, res) => {
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+    
+
+  appService.updateAppSetting(req, function(result, error){
+    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    else util.responseFormat(res, result);
+  });
+     
+});
+
+ 
 
  
 
