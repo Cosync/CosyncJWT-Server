@@ -348,6 +348,29 @@ router.post("/updateAppSetting", async (req, res) => {
      
 });
 
+
+
+router.post("/testAppTwilio", async (req, res) => {
+
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+   
+  try {  
+
+    appService.testAppTwilio(req, function(result, error){
+      if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      else util.responseFormat(res, result);
+    });
+    
+  } catch (e) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
+  }
+});
+
  
 
  

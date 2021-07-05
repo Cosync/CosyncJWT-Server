@@ -4,6 +4,7 @@ const nrsa = require('node-rsa');
 const util = require('../util'); 
 const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');  
+const twilioService = require('../twilioService');
 
 const appProjection = {
   __v: false,
@@ -439,9 +440,11 @@ class AppService {
               callback(null, error);
               return;
             } 
-            app.TWILIOAccountSid = hashService.aesEncrypt(data.TWILIOAccountSid); 
-            app.TWILIOToken = hashService.aesEncrypt(data.TWILIOToken); 
-            app.TWILIOPhoneNumber = hashService.aesEncrypt(data.TWILIOPhoneNumber);
+
+            app.TWILIOAccountSid = data.TWILIOAccountSid; 
+            app.TWILIOToken = data.TWILIOToken;
+            app.TWILIOPhoneNumber = data.TWILIOPhoneNumber;
+           
           }  
           else if(data.twoFactorVerification == 'google' && data.googleAPP_NAME) app.googleAPP_NAME = data.googleAPP_NAME;
  
@@ -572,6 +575,27 @@ class AppService {
       } 
     
   }
+
+
+
+  async testAppTwilio(req, callback){
+    let error = {status: 'Fails', message: 'Invalid Data'};
+     
+    let data = req.body;
+    
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: data.appId});
+
+    if(!app) {
+      callback(null, error); 
+      return;
+    } 
+     
+    twilioService.sendSMS(data, app, callback);
+
+
+  }
+ 
  
 
 
