@@ -5,7 +5,7 @@ let mongoose = require('mongoose');
 const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');   
 let util = require("../util"); 
-
+let atob = require('atob'); 
 
 
 class InitCosyncJWT {
@@ -41,9 +41,12 @@ class InitCosyncJWT {
     async init(req, callback) {
         let error = {status: 'Fails', message: 'Invalid Data'};
 
-        
-
         let data = req.body; 
+
+        if(data.projectId == "" || !data.projectId || !data.publicKey || data.publicKey == "" || !data.privateKey || data.privateKey == ""){
+            callback(null, error); 
+            return;
+        } 
 
         let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
         let app = await _app.findOne({ appId: data.appId });
@@ -53,16 +56,18 @@ class InitCosyncJWT {
             return;
         }  
 
+        data.app = app;
+        data.app.appRealmPublicKey = atob(app.appPublicKey); 
        
         let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
         let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
         
         let requestedVersion;
 
-        if(req.body.version){
+        if(data.version){
 
             vesions.forEach(element => {
-                if(req.body.version == element.versionNumber) requestedVersion = element;
+                if(data.version == element.versionNumber) requestedVersion = element;
             });
 
            
@@ -79,7 +84,7 @@ class InitCosyncJWT {
         else requestedVersion = vesions[0] || { versionNumber: '1.0.1'};
 
         let cosyncJWT = require(`../cosyncJWT/${requestedVersion.versionNumber}/initVersion`);
-        cosyncJWT.init(req, function(result, error){ 
+        cosyncJWT.init(data, function(result, error){ 
 
             if(result){
                 if(app.appData) app.appData = { CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: app.appData.CosyncEngineVersion};
@@ -102,10 +107,15 @@ class InitCosyncJWT {
 
 
     async reinit(req, callback) { 
-
         
         let error = {status: 'Fails', message: 'Invalid Data'};
         let data = req.body;
+
+        if(data.projectId == "" || !data.projectId || !data.publicKey || data.publicKey == "" || !data.privateKey || data.privateKey == ""){
+            callback(null, error); 
+            return;
+        } 
+        
         let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
         let app = await _app.findOne({ appId: data.appId });
 
@@ -113,16 +123,18 @@ class InitCosyncJWT {
             callback(null, error); 
             return;
         }  
+        data.app = app;
+        data.app.appRealmPublicKey = atob(app.appPublicKey); 
 
         let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
         let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
        
         let requestedVersion;
 
-        if(req.body.version){
+        if(data.version){
 
             vesions.forEach(element => {
-                if(req.body.version == element.versionNumber) requestedVersion = element;
+                if(data.version == element.versionNumber) requestedVersion = element;
             });
 
            
@@ -140,9 +152,7 @@ class InitCosyncJWT {
        
 
         let cosyncJWT = require(`../cosyncJWT/${requestedVersion.versionNumber}/initVersion`);
-        cosyncJWT.reinit(req, function(result, error){
-
-            
+        cosyncJWT.reinit(data, function(result, error){
 
             if(result){
                 if(app.appData) app.appData = { CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: app.appData.CosyncEngineVersion};
@@ -167,6 +177,12 @@ class InitCosyncJWT {
 
         let error = {status: 'Fails', message: 'Invalid Data'};
         let data = req.body;
+
+        if(data.projectId == "" || !data.projectId || !data.publicKey || data.publicKey == "" || !data.privateKey || data.privateKey == ""){
+            callback(null, error); 
+            return;
+        } 
+
         let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
         let app = await _app.findOne({ appId: data.appId });
 
@@ -179,8 +195,12 @@ class InitCosyncJWT {
             return;
         } 
 
+        data.app = app;
+        data.app.appRealmPublicKey = atob(app.appPublicKey); 
+
+
         let cosyncJWT = require(`../cosyncJWT/${app.appData.CosyncJWTVersion}/initVersion`);
-        cosyncJWT.remove(req, function(result, error){
+        cosyncJWT.remove(data, function(result, error){
             if(result){
 
                 

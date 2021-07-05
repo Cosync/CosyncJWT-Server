@@ -59,6 +59,12 @@ router.get("/allApps",
 
 router.get("/appId/:appId", async function (req, res) { 
 
+    if (req.scope != 'server')
+    {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
     let valid = req.params.appId;
     if(!valid) {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -78,6 +84,12 @@ router.get("/appId/:appId", async function (req, res) {
 
 router.get("/search", async function (req, res) {  
    
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+  
   appService.search(req.query, function(apps, err){
       if(apps) util.responseFormat(res, apps);
       else util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);

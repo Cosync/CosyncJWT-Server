@@ -3,6 +3,7 @@ let mongoose = require('mongoose');
 const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');   
 let util = require("../util"); 
+let atob = require('atob'); 
 
 class InitCosyncEngine {
 
@@ -32,9 +33,19 @@ class InitCosyncEngine {
   
     async init(req, callback) {
 
+        let error = {status: 'Fails', message: 'Invalid Data'};
         let data = req.body;
 
-        let error = {status: 'Fails', message: 'Invalid Data'};
+        if(data.projectId == "" || !data.projectId || 
+            !data.realmDatabase || data.realmDatabase == "" || 
+            !data.serviceId || data.serviceId == "" || 
+            !data.s3Bucket || data.s3Bucket == "" || 
+            !data.s3Region || data.s3Region == "" || 
+            !data.publicKey || data.publicKey == "" || 
+            !data.privateKey || data.privateKey == ""){
+            callback(null, error); 
+            return;
+        }
 
         let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
         let app = await _app.findOne({ appId: data.appId });
@@ -43,17 +54,18 @@ class InitCosyncEngine {
             callback(null, error); 
             return;
         }
+
+        data.app = app;
+        data.app.appRealmPublicKey = atob(app.appPublicKey); 
        
         let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
-        let vesions = await _version.find({service: "CosyncEngine"}).sort({createdAt: 'desc'}); 
-       
-
+        let vesions = await _version.find({service: "CosyncEngine"}).sort({createdAt: 'desc'});
         let requestedVersion;
 
-        if(req.body.version){
+        if(data.version){
 
             vesions.forEach(element => {
-                if(req.body.version == element.versionNumber) requestedVersion = element;
+                if(data.version == element.versionNumber) requestedVersion = element;
             });
 
            
@@ -70,7 +82,7 @@ class InitCosyncEngine {
         else requestedVersion = vesions[0] || {versionNumber: '1.0.1'};
 
         let cosyncEngine = require(`../cosyncEngine/${requestedVersion.versionNumber}/initVersion`);
-        cosyncEngine.init(req, function(result, error){
+        cosyncEngine.init(data, function(result, error){
 
             if(result){
                 if(app.appData) app.appData = { CosyncEngineVersion:requestedVersion.versionNumber, CosyncJWTVersion: app.appData.CosyncJWTVersion}; 
@@ -79,7 +91,6 @@ class InitCosyncEngine {
                 app.realmAppId = req.body.realmAppId;
                 app.save();
                 callback(app.appData);
-                 
 
             }
             else callback(result, error);
@@ -95,6 +106,16 @@ class InitCosyncEngine {
         let error = {status: 'Fails', message: 'Invalid Data'};
         let data = req.body;
 
+        if(data.projectId == "" || !data.projectId ||  
+            !data.serviceId || data.serviceId == "" || 
+            !data.s3Bucket || data.s3Bucket == "" || 
+            !data.s3Region || data.s3Region == "" || 
+            !data.publicKey || data.publicKey == "" || 
+            !data.privateKey || data.privateKey == ""){
+            callback(null, error); 
+            return;
+        } 
+
         let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
         let app = await _app.findOne({ appId: data.appId});
 
@@ -103,17 +124,18 @@ class InitCosyncEngine {
             return;
         }  
 
+        data.app = app;
+        data.app.appRealmPublicKey = atob(app.appPublicKey); 
+
         let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
-        let vesions = await _version.find({service: "CosyncEngine"}).sort({createdAt: 'desc'}); 
-        
-       
+        let vesions = await _version.find({service: "CosyncEngine"}).sort({createdAt: 'desc'});  
 
         let requestedVersion;
 
-        if(req.body.version){
+        if(data.version){
 
             vesions.forEach(element => {
-                if(req.body.version == element.versionNumber) requestedVersion = element;
+                if(data.version == element.versionNumber) requestedVersion = element;
             });
 
            
@@ -131,7 +153,7 @@ class InitCosyncEngine {
        
 
         let cosyncEngine = require(`../cosyncEngine/${requestedVersion.versionNumber}/initVersion`);
-        cosyncEngine.reinit(req, function(result, error){
+        cosyncEngine.reinit(data, function(result, error){
 
             if(result){
                 if(app.appData) app.appData = { CosyncEngineVersion:requestedVersion.versionNumber, CosyncJWTVersion: app.appData.CosyncJWTVersion}; 
@@ -152,6 +174,16 @@ class InitCosyncEngine {
         let error = {status: 'Fails', message: 'Invalid Data'};
         let data = req.body;
   
+        if(data.projectId == "" || !data.projectId ||  
+        !data.serviceId || data.serviceId == "" || 
+        !data.s3Bucket || data.s3Bucket == "" || 
+        !data.s3Region || data.s3Region == "" || 
+        !data.publicKey || data.publicKey == "" || 
+        !data.privateKey || data.privateKey == ""){
+        callback(null, error); 
+        return;
+    } 
+
         let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
         let app = await _app.findOne({ appId: data.appId });
 
@@ -163,9 +195,12 @@ class InitCosyncEngine {
             callback(null, error); 
             return;
         } 
-         
+
+        data.app = app;
+        data.app.appRealmPublicKey = atob(app.appPublicKey); 
+
         let cosyncEngine = require(`../cosyncEngine/${app.appData.CosyncEngineVersion}/initVersion`);
-        cosyncEngine.remove(req, function(result, error){
+        cosyncEngine.remove(data, function(result, error){
 
             if(result){ 
 

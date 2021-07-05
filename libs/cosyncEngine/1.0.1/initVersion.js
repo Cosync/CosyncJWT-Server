@@ -2,7 +2,7 @@
 let request = require("request");
 let mongoose = require('mongoose');   
  
-let atob = require('atob'); 
+
 const CONT = require('../../../config/constants');
 const SCHEMA = require('../../../config/schema');  
 let REALM_API_URL = "https://realm.mongodb.com/api/admin/v3.0";
@@ -80,33 +80,11 @@ class InitVersion {
     constructor() {
     }
   
-    async init(req, callback) {
+    async init(data, callback) {
 
-        let error = {status: 'Fails', message: 'Invalid Data'};
-       
-        let data = req.body;
-
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-        let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
-
-        if(!app ) {
-            callback(null, error); 
-            return;
-        } 
-        if(data.projectId == "" || !data.projectId || 
-            !data.realmDatabase || data.realmDatabase == "" || 
-            !data.serviceId || data.serviceId == "" || 
-            !data.s3Bucket || data.s3Bucket == "" || 
-            !data.s3Region || data.s3Region == "" || 
-            !data.publicKey || data.publicKey == "" || 
-            !data.privateKey || data.privateKey == ""){
-            callback(null, error); 
-            return;
-        } 
-
-        data.app = app;
+        let error = {status: 'Fails', message: 'Invalid Data'};  
         
-        data.app.appRealmPublicKey = atob(app.appPublicKey); 
+      
         let that = this;
 
         this.mongodbRealmlogin(data, async function(token){
@@ -475,7 +453,7 @@ class InitVersion {
                     if(result && result.length){
                         let app;
                         result.forEach(item => { 
-                            if(item.client_app_id == data.realmAppId ) app = item;
+                            if(item.client_app_id == data.app.realmAppId ) app = item;
                         }); 
 
                         if(app) resolve(app); 
@@ -593,33 +571,10 @@ class InitVersion {
 
 
 
-    async reinit(req, callback) {
+    async reinit(data, callback) {
 
-        let error = {status: 'Fails', message: 'Invalid Data'};
-       
-        let data = req.body;
-
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-        let app = await _app.findOne({ appId: data.appId});
-
-        if(!app ) {
-            callback(null, error); 
-            return;
-        } 
-        if(data.projectId == "" || !data.projectId || 
-            //!data.partitionKey || data.partitionKey == "" || 
-            !data.serviceId || data.serviceId == "" || 
-            !data.s3Bucket || data.s3Bucket == "" || 
-            !data.s3Region || data.s3Region == "" || 
-            !data.publicKey || data.publicKey == "" || 
-            !data.privateKey || data.privateKey == ""){
-            callback(null, error); 
-            return;
-        } 
-
-        data.app = app;
+        let error = {status: 'Fails', message: 'Invalid Data'};  
         
-        data.app.appRealmPublicKey = atob(app.appPublicKey); 
         let that = this;
 
         this.mongodbRealmlogin(data, async function(token){
@@ -665,28 +620,7 @@ class InitVersion {
 
     async remove(req, callback) {
 
-        let error = {status: 'Fails', message: 'Invalid Data'};
-       
-        let data = req.body;
-
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-        let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
-
-        if(!app ) {
-            callback(null, error); 
-            return;
-        } 
-        if(data.projectId == "" || !data.projectId ||
-            !data.serviceId || data.serviceId == "" ||  
-            !data.publicKey || data.publicKey == "" || 
-            !data.privateKey || data.privateKey == ""){
-            callback(null, error); 
-            return;
-        } 
-
-        data.app = app;
-        
-        data.app.appRealmPublicKey = atob(app.appPublicKey); 
+        let error = {status: 'Fails', message: 'Invalid Data'}; 
         let that = this;
 
         this.mongodbRealmlogin(data, async function(token){

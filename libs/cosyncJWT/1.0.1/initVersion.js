@@ -17,27 +17,10 @@ class InitVersion {
 
     
 
-    async init(req, callback){
+    async init(data, callback){
 
-        let error = {status: 'Fails', message: 'Invalid Data'};
-        
-        let data = req.body;
-
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-        let app = await _app.findOne({ appId: data.appId });
-
-        if(!app ) {
-            callback(null, error); 
-            return;
-        } 
-        if(data.projectId == "" || !data.projectId || !data.publicKey || data.publicKey == "" || !data.privateKey || data.privateKey == ""){
-            callback(null, error); 
-            return;
-        } 
-
-        data.app = app;
-        
-        data.app.appRealmPublicKey = atob(app.appPublicKey); 
+        let error = {status: 'Fails', message: 'Invalid Data'}; 
+      
         let that = this;
 
         this.mongodbRealmlogin(data, async function(token){
@@ -71,8 +54,8 @@ class InitVersion {
                 return;
             }
             let result = await that.createJWTAuthProvider(data, token.access_token, app);
-
-            if(result.error == "auth provider with name 'custom-token' already exists") {
+            if(!result) callback(null, error); 
+            else if(result.error == "auth provider with name 'custom-token' already exists") {
                 that.deleteJWTAuthProvider(data, token.access_token, app, async function(){
                     let auth = await that.createJWTAuthProvider(data, token.access_token, app);
                     if(auth.error){
@@ -210,9 +193,9 @@ class InitVersion {
             } 
 
             request(options, async function(error, response, body){
-                let data = JSON.parse(body);
+                let result = JSON.parse(body);
                 let auth;
-                data.forEach(element => {
+                result.forEach(element => {
                     if(element.type == "custom-token") auth = element;
                 });
                 resolve(auth);
@@ -223,8 +206,7 @@ class InitVersion {
     async deleteJWTAuthProvider(data, token, app, callback){ 
 
         let auth = await this.getJWTAuthProvider(data, token, app);
-        if(auth){
-
+        if(auth){ 
         
             let updateAuth = await this.disableJWTProvider(data, token, app, auth); 
             if(updateAuth.error){
@@ -413,7 +395,7 @@ class InitVersion {
                 if(result && result.length){
                     let app;
                     result.forEach(item => { 
-                        if(item.client_app_id == data.realmAppId ) app = item;
+                        if(item.client_app_id == data.app.realmAppId ) app = item;
                     }); 
                     if(app) resolve(app); 
                     else resolve({status:'no_result', message: "MongoDB Realm app is not found" })
@@ -464,23 +446,9 @@ class InitVersion {
     }
 
 
-    async reinit(req, callback){
+    async reinit(data, app, callback){
 
-        let error = {status: 'Fails', message: 'Invalid Data'};
-       
-        let data = req.body;
-
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-        let app = await _app.findOne({ appId: data.appId });
-
-        if(!app ) {
-            callback(null, error); 
-            return;
-        } 
-        if(data.projectId == "" || !data.projectId || !data.publicKey || data.publicKey == "" || !data.privateKey || data.privateKey == ""){
-            callback(null, error); 
-            return;
-        } 
+        let error = {status: 'Fails', message: 'Invalid Data'}; 
 
         data.app = app;
         
@@ -509,14 +477,18 @@ class InitVersion {
             } 
             
             that.deleteJWTAuthProvider(data, token.access_token, app, async function(result, err){
-                if(result){
-                    let res = await that.createJWTAuthProvider(data, token.access_token, app); 
-                    callback(res);  
-                }  
-                else{
-                    error.message = err;
-                    callback(null, error);
-                } 
+                // if(result){
+                //     let res = await that.createJWTAuthProvider(data, token.access_token, app); 
+                //     callback(res);  
+                // }  
+                // else{
+                //     error.message = err;
+                //     callback(null, error);
+                // } 
+
+                let res = await that.createJWTAuthProvider(data, token.access_token, app); 
+                callback(res);  
+
             }); 
         });
 
