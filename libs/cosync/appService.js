@@ -926,6 +926,56 @@ class AppService {
     });
     callback(data)
   }
+
+
+async updateAppMetaData(req, callback){
+
+  let error = {status: 'Fails', message: 'Invalid Data'};
+   
+  let data = req.body;
+  let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+  let app = await _app.findOne({ appId: data.appId });
+
+  if(!app ) {
+    callback(null, error); 
+    return;
+  }   
+  
+  app.metaData = data.metaData; 
+  app.updatedAt = util.getCurrentTime();
+  app.save();
+
+  delete app.appPrivateKey;
+  delete app.appSecret;
+  callback(app);  
+  
+  
+}
+
+
+
+async updateAppInviteMetaData(req, callback){
+
+  let error = {status: 'Fails', message: 'Invalid Data'}; 
+  let data = req.body;
+  let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+  let app = await _app.findOne({ appId: data.appId});
+
+  if(!app ) {
+    callback(null, error); 
+    return;
+  }  
+  
+  app.metaDataInvite = data.metaDataInvite; 
+  app.updatedAt = util.getCurrentTime();
+  app.save();
+
+  delete app.appPrivateKey;
+  delete app.appSecret;
+  callback(app);  
+
+  
+}
  
 
  

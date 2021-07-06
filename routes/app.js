@@ -579,6 +579,52 @@ router.post("/updateEmailTemplate", async function (req, res) {
   });
 });
 
+
+
+router.post("/updateAppMetaData", async (req, res) => {
+
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+   
+  try {  
+
+    appService.updateAppMetaData(req, function(result, error){
+      if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      else util.responseFormat(res, result);
+    });
+    
+  } catch (e) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
+  }
+});
+
+
+
+
+router.post("/updateAppInviteMetaData", async (req, res) => {
+
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  } 
+   
+  try {  
+
+    appService.updateAppInviteMetaData(req, function(result, error){
+      if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      else util.responseFormat(res, result);
+    });
+    
+  } catch (e) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
+  }
+});
+
  
 
 module.exports = router;
