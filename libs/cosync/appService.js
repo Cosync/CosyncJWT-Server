@@ -928,54 +928,73 @@ class AppService {
   }
 
 
-async updateAppMetaData(req, callback){
+  async updateAppMetaData(req, callback){
 
-  let error = {status: 'Fails', message: 'Invalid Data'};
-   
-  let data = req.body;
-  let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-  let app = await _app.findOne({ appId: data.appId });
+    let error = {status: 'Fails', message: 'Invalid Data'};
+    
+    let data = req.body;
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: data.appId });
 
-  if(!app ) {
-    callback(null, error); 
-    return;
-  }   
+    if(!app ) {
+      callback(null, error); 
+      return;
+    }   
+    
+    app.metaData = data.metaData; 
+    app.updatedAt = util.getCurrentTime();
+    app.save();
+
+    delete app.appPrivateKey;
+    delete app.appSecret;
+    callback(app);  
+    
+    
+  }
+
+
+
+  async updateAppInviteMetaData(req, callback){
+
+    let error = {status: 'Fails', message: 'Invalid Data'}; 
+    let data = req.body;
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: data.appId});
+
+    if(!app ) {
+      callback(null, error); 
+      return;
+    }  
+    
+    app.metaDataInvite = data.metaDataInvite; 
+    app.updatedAt = util.getCurrentTime();
+    app.save();
+
+    delete app.appPrivateKey;
+    delete app.appSecret;
+    callback(app);  
+
+    
+  }
+
+
+  async resetApp(data, callback) {
+    let appId = data.appId;
+
+    let error = {status: 'fails', message: 'Invalid Data'}; 
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: appId});
   
-  app.metaData = data.metaData; 
-  app.updatedAt = util.getCurrentTime();
-  app.save();
-
-  delete app.appPrivateKey;
-  delete app.appSecret;
-  callback(app);  
+    if(app){
+      this.deleteAppData(appId, app, 'reset');
+      callback(true);
+    } 
+    else callback(null, error); 
   
-  
-}
 
+  }
 
-
-async updateAppInviteMetaData(req, callback){
-
-  let error = {status: 'Fails', message: 'Invalid Data'}; 
-  let data = req.body;
-  let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-  let app = await _app.findOne({ appId: data.appId});
-
-  if(!app ) {
-    callback(null, error); 
-    return;
-  }  
-  
-  app.metaDataInvite = data.metaDataInvite; 
-  app.updatedAt = util.getCurrentTime();
-  app.save();
-
-  delete app.appPrivateKey;
-  delete app.appSecret;
-  callback(app);  
-
-  
-}
  
 
  
