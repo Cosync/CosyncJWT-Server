@@ -885,6 +885,49 @@ class AppService {
     });
   }
 
+
+  async updateEmailTemplate(req, callback){
+    let template = req.body;
+    template.htmlTemplate = template.htmlTemplate.split('</p><p>').join('</p>\n<p>');
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    var app = await _app.findOne({ appId: template.appId });
+    if (!app || app.status != "active" ) {
+      callback(null);
+      return; 
+    }
+
+    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+    let emailTemplate = await _email.findOne({_id: template._id});
+    if(emailTemplate){
+      emailTemplate.replyTo = template.replyTo;
+      emailTemplate.subject = template.subject;
+      emailTemplate.htmlTemplate = template.htmlTemplate;
+      emailTemplate.updatedAt = util.getCurrentTime();
+      emailTemplate.save();
+    } 
+
+    callback(emailTemplate)
+  }
+
+  async emailTemplates(req, callback) { 
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    var app = await _app.findOne({ appId: req.query.appId });
+    if (!app || app.status != "active") {
+      callback(null);
+      return; 
+    }
+
+    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+    let emailTemplates = await _email.find({appId: req.query.appId}); 
+    let data = {};
+    emailTemplates.forEach(element => {
+      data[element.templateName] = element;
+    });
+    callback(data)
+  }
+ 
+
  
  
 

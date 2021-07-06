@@ -538,6 +538,47 @@ router.get("/stat",
 ); 
  
 
+
+
+router.get("/emailTemplates", async function (req, res) {
+  if (req.scope != 'server')
+  { 
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+  let valid = req.query.appId;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  appService.emailTemplates(req, function(data, err){
+    if(data) util.responseFormat(res, data);
+    else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+  });
+});
+
+
+router.post("/updateEmailTemplate", async function (req, res) {
+  if (req.scope != 'server')
+  { 
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+  let valid = req.body.appId;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  appService.updateEmailTemplate(req, function(data, err){
+    if(data) util.responseFormat(res, data);
+    else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+  });
+});
+
  
 
 module.exports = router;
