@@ -16,6 +16,95 @@ const appProjection = {
 let _error = {status: 'Fails', message: `Invalid Data`}; 
  
 
+
+let resetPasswordTemplate = `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" dir="ltr" lang="en">
+  <tbody>
+  <tr>
+   <td valign="top" width="50%"></td>
+   <td valign="top"> 
+      <table width="640" cellpadding="0" cellspacing="0" border="0" dir="ltr" lang="en" style="border-left:1px solid #e3e3e3;border-right:1px solid #e3e3e3">
+       <tbody>
+       <tr style="background-color:#0072c6">
+           <td width="1" style="background:#0072c6;border-top:1px solid #e3e3e3"></td>
+           <td width="24" style="border-top:1px solid #e3e3e3;border-bottom:1px solid #e3e3e3">&nbsp;</td>
+           <td width="310" valign="middle" style="border-top:1px solid #e3e3e3;border-bottom:1px solid #e3e3e3;padding:12px 0">
+               <h1 style="line-height:20pt;font-family:Segoe UI Light;font-size:18pt;color:#ffffff;font-weight:normal">
+                   
+               <span ><font color="#FFFFFF">Your password has been reset from CosyncJWT Portal.</font></span>
+
+               </h1>
+           </td>
+           <td width="24" style="border-top:1px solid #e3e3e3;border-bottom:1px solid #e3e3e3">&nbsp;</td>
+       </tr>
+      </tbody></table>
+      
+      <table width="640" cellpadding="0" cellspacing="0" border="0" dir="ltr" lang="en">
+       <tbody><tr>
+           <td width="1" style="background:#e3e3e3"></td>
+           <td width="24">&nbsp;</td>
+           <td width="640" valign="top" colspan="2" style="border-bottom:1px solid #e3e3e3;padding:10px 0 20px;border-bottom-style:hidden">		
+                <table cellpadding="0" cellspacing="0" border="0">
+                   <tbody><tr>
+                       <td width="630" style="font-size:10pt;line-height:13pt;color:#000">
+                           <table cellpadding="0" cellspacing="0" border="0" width="100%" dir="ltr" lang="en">
+                               <tbody>
+                               <tr>
+                                   <td>
+                                                                            
+                                      <div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:14px;color:#333">
+                                        <span >Your login account handle: <a href="#">%HANDLE%</a></span>
+                                      </div>
+                                      <br>
+                                      <div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:14px;color:#333;font-weight:bold">
+                                        <span>Your new account password: %PASSWORD%</span>
+                                      </div>
+                                      <br>
+                                      <br>
+
+                                       <div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:14px;color:#333">
+                                       Sincerely,
+                                       </div>
+                                       <div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:14px;font-style:italic;color:#333">
+                                       The %APP_NAME% team
+                                       </div>
+                                   </td>
+                               </tr>
+                              </tbody>
+                            </table>
+                       </td>
+                   </tr>
+                </tbody>
+              </table>
+           </td>
+
+           <td width="1">&nbsp;</td>
+           <td width="1"></td>
+           <td width="1">&nbsp;</td>
+           <td width="1" valign="top"></td>			 
+           <td width="29">&nbsp;</td>
+           <td width="1" style="background:#e3e3e3"></td>
+       </tr>
+       <tr>
+           <td width="1" style="background:#e3e3e3;border-bottom:1px solid #e3e3e3"></td>
+           <td width="24" style="border-bottom:1px solid #e3e3e3">&nbsp;</td>
+           <td width="585" valign="top" colspan="6" style="border-bottom:1px solid #e3e3e3;padding:0px">
+               
+
+           </td>
+
+           <td width="29" style="border-bottom:1px solid #e3e3e3">&nbsp;</td>
+           <td width="1" style="background:#e3e3e3;border-bottom:1px solid #e3e3e3"></td>
+       </tr>
+      </tbody></table>
+
+   </td>
+   <td valign="top" width="50%"></td>
+</tr>
+</tbody></table>`;
+
+
+
 class AppUserService {
 
   constructor() {
@@ -1045,6 +1134,24 @@ class AppUserService {
   } 
 
 
+
+
+  async updateAppUser(data, callback){ 
+
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let user = await _user.findOne({_id: data.userId}); 
+    if(user){
+      user.status = data.status;
+      user.updatedAt = util.getCurrentTime();
+      user.save();
+      callback(true);
+    }
+    else callback(false);
+
+  }
+
+  
+
   async updateAppUserPasword(data, callback){ 
 
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
@@ -1058,7 +1165,7 @@ class AppUserService {
     let user = await _user.findOne({_id: data.userId}); 
     if(user){
       
-      user.password = hashedPassword;
+      user.password = data.hashValue;
       user.updatedAt = util.getCurrentTime();
       user.save();
       callback(true); 

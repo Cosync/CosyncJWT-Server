@@ -98,6 +98,76 @@ router.get("/search", async function (req, res) {
 });
 
 
+router.get("/searchUser",
+  async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid = req.query.appId && req.query.value;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    appService.searchUser(req.query, function(data, err){
+      if(data) util.responseFormat(res, data);
+      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    });
+  }
+);
+
+
+ 
+
+router.get("/searchSingUp",
+  async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid = req.query.appId && req.query.value;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    appService.searchSignUp(req.query, function(data, err){
+      if(data) util.responseFormat(res, data);
+      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    });
+  }
+);
+
+
+
+router.get("/searchInvite",
+  async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid = req.query.appId && req.query.value;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    appService.searchInvite(req.query, function(data, err){
+      if(data) util.responseFormat(res, data);
+      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    });
+  }
+);
+
+
+
 router.post("/update", async (req, res) => { 
     let valid = req.body.appId;
     if(!valid || req.scope != 'server') {
@@ -166,6 +236,34 @@ router.delete("/:appId",
 
 
 
+
+router.post("/user",
+  async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid = req.body.appId && req.body.status && req.body.userId;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+    if(req.body.status != 'active' && req.body.status != 'suspend'){
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    appUserService.updateAppUser(req.body, function(data, err){
+      if(data) util.responseFormat(res, data);
+      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    });
+  }
+);
+
+
+
 router.post("/resetUserPassword",
   async function (req, res) {
     if (req.scope != 'server')
@@ -174,7 +272,7 @@ router.post("/resetUserPassword",
       return;
     }
 
-    let valid = req.uid && req.body.appId && req.body.rawValue  && req.body.hashValue && req.body.userId;
+    let valid = req.body.appId && req.body.rawValue  && req.body.hashValue && req.body.userId;
     if(!valid) {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       return;
@@ -316,7 +414,7 @@ router.post("/saveUserSchema", async function (req, res) {
       return;
     }
 
-    let valid = req.uid && req.body.appId && req.body.schema;
+    let valid = req.body.appId && req.body.schema;
     if(!valid || typeof req.body.schema != 'object') {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       return;
@@ -371,6 +469,73 @@ router.post("/testAppTwilio", async (req, res) => {
   }
 });
 
+ 
+
+
+router.post("/addUser", async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid = req.body.appId &&  req.body.handle && req.body.password;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    appService.addUser(req.body, function(data, err){
+      if(data) util.responseFormat(res, data);
+      else util.responseFormat(res, err, util.HTTP_STATUS_CODE.FORBIDDEN);
+    });
+  }
+);
+
+
+router.post("/removeUser",
+  async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid = req.body.appId;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    appService.removeUser(req.body, function(data, err){
+      if(data) util.responseFormat(res, data);
+      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    });
+  }
+);
+
+
+  
+router.get("/stat",
+  async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid =req.query.appId;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    appService.getAppStat(req.query, function(data, err){
+      if(data) util.responseFormat(res, data);
+      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    });
+  }
+); 
  
 
  

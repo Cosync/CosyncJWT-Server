@@ -12,6 +12,25 @@ const appProjection = {
   
 }; 
 
+
+const userProjection = {
+  __v: false, 
+  password: false,
+}; 
+
+
+
+const inviteProjection = {
+  __v: false, 
+  password: false,
+}; 
+
+
+const signupProjection = {
+  __v: false, 
+  password: false,
+}; 
+
  
 
 class AppService {
@@ -595,6 +614,277 @@ class AppService {
 
 
   }
+
+
+  async addUser( data, callback) {
+    let that = this;
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: data.appId });
+    
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    } 
+    if(app.status != 'active') {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
+      return;
+    }  
+    
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let user = await _user.findOne({ appId: data.appId, handle: data.handle });
+    if (user) {
+      let errorData = {status: 'Fails', message: 'User already registerred.'};
+      callback(null, errorData);
+      return; 
+    }
+  
+    let item = {
+      handle: data.handle,
+      password: data.password,
+      appId: data.appId, 
+      status: 'active',
+      createdAt: util.getCurrentTime(),
+      updatedAt: util.getCurrentTime()
+    }; 
+
+    
+    user = new _user(item); 
+    user.save();
+    this.createSignup(item);
+
+    callback(user);
+  
+     
+  }
+
+
+  async searchUser(data, callback) {  
+
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let users = await _user.find({appId: data.appId, handle:{ $regex: '.*' + data.value + '.*' }}, userProjection).sort({handle: 'asc'});  
+    callback(users);
+  }
+
+
+
+
+  async searchSignUp(data, callback) {  
+
+    let model = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
+    let item = await model.find({appId: data.appId, handle:{ $regex: '.*' + data.value + '.*' }}, signupProjection).sort({handle: 'asc'});  
+    callback(item);
+  }
+
+
+
+  async removeAppSignup(req, data, callback) {
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: data.appId });
+    
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    } 
+    if(app.status != 'active') {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
+      return;
+    } 
+
+
+    let _invite = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup); 
+    _invite.findOneAndRemove({appId: data.appId, handle:data.handle}, function(err, res) {
+      callback(res, err);
+    }); 
+      
+    
+  }
+
+  
+  async removeAppInvite(req, data, callback) {
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: data.appId });
+    
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    } 
+    if(app.status != 'active') {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
+      return;
+    } 
+
+
+    let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite); 
+    _invite.findOneAndRemove({appId: data.appId, handle:data.handle}, function(err, res) {
+      callback(res, err);
+    }); 
+    
+    
+  }
+
+  async createAppInvite(req, data, callback) { 
+    
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: data.appId });
+    
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    } 
+    if(app.status != 'active') {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
+      return;
+    }  
+    
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let user = await _user.findOne({ appId: data.appId, handle: data.handle });
+    if (user) {
+      callback(null, {message:"Handle already registerred."});
+      return; 
+    }
+    req.appId = app.appId;
+    req.body.senderUserId = 'superuser';
+    appUserService.createInvite(req, app, function(data){
+      callback(data);
+    });
+    
+    
+    
+  }
+
+ 
+
+  async searchInvite(data, callback) {  
+
+    let model = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite);
+    let item = await model.find({appId: data.appId, handle:{ $regex: '.*' + data.value + '.*' }}, inviteProjection).sort({handle: 'asc'});  
+    callback(item);
+  }
+
+
+
+
+  async removeUser(data, callback) {  
+
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    _user.findOneAndRemove({appId: data.appId, handle:data.handle}, function(err, res) {
+      callback(res, err);
+      if(res){
+        let app = {
+          appId: data.appId 
+        };
+        
+      }  
+    });
+
+    let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
+    _signup.findOneAndRemove({appId: data.appId, handle:data.handle}, function(err, res) {
+       
+    });
+
+    let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite);
+    _invite.findOneAndRemove({appId: data.appId, handle:data.handle}, function(err, res) {
+       
+    });
+    
+  }
+
+
+
+
+  createSignup(data){
+
+    let metaData = {}; 
+    if(data.metaData) metaData = JSON.parse(data.metaData); 
+     
+    let item = {
+      handle: data.handle, 
+      password: data.password,
+      appId: data.appId,
+      metaData:metaData,
+      status: 'active',
+      code: 0,
+      createdAt: util.getCurrentTime(),
+      updatedAt: util.getCurrentTime(),
+    };
+
+    let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup); 
+    let signupUser = new _signupTbl(item);
+    signupUser.save();
+  }
+
+
+
+  async getAppStat(params, callback) { 
+
+    let appData = {}; 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    var app = await _app.findOne({ appId: params.appId });
+    if (!app || app.status != "active") {
+      callback(null);
+      return; 
+    }
+
+
+    let offset = params.offset ? parseInt(params.offset) : 0;
+    offset = offset >= 0 ? offset : 0;
+    
+    let limit = params.limit ? parseInt(params.limit) : 25;
+    limit = limit >= 25 ? limit : 25;
+
+    offset = offset * limit;
+
+    if(params.target){
+
+      if(params.target == CONT.TABLE.USERS){ 
+        let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+        appData.users = await _user.find({appId: params.appId}, userProjection).sort({createdAt: 'desc'}).skip(offset).limit(limit);
+        appData.totalUser = await this.countTable(_user, {appId: params.appId});
+      }
+      else if(params.target == CONT.TABLE.INVITES){ 
+        let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite);
+        appData.invites = await _invite.find({appId: params.appId}, inviteProjection).sort({createdAt: 'desc'}).skip(offset).limit(limit);
+        appData.totalInvite = await this.countTable(_invite, {appId: params.appId}); 
+      }
+      else if(params.target == CONT.TABLE.SIGNUPS){ 
+        let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
+        appData.signups = await _signup.find({appId: params.appId}, signupProjection).sort({createdAt: 'desc'}).skip(offset).limit(limit);
+        appData.totalSignup = await this.countTable(_signup, {appId: params.appId}); 
+      }
+
+    }
+    else{ 
+      let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+      appData.users = await _user.find({appId: params.appId}, userProjection).sort({createdAt: 'desc'}).limit(limit);
+      appData.totalUser = await this.countTable(_user, {appId: params.appId});
+
+      let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite);
+      appData.invites = await _invite.find({appId: params.appId}, inviteProjection).sort({createdAt: 'desc'}).limit(limit);
+      appData.totalInvite = await this.countTable(_invite, {appId: params.appId}); 
+
+      let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
+      appData.signups = await _signup.find({appId: params.appId}, signupProjection).sort({createdAt: 'desc'}).limit(limit);
+      appData.totalSignup = await this.countTable(_signup, {appId: params.appId}); 
+
+      
+       
+    }
+
+    callback(appData);
+  }
+
+
+  countTable(collection, query){
+    return new Promise((resolve, reject) => {
+      collection.countDocuments(query, function(err, count){
+        resolve(count);
+      });
+    });
+  }
+
  
  
 
