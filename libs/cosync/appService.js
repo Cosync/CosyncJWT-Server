@@ -5,9 +5,12 @@ const util = require('../util');
 const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');  
 const twilioService = require('../twilioService');
+const appUserService = require('./appUserService');
 const fs = require('fs');
 const DIR = 'temp';
-var zipper = require('zip-local');
+const zipper = require('zip-local');
+const csv = require('csv-parser');
+const { exit } = require('process');
 
 const appProjection = {
   __v: false,
@@ -750,7 +753,7 @@ class AppService {
     }
     req.appId = app.appId;
     req.body.senderUserId = 'superuser';
-    appUserService.createInvite(req, app, function(data){
+    appUserService.createInvite(req, app, {}, function(data){
       callback(data);
     });
     
@@ -999,37 +1002,129 @@ class AppService {
   }
 
 
+  readCSVFile(path, appId){
+    return new Promise((resolve, reject) => {
+      let result = [];
+      fs.createReadStream(path)
+        .pipe(csv())
+        .on('data', (data) => {
+          if(data.appId){
+            data.appId = appId; 
+            result.push(data)
+          } 
+        })
+        .on('end', () => { 
+          resolve(result);
+        });
+    });
+  }
 
 
-  importDatabase(req, res, callback){ 
+  async importDatabase(req, res, callback){ 
 
-    if (!fs.existsSync(DIR)){
-        fs.mkdirSync(DIR);
-    }
-
+    let that = this;
     let data = req.body;
     let file = req.file; 
-    let filename = `${data.appId}.zip`;
-    let path = `./${DIR}/${data.appId}/${filename}`;
+    let location = `./${DIR}/${data.appId}`;
+
+
+    let appId = data.appId;
+
+    let error = {status: 'fails', message: 'Invalid Data'}; 
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: appId}); 
+    if(!app){
+      callback(null, error); 
+      return;
+    }  
+
+    if (!fs.existsSync(location)){
+      fs.mkdirSync(location);
+    }
+ 
+    let path = `./${location}/${file.originalname}`;
     let writeStream = fs.createWriteStream(path);
     writeStream.write(file.buffer, 'base64');
    
-    writeStream.on('finish', () => {
-      console.log('wrote all data to file');
+    writeStream.on('finish', async () => {
+       
 
-      zipper.unzip(`path`, function(error, unzipped) {
+      zipper.unzip(path, async function(error, unzipped) {
  
         if(!error) {
-          unzipped.save(null, function() { });
+          unzipped.save(location, async function() {
+
+            // read files here
+
+            let tableFile = ['tbl-user.csv', 'tbl-signup.csv', 'tbl-invite.csv', 'tbl-email-template.csv'];
+            let appData = {
+              users: [],
+              signups: [],
+              invites : [],
+              emails: []
+            };
+            try {
+              let found = true;
+              for (let index = 0; index < tableFile.length; index++) {
+                const tbl = tableFile[index];
+                if (fs.existsSync(`${location}/${tbl}`)) {
+
+                  let result = await that.readCSVFile(`${location}/${tbl}`, appId);
+
+                  if(index == 0) appData.users = result;
+                  else if(index == 1) appData.signups = result;
+                  else if(index == 2) appData.invites = result;
+                  else if(index == 3) appData.emails = result;
+                   
+                }
+                else{
+                  found = false;
+                }
+              }
+              
+             
+
+
+              if(!found){
+                fs.rmdirSync(location, { recursive: true });
+                callback(false); 
+              }
+              else{
+
+                that.addDataToTable(appData, function(result){
+                  fs.rmdirSync(location, { recursive: true });
+                  callback(result); 
+                });
+              }
+             
+            } catch(err) {
+
+              fs.rmdirSync(location, { recursive: true });
+              callback(false);
+
+              console.error(err)
+            }
+
+           
+
+
+            
+          });
+        }
+        else {
+          fs.rmdirSync(location, { recursive: true });
+          callback(false);
         }
 
       });
 
-      callback(true);
+     
     });
 
     writeStream.on('error', () => {
       console.log('wrote all data to file error');
+      fs.rmdirSync(location, { recursive: true });
       callback(false);
     });
     
@@ -1038,6 +1133,63 @@ class AppService {
      
   }
 
+
+  async addDataToTable(data, callback){
+
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user); 
+    let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite); 
+    let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
+    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+
+    let result = await this.executeInsert(data.users, _user);
+    if(!result){
+      callback(false);
+      return;
+    }
+
+
+    result = await this.executeInsert(data.invites, _invite);
+    if(!result){
+      callback(false);
+      return;
+    }
+
+
+    result = await this.executeInsert(data.signups, _signup);
+    if(!result){
+      callback(false);
+      return;
+    }
+
+
+    result = await this.executeInsert(data.emails, _email);
+    if(!result){
+      callback(false);
+      return;
+    }
+
+
+    callback(true);
+  }
+
+  executeInsert(data, table){
+    return new Promise((resolve, reject) => {
+      let i = 0;
+      while (i <= data.length) {
+        for (const key in data[i]) {
+          if(data[i][key] === undefined || data[i][key] == "") delete data[i][key];
+        }
+        i++;
+      }
+
+      table.insertMany(data, function(error, docs) {
+        if(error) resolve(false);
+        else resolve(true);
+      });
+
+    });
+    
+  }
  
 
  
