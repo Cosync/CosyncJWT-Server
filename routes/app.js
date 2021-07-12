@@ -4,11 +4,13 @@
 const express = require('express');
 const router = express.Router();
 const appService = require('../libs/cosync/appService'); 
-const appUserService = require('../libs/cosync/appUserService'); 
-
+const appUserService = require('../libs/cosync/appUserService');  
 let initCosyncJWT = require('../libs/cosync/initCosyncJWT'); 
 let initCosyncEngine = require('../libs/cosync/initCosyncEngine'); 
-
+let multer = require('multer')
+    , inMemoryStorage = multer.memoryStorage()
+    , uploadStrategy = multer({ storage: inMemoryStorage }).single('file');
+    
 const util = require('../libs/util');
 let _error = {status: 'Fails', message: 'Invalid Data'};
 
@@ -647,7 +649,29 @@ router.post("/reset", async (req, res) => {
   } catch (e) {
     util.responseFormat(res, _error, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
   }
+}); 
+
+router.post("/importDatabase", uploadStrategy, async function (req, res) {
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+  let valid = req.body.appId && req.file;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  appService.importDatabase(req, res, function(result, error){
+    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    else util.responseFormat(res, true);
+  })
+   
+  
 });
+ 
 
 
  

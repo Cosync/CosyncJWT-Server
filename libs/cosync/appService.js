@@ -5,6 +5,9 @@ const util = require('../util');
 const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');  
 const twilioService = require('../twilioService');
+const fs = require('fs');
+const DIR = 'temp';
+var zipper = require('zip-local');
 
 const appProjection = {
   __v: false,
@@ -993,6 +996,46 @@ class AppService {
     else callback(null, error); 
   
 
+  }
+
+
+
+
+  importDatabase(req, res, callback){ 
+
+    if (!fs.existsSync(DIR)){
+        fs.mkdirSync(DIR);
+    }
+
+    let data = req.body;
+    let file = req.file; 
+    let filename = `${data.appId}.zip`;
+    let path = `./${DIR}/${data.appId}/${filename}`;
+    let writeStream = fs.createWriteStream(path);
+    writeStream.write(file.buffer, 'base64');
+   
+    writeStream.on('finish', () => {
+      console.log('wrote all data to file');
+
+      zipper.unzip(`path`, function(error, unzipped) {
+ 
+        if(!error) {
+          unzipped.save(null, function() { });
+        }
+
+      });
+
+      callback(true);
+    });
+
+    writeStream.on('error', () => {
+      console.log('wrote all data to file error');
+      callback(false);
+    });
+    
+    // close the stream
+    writeStream.end();
+     
   }
 
  

@@ -12,16 +12,21 @@
     "@sendgrid/mail": "^7.4.4",
     "atob": "^2.1.2",
     "authenticator": "^1.1.5",
+    "bcrypt": "^5.0.1",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "mongoose": "^5.8.3",
+    "multer": "^1.4.2",
     "node-rsa": "^1.1.1",
+    "path": "^0.12.7",
     "qrcode": "^1.4.4",
     "request": "^2.88.2",
     "stream": "0.0.2",
     "twilio": "^3.65.0",
-    "uuid": "^3.4.0"
+    "uuid": "^3.4.0",
+    "zip-local": "^0.3.4"
   }
 }
