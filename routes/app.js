@@ -665,7 +665,7 @@ router.post("/importDatabase", uploadStrategy, async function (req, res) {
   }
 
   appService.importDatabase(req, res, function(result){
-    if(!result) util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    if(result.status == 'fails') util.responseFormat(res, result, util.HTTP_STATUS_CODE.BAD_REQUEST);
     else util.responseFormat(res, true);
   })
    

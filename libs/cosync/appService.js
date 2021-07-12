@@ -1035,7 +1035,7 @@ class AppService {
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.findOne({ appId: appId}); 
     if(!app){
-      callback(null, error); 
+      callback(error); 
       return;
     }  
 
@@ -1081,14 +1081,11 @@ class AppService {
                 else{
                   found = false;
                 }
-              }
-              
-             
-
+              } 
 
               if(!found){
                 fs.rmdirSync(location, { recursive: true });
-                callback(false); 
+                callback(error); 
               }
               else{
 
@@ -1101,14 +1098,8 @@ class AppService {
             } catch(err) {
 
               fs.rmdirSync(location, { recursive: true });
-              callback(false);
-
-              console.error(err)
+              callback(error); 
             }
-
-           
-
-
             
           });
         }
@@ -1142,29 +1133,29 @@ class AppService {
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
 
     let result = await this.executeInsert(data.users, _user);
-    if(!result){
-      callback(false);
+    if(result.status){
+      callback(result);
       return;
     }
 
 
     result = await this.executeInsert(data.invites, _invite);
-    if(!result){
-      callback(false);
+    if(result.status){
+      callback(result);
       return;
     }
 
 
     result = await this.executeInsert(data.signups, _signup);
-    if(!result){
-      callback(false);
+    if(result.status){
+      callback(result);
       return;
     }
 
 
     result = await this.executeInsert(data.emails, _email);
-    if(!result){
-      callback(false);
+    if(result.status){
+      callback(result);
       return;
     }
 
@@ -1183,7 +1174,7 @@ class AppService {
       }
 
       table.insertMany(data, function(error, docs) {
-        if(error) resolve(false);
+        if(error) resolve({status: 'fails', message:error.message });
         else resolve(true);
       });
 
