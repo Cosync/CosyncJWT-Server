@@ -1124,6 +1124,35 @@ class AppService {
      
   }
 
+  rollbackDatabase(newDocs, table){
+    let ids = [];
+    if(newDocs.length){
+
+      newDocs.forEach(element => {
+        ids.push(element._id.toString());
+      });
+
+      if(table){
+
+        table.deleteMany({
+          _id: {
+            $in: ids
+          }
+        }, function(err, result) {
+          if (err) {
+            console.log(err)
+          } else {
+             
+          }
+        })
+      } 
+
+    }
+    
+
+    
+  }
+
 
   async addDataToTable(data, callback){
 
@@ -1131,34 +1160,44 @@ class AppService {
     let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite); 
     let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+ 
+    let newDocs = {};
 
     let result = await this.executeInsert(data.users, _user);
-    if(result.status){
+    if(result.status){ 
       callback(result);
       return;
     }
+    newDocs.user = result;
 
 
     result = await this.executeInsert(data.invites, _invite);
     if(result.status){
+      this.rollbackDatabase(newDocs, _user);
       callback(result);
       return;
     }
+    newDocs.invite = result;
 
 
     result = await this.executeInsert(data.signups, _signup);
     if(result.status){
+      this.rollbackDatabase(newDocs.user, _user);
+      this.rollbackDatabase(newDocs.invite, _invite);
       callback(result);
       return;
     }
-
+    newDocs.signup = result;
 
     result = await this.executeInsert(data.emails, _email);
     if(result.status){
+      this.rollbackDatabase(newDocs.user, _user);
+      this.rollbackDatabase(newDocs.invite, _invite);
+      this.rollbackDatabase(newDocs.signup, _signup);
       callback(result);
       return;
     }
-
+    
 
     callback(true);
   }
@@ -1175,7 +1214,7 @@ class AppService {
 
       table.insertMany(data, function(error, docs) {
         if(error) resolve({status: 'fails', message:error.message });
-        else resolve(true);
+        else resolve(docs);
       });
 
     });
