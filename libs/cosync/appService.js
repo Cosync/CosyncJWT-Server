@@ -1008,10 +1008,8 @@ class AppService {
       fs.createReadStream(path)
         .pipe(csv())
         .on('data', (data) => {
-          if(data.appId){
-            data.appId = appId; 
-            result.push(data)
-          } 
+          if(data.appId) data.appId = appId; 
+          result.push(data)
         })
         .on('end', () => { 
           resolve(result);
@@ -1020,24 +1018,101 @@ class AppService {
   }
 
 
+  async createImportedApp(data, _app){
+
+    return new Promise((resolve, reject) => { 
+
+      let tempApp = data.tempApp;
+      let importedApp = data.app; 
+      importedApp.appId = tempApp.appId;
+      importedApp.name = tempApp.name;
+      importedApp.appToken = tempApp.appToken;
+      importedApp.appSecret = tempApp.appSecret; 
+      importedApp.createdAt = tempApp.createdAt;
+      importedApp.updatedAt = tempApp.updatedAt;
+      importedApp.appData = {};
+
+      _app.create(importedApp, function(error, doc){
+
+        if(error) resolve({status: 'fails', message:error.message });
+        else resolve(doc);
+      });
+       
+    });
+   
+
+  }
+
+
+
+  async createTempoApp(data){
+
+    return new Promise((resolve, reject) => {
+
+      let appId = util.getRandomID();
+      let key = new nrsa();
+      key.generateKeyPair();
+      let publicKey = key.exportKey('public');
+      let privateKey = key.exportKey();
+      let publicKey64 = Buffer.from(publicKey).toString('base64');
+      let privateKey64 = Buffer.from(privateKey).toString('base64');  
+
+      const appToken = util.generateAppToken({appId: appId}); 
+      const appSecret =  util.generateAppSecretToken({appId: appId});
+
+      let item =  {
+        name: data.appName, 
+        appId: appId,
+        appToken: appToken,
+        appSecret: appSecret, 
+        appPublicKey: publicKey64, 
+        appPrivateKey: privateKey64,
+        handle: 'email',
+        status:'active',
+        invitationEnabled: true,
+        signupEnabled: true, 
+        metaDataEmail: true,
+        jwtEnabled: true,
+        twoFactorVerification:'none',
+        createdAt: util.getCurrentTime(),
+        updatedAt: util.getCurrentTime()
+      };  
+      resolve(item); 
+    });
+   
+
+  }
+
+
   async importDatabase(req, res, callback){ 
 
     let that = this;
     let data = req.body;
-    let file = req.file; 
-    let location = `./${DIR}/${data.appId}`;
-
-
-    let appId = data.appId;
+    let file = req.file;  
 
     let error = {status: 'fails', message: 'Invalid Data'}; 
 
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-    let app = await _app.findOne({ appId: appId}); 
-    if(!app){
+    let app = await _app.findOne({ name: data.appName}); 
+    if(app){
+      error.message = `App '${data.appName}' already exists.`;
       callback(error); 
       return;
-    }  
+    }
+
+    let tempApp = await this.createTempoApp(data);
+
+    let location = `./${DIR}/${tempApp.appId}`; 
+    let appId = tempApp.appId; 
+
+    let appData = {
+      app: {},
+      users: [],
+      signups: [],
+      invites : [],
+      emails: [],
+      tempApp: tempApp
+    };
 
     if (!fs.existsSync(location)){
       fs.mkdirSync(location);
@@ -1057,13 +1132,8 @@ class AppService {
 
             // read files here
 
-            let tableFile = ['tbl-user.csv', 'tbl-signup.csv', 'tbl-invite.csv', 'tbl-email-template.csv'];
-            let appData = {
-              users: [],
-              signups: [],
-              invites : [],
-              emails: []
-            };
+            let tableFile = ['tbl-user.csv', 'tbl-signup.csv', 'tbl-invite.csv', 'tbl-email-template.csv', 'tbl-app.csv'];
+            
             try {
               let found = true;
               for (let index = 0; index < tableFile.length; index++) {
@@ -1072,11 +1142,11 @@ class AppService {
 
                   let result = await that.readCSVFile(`${location}/${tbl}`, appId);
 
-                  if(index == 0) appData.users = result;
+                  if(index == 0) appData.users = result; 
                   else if(index == 1) appData.signups = result;
                   else if(index == 2) appData.invites = result;
                   else if(index == 3) appData.emails = result;
-                   
+                  else if(index == 4) appData.app = result[0];
                 }
                 else{
                   found = false;
@@ -1149,13 +1219,13 @@ class AppService {
 
     }
     
-
     
   }
 
 
   async addDataToTable(data, callback){
 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user); 
     let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite); 
     let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
@@ -1163,7 +1233,14 @@ class AppService {
  
     let newDocs = {};
 
-    let result = await this.executeInsert(data.users, _user);
+    let result = await this.createImportedApp(data, _app); 
+    if(result.status == 'fails'){ 
+      callback(result);
+      return;
+    }
+    newDocs.app = [result];
+
+    result = await this.executeInsert(data.users, _user);
     if(result.status){ 
       callback(result);
       return;
@@ -1173,6 +1250,7 @@ class AppService {
 
     result = await this.executeInsert(data.invites, _invite);
     if(result.status){
+      this.rollbackDatabase(newDocs.app, _app);
       this.rollbackDatabase(newDocs, _user);
       callback(result);
       return;
@@ -1182,6 +1260,7 @@ class AppService {
 
     result = await this.executeInsert(data.signups, _signup);
     if(result.status){
+      this.rollbackDatabase(newDocs.app, _app);
       this.rollbackDatabase(newDocs.user, _user);
       this.rollbackDatabase(newDocs.invite, _invite);
       callback(result);
@@ -1191,6 +1270,7 @@ class AppService {
 
     result = await this.executeInsert(data.emails, _email);
     if(result.status){
+      this.rollbackDatabase(newDocs.app, _app);
       this.rollbackDatabase(newDocs.user, _user);
       this.rollbackDatabase(newDocs.invite, _invite);
       this.rollbackDatabase(newDocs.signup, _signup);
@@ -1199,23 +1279,29 @@ class AppService {
     }
     
 
-    callback(true);
+    callback(newDocs.app[0]);
   }
 
   executeInsert(data, table){
     return new Promise((resolve, reject) => {
       let i = 0;
+      let docs = []
       while (i <= data.length) {
         for (const key in data[i]) {
           if(data[i][key] === undefined || data[i][key] == "") delete data[i][key];
         }
+        if(data[i] && data[i].appId) docs.push(data[i]);
         i++;
       }
 
-      table.insertMany(data, function(error, docs) {
-        if(error) resolve({status: 'fails', message:error.message });
-        else resolve(docs);
-      });
+      if(docs.length){
+        table.insertMany(docs, function(error, insertedDocs) {
+          if(error) resolve({status: 'fails', message:error.message });
+          else resolve(insertedDocs);
+        });
+      } 
+      else resolve(docs); 
+      
 
     });
     
