@@ -1034,7 +1034,7 @@ class AppService {
 
       _app.create(importedApp, function(error, doc){
 
-        if(error) resolve({status: 'fails', message:error.message });
+        if(error) resolve({status: 'fails', message:'Database error for invalid table: ' + error.message });
         else resolve(doc);
       });
        
@@ -1132,7 +1132,7 @@ class AppService {
 
             // read files here
 
-            let tableFile = ['tbl-user.csv', 'tbl-signup.csv', 'tbl-invite.csv', 'tbl-email-template.csv', 'tbl-app.csv'];
+            let tableFile = ['user-collection.csv', 'signup-collection.csv', 'invite-collection.csv', 'email-template-collection.csv', 'app-collection.csv'];
             
             try {
               let found = true;
@@ -1296,7 +1296,7 @@ class AppService {
 
       if(docs.length){
         table.insertMany(docs, function(error, insertedDocs) {
-          if(error) resolve({status: 'fails', message:error.message });
+          if(error) resolve({status: 'fails', message: 'Database error for invalid table: ' +  error.message });
           else resolve(insertedDocs);
         });
       } 
