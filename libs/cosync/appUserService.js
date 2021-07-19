@@ -6,6 +6,7 @@ const SCHEMA = require('../../config/schema');
 let twoFactorService = require('./authenticatorService');
 let emailService = require('./emailService'); 
 let twilioService = require('./twilioService');
+let hashService  = require('./hashService');
 
 const appProjection = {
   __v: false,
@@ -142,7 +143,7 @@ class AppUserService {
 
   
     let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-    let item = await _appUserTbl.findOne({ handle: req.body.handle, password:req.body.password, appId: req.appId });
+    let item = await _appUserTbl.findOne({ handle: req.body.handle, appId: req.appId });
 
     if (!item) { 
       let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
@@ -207,9 +208,11 @@ class AppUserService {
           return;
         }  
 
+        let hashedPassword = await hashService.generateHash(req.body.password);
+        
         let data = {
           handle: handle, 
-          password: req.body.password,
+          password: hashedPassword,
           appId: req.appId,
           metaData: finalMetaData,
           status: 'active',
@@ -221,7 +224,7 @@ class AppUserService {
         let signupUser = new _signupTbl(data);
         signupUser.save(); 
 
-        let result = await this.addAppUserData(data, app);
+        let result = await this.addAppUserDataSkipPasswordHash(data, app);
         result.code = code;
         if(result.jwt) callback(result);
         else callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
@@ -297,9 +300,11 @@ class AppUserService {
 
       callback(true); 
 
+      let hashedPassword = await hashService.generateHash(req.body.password);
+
       let item = {
         handle: handle, 
-        password: req.body.password,
+        password: hashedPassword,
         appId: req.appId,
         metaData: finalMetaData,
         status: 'pending',
@@ -360,9 +365,10 @@ class AppUserService {
       signup.save();
 
       signUpData.metaData = signup.metaData; 
-      signUpData.password = signup.password;
+      signUpData.password = signup.password; // already hashed
 
-      let result = await that.addAppUserData(signUpData, app);
+      let result = await that.addAppUserDataSkipPasswordHash(signUpData, app);
+
       if(!result.jwt){
         callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
         return;
@@ -388,13 +394,47 @@ class AppUserService {
   }
 
 
-
-
   addAppUserData(data, app){
 
     return new Promise((resolve, reject) =>{
-      let that = this;
+       
       let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+      hashService.generateHash(data.password).then(hashedPassword => {
+
+        let user = {
+          handle: data.handle,
+          password: hashedPassword,
+          appId: app.appId,
+          status: 'active', 
+          createdAt: util.getCurrentTime(),
+          updatedAt: util.getCurrentTime(),
+        };
+
+        data.appId = app.appId;
+        
+        if(data.metaData) user.metaData = data.metaData;
+
+        let appUser = new _appUserTbl(user);
+        appUser.save();
+
+        data.uid = user.uid;
+
+        const accessToken = util.generateAccessToken(user , data.owner);
+        const jwtToken = util.generateAuthJWTToken(user, app); 
+        const signToken = util.generateSignToken(data, app); 
+        
+        resolve({'jwt':jwtToken, 'access-token':accessToken, 'signed-user-token':signToken});  
+      });
+    });
+  }
+
+
+
+  addAppUserDataSkipPasswordHash(data, app){
+
+    return new Promise((resolve, reject) =>{
+       
+      let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user); 
 
       let user = {
         handle: data.handle,
@@ -419,7 +459,7 @@ class AppUserService {
       const signToken = util.generateSignToken(data, app); 
       
       resolve({'jwt':jwtToken, 'access-token':accessToken, 'signed-user-token':signToken});  
-       
+    
     });
   }
 
@@ -458,10 +498,13 @@ class AppUserService {
     }
     else{ 
 
-      if(params.password != user.password){
+      let validHash = await hashService.validateHash(params.password, user.password);
+      if(!validHash){
         callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
         return; 
       } 
+
+       
       
       if(app.twoFactorVerification != 'none' && user.twoFactorGoogleVerification == true || (user.twoFactorPhoneVerification == true && user.phoneVerified == true) ){
         
@@ -657,9 +700,10 @@ class AppUserService {
         let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
         let user = await _appUserTbl.findOne({ handle: handle, appId: req.appId });
         
+
         if(user){
          
-          user.password = req.body.password;
+          user.password = await hashService.generateHash(req.body.password);
           user.googleSecretKey = "";
           user.twoFactorPhoneVerification = false;
           user.twoFactorGoogleVerification = false;
@@ -698,9 +742,10 @@ class AppUserService {
 
     if(user){
       
-      if(req.body.password == user.password){ 
-       
-        user.password = req.body.newPassword;
+      let validHash = await hashService.validateHash(req.body.password, user.password);
+
+      if(validHash){ 
+        user.password = await hashService.generateHash(req.body.newPassword);
         user.updatedAt = util.getCurrentTime();
         user.save();
         
@@ -1165,7 +1210,7 @@ class AppUserService {
     let user = await _user.findOne({_id: data.userId}); 
     if(user){
       
-      user.password = data.hashValue;
+      user.password = await hashService.generateHash(data.hashValue);
       user.updatedAt = util.getCurrentTime();
       user.save();
       callback(true); 
@@ -1330,71 +1375,83 @@ class AppUserService {
     if(!invite) {
       callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
       return;
+    } 
+
+    if(invite && invite.status == 'pending'){
+
+      let data = req.body;
+      data.appId = req.appId; 
+      data.senderHandle = invite.senderHandle;
+      data.senderUserId = invite.senderUserId;
+        
+      let valid = true;
+      let finalMetaData = {};
+      let metaData = {};
+      try { 
+
+        if(app.metaData.length){
+
+          if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
+
+          for (let index = 0; index < app.metaData.length; index++) {
+            let field = app.metaData[index];
+            let value = _.get(metaData, field.path);
+
+            if(value !== undefined) _.set(finalMetaData, field.path, value); 
+
+            if(field.required && value === undefined){ 
+              valid = false;
+              callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+              return;
+            }
+
+          };
+        }
+
+
+      } catch (error) {
+        callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+        return;
+      } 
+      
+      if(!valid) return;
+
+      if(invite.metaData) _.merge(finalMetaData, invite.metaData);
+
+      invite.status = 'verified';
+      invite.updatedAt = util.getCurrentTime();
+      invite.save();
+
+      data.metaData = finalMetaData;
+      
+      this.addAppUserAccount(data, app, callback);
     }
- 
-
-    subscription.checkAppStatusAsync(app).then(res => {
-
-      if(invite && invite.status == 'pending'){
-
-        let data = req.body;
-        data.appId = req.appId; 
-        data.senderHandle = invite.senderHandle;
-        data.senderUserId = invite.senderUserId;
-          
-        let valid = true;
-        let finalMetaData = {};
-        let metaData = {};
-        try { 
-
-          if(app.metaData.length){
-
-            if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
-
-            for (let index = 0; index < app.metaData.length; index++) {
-              let field = app.metaData[index];
-              let value = _.get(metaData, field.path);
-
-              if(value !== undefined) _.set(finalMetaData, field.path, value); 
-
-              if(field.required && value === undefined){ 
-                valid = false;
-                callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
-                return;
-              }
-
-            };
-          }
-
-
-        } catch (error) {
-          callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
-          return;
-        } 
-        
-        if(!valid) return;
-
-        if(invite.metaData) _.merge(finalMetaData, invite.metaData);
-
-        invite.status = 'verified';
-        invite.updatedAt = util.getCurrentTime();
-        invite.save();
-
-        data.metaData = finalMetaData;
-        
-        this.addAppUserAccount(data, callback);
-      }
-      else if(invite && invite.status == 'verified'){
-        callback(null, util.INTERNAL_STATUS_CODE.HANDLE_ALREADY_REGISTERED);
-      }
-      else callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
-    }).catch(err => {
-      callback(null, err);
-      return;
-    }); 
-  
+    else if(invite && invite.status == 'verified'){
+      callback(null, util.INTERNAL_STATUS_CODE.HANDLE_ALREADY_REGISTERED);
+    }
+    else callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
     
+  
 
+  }
+
+
+
+
+  async addAppUserAccount(data, app, callback){
+
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user); 
+    let user = await _user.findOne({ appId: data.appId, handle:data.handle });
+    if(user) {
+      callback(null, util.INTERNAL_STATUS_CODE.HANDLE_ALREADY_REGISTERED); 
+      return;
+    } 
+
+    let result = await this.addAppUserData(data, app);
+
+    if(result.jwt) callback(result, null);
+    else callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+  
   }
 
 

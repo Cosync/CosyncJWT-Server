@@ -623,7 +623,7 @@ class AppService {
 
 
   async addUser( data, callback) {
-    let that = this;
+     
 
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: data.appId });
@@ -645,9 +645,10 @@ class AppService {
       return; 
     }
   
+    let hashedPassword = await hashService.generateHash(data.password);
     let item = {
       handle: data.handle,
-      password: data.password,
+      password: hashedPassword,
       appId: data.appId, 
       status: 'active',
       createdAt: util.getCurrentTime(),
@@ -699,8 +700,8 @@ class AppService {
     } 
 
 
-    let _invite = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup); 
-    _invite.findOneAndRemove({appId: data.appId, handle:data.handle}, function(err, res) {
+    let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup); 
+    _signup.findOneAndRemove({appId: data.appId, handle:data.handle}, function(err, res) {
       callback(res, err);
     }); 
       
@@ -808,7 +809,7 @@ class AppService {
      
     let item = {
       handle: data.handle, 
-      password: data.password,
+      password: data.password, // already hashed
       appId: data.appId,
       metaData:metaData,
       status: 'active',
