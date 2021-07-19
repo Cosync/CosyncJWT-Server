@@ -1,8 +1,6 @@
 'use strict';
-let crypto = require('crypto');
 const bcrypt = require('bcrypt');
-const saltRounds = 10;
-const CIPHER_ALGORITHM = 'aes-256-ctr';
+const saltRounds = 10; 
 
 class HashService {
 
