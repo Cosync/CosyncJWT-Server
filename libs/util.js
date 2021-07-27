@@ -3,7 +3,7 @@ const uuidv4 = require('uuid/v4')
 const jwt = require('jsonwebtoken');  
 const fs = require('fs');   
 const cert = fs.readFileSync(global.privateKey, 'utf8'); 
-const serverPrivateKey = { key: cert, passphrase: global.__passKey }; 
+const serverPrivateKey = { key: cert, passphrase: global.__config.passKey }; 
 const _ = require('lodash'); 
 
 function setHeader(res){
@@ -250,6 +250,21 @@ exports.generateServerSecretToken = function(){
 		 
 		return null;
 	}
+}
+
+
+
+exports.validatePassKey = function(){
+	try {
+		const payload = {  
+			scope: 'password check'
+		  };
+		  const token = jwt.sign(payload, serverPrivateKey, { algorithm: 'RS256' });
+		  return token;
+	} catch (error) {
+		return false;
+	}
+    
 }
 
 

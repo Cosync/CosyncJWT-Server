@@ -1,38 +1,37 @@
 
  
 const express = require("express");  
- 
+
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 
+
 global.publicKey = './config/publickey.pem';
 global.privateKey = './config/privatekey.pem';
-
-if(process.env.NODE_ENV == 'staging' || process.env.NODE_ENV == 'production'){
-
-  global.__config = require('./config/config_default.js');
-  global.__config.db.connectionString = process.env.DB_CONN_STRING;
-  global.__config.sendGrid.apiKey = process.env.SEND_GRID_API_KEY;
-  if(process.env.PORT) global.__config.serverPort = process.env.PORT;
-
-}
-else global.__config = require('./config/config.js');
-
+global.__config = require('./config/config.js'); 
 const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
 
-const key = process.argv[2];
+if(process.env.DB_CONN_STRING) global.__config.db.connectionString = process.env.DB_CONN_STRING;
+if(process.env.SEND_GRID_API_KEY) global.__config.sendGrid.apiKey = process.env.SEND_GRID_API_KEY;
+if(process.env.PORT) global.__config.serverPort = process.env.PORT; 
 
-if(process.env.PASS_KEY) global.__passKey = process.env.PASS_KEY;
-else if(key) global.__passKey = key;
+const key = process.argv[2] || process.env.PASS_KEY;
+if(key) global.__config.passKey = key;
 
-
-if(!global.__passKey){
-  console.log("Please provide pass key to start the service ");
-  console.log("Service is shutdown! ");
+if(!global.__config.passKey){
+  console.log("Please provide private passphrase to start the service ");
+  console.error("Service is shutdown! ");
   return; 
 }
 
 const util = require('./libs/util');
+
+if(!util.validatePassKey()){
+  console.log("Your passphrase is invalid. Service is shutdown! "); 
+  return; 
+}
+
+
 const app = express(); 
 const port = normalizePort(global.__config.serverPort);
 app.listen(port); 

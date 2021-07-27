@@ -1,16 +1,15 @@
 
 module.exports  = {
-  noreplyEmail:'noreply@cosync.io',
-  serverName: 'JWTServer', 
+  noreplyEmail:'email to send out',
+  serverName: 'your service name', 
   serverPort: 3000,
-  db: {
-    name: "CosyncJWTServer",
-    connectionString: 'mongodb://localhost:27017/CosyncJWTServer',
-   
+  db: { 
+    connectionString: 'your MongoDB database connection' 
   },
   sendGrid : {
-    apiKey: ""
-  }
+    apiKey: "your send grid API Key"
+  },
+  passKey: "your private/public key password"
 
 }
  
