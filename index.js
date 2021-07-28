@@ -57,6 +57,10 @@ if(!util.validatePassKey()){
 }
 
 
+if (!fs.existsSync('temp')) {
+  fs.mkdirSync('temp');
+}
+
 const app = express(); 
 const port = normalizePort(global.__config.serverPort);
 app.listen(port); 
