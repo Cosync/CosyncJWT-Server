@@ -27,10 +27,12 @@
 
 const express = require('express')
 const router = express.Router()
-
-/* GET home page. */
+const util = require('../libs/util');
+ 
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'CosyncJWT Server Service' });
+ 
+  util.responseFormat(res, "Welcome to CosyncJWT Server Service");
+ 
 });
 
 module.exports = router;
