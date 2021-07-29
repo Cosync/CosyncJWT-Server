@@ -27,7 +27,7 @@
 
 module.exports  = {
   noreplyEmail:'email to send out',
-  serverName: 'your service name', 
+  serverName: 'your server name', 
   serverPort: 3000,
   db: { 
     connectionString: 'your MongoDB database connection' 
