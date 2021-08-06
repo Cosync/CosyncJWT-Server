@@ -25,8 +25,10 @@
  * For questions about this license, you may write to mailto:info@cosync.io
 */
 
+let crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const saltRounds = 10; 
+const CIPHER_ALGORITHM = 'aes-256-ctr';
 
 class HashService {
 
@@ -51,6 +53,52 @@ class HashService {
                 else resolve(false);
             });
         });
+    }
+
+
+    aesEncrypt(plaintext){
+
+        if(!global.__config.encryptKey) return plaintext;
+
+        if(!plaintext) return null;
+        
+        let sha256 = crypto.createHash('sha256');
+        sha256.update(global.__config.encryptKey);
+        
+        let iv = crypto.randomBytes(16);
+        let cipher = crypto.createCipheriv(CIPHER_ALGORITHM, sha256.digest(), iv);
+
+        let ciphertext = cipher.update(Buffer.from(plaintext));
+        let encrypted = Buffer.concat([iv, ciphertext, cipher.final()]).toString('base64');
+
+        return encrypted;
+        
+    }
+
+    aesDecrypt(encrypted){
+        
+        if(!global.__config.encryptKey) return encrypted;
+
+        if(!encrypted || encrypted == "") return null;
+
+        var sha256 = crypto.createHash('sha256');
+        sha256.update(global.__config.encryptKey);
+         
+        var input = Buffer.from(encrypted, 'base64');
+
+        if (input.length < 17) {
+            
+            return null;
+        }
+
+        // Initialization Vector
+        var iv = input.slice(0, 16);
+        var decipher = crypto.createDecipheriv(CIPHER_ALGORITHM, sha256.digest(), iv);
+
+        var ciphertext = input.slice(16);
+        var plaintext = decipher.update(ciphertext) + decipher.final();
+
+        return plaintext;
     }
  
 }

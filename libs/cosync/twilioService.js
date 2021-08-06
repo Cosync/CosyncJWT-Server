@@ -27,6 +27,7 @@
 
 let Twilio = require('twilio');
 let util = require('../util');  
+let hashService = require('./hashService');
 let mongoose = require('mongoose'); 
 const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');  
@@ -43,9 +44,11 @@ class TwilioService {
             // Download the helper library from https://www.twilio.com/docs/node/install
             // Your Account Sid and Auth Token from twilio.com/console
             // DANGER! This is insecure. See http://twil.io/secure
-            const accountSid = app.TWILIOAccountSid
-            const authToken = app.TWILIOToken
-            const sender = app.TWILIOPhoneNumber
+            
+            const accountSid = hashService.aesDecrypt(app.TWILIOAccountSid);
+            const authToken = hashService.aesDecrypt(app.TWILIOToken);
+            const sender = hashService.aesDecrypt(app.TWILIOPhoneNumber);
+
             const client = new Twilio(accountSid, authToken);
             if(!client){
                 callback(false, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR);

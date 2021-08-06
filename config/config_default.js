@@ -35,7 +35,8 @@ module.exports  = {
   sendGrid : {
     apiKey: "your send grid API Key"
   },
-  passKey: "your private/public key password"
+  passKey: "your private/public key password",
+  encryptKey: "your AES Encryption key"
 
 }
  

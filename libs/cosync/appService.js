@@ -34,15 +34,18 @@ const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');  
 const twilioService = require('../twilioService');
 const appUserService = require('./appUserService');
+const hashService  = require('./hashService');
 const fs = require('fs');
 const DIR = 'temp';
 const zipper = require('zip-local');
 const csv = require('csv-parser');
-const { exit } = require('process');
+
 
 const appProjection = {
   __v: false,
-  _id: false
+  _id: false,
+  appPrivateKey: false,
+  appSecret : false
   
 }; 
 
@@ -90,16 +93,13 @@ class AppService {
       let publicKey64 = Buffer.from(publicKey).toString('base64');
       let privateKey64 = Buffer.from(privateKey).toString('base64');  
 
-      const appToken = util.generateAppToken({appId: appId}); 
-      const appSecret =  util.generateAppSecretToken({appId: appId});
+      const appToken = util.generateAppToken({appId: appId});
 
       let item =  {
         name: data.name, 
         appId: appId,
         appToken: appToken,
-        appSecret: appSecret, 
-        appPublicKey: publicKey64, 
-        appPrivateKey: privateKey64,
+        appPublicKey: publicKey64,
         handle: 'email',
         status:'active',
         invitationEnabled: true,
@@ -109,12 +109,19 @@ class AppService {
         twoFactorVerification:'none',
         createdAt: util.getCurrentTime(),
         updatedAt: util.getCurrentTime()
-      };  
+      }; 
+
+      callback(item); 
+
+      const appSecret = util.generateAppSecretToken({appId: appId});
+      item.appSecret = hashService.aesEncrypt(appSecret);
+
+      item.appPublicKey = hashService.aesEncrypt(publicKey64);
+      item.appPrivateKey = hashService.aesEncrypt(privateKey64);  
 
       let app = new _app(item); 
       app.save();
-
-      callback(app); 
+      
       this.createAppEmailTemplate(app);
     }
     
@@ -123,9 +130,19 @@ class AppService {
 
 
   async getApp( appId, callback) { 
- 
+   
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.findOne({ appId: appId }, appProjection); 
+
+    if(global.__config.encryptKey){
+      
+      app.appPublicKey = hashService.aesDecrypt(app.appPublicKey); 
+
+      if(app.TWILIOAccountSid) app.TWILIOAccountSid = hashService.aesDecrypt(app.TWILIOAccountSid);
+      if(app.TWILIOToken) app.TWILIOToken = hashService.aesDecrypt(app.TWILIOToken);
+      if(app.TWILIOPhoneNumber) app.TWILIOPhoneNumber = hashService.aesDecrypt(app.TWILIOPhoneNumber);
+    }
+
     callback(app);
   }
 
@@ -133,8 +150,26 @@ class AppService {
 
     let _apps = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
   
-    let apps = await _apps.find({}); 
-    callback(apps); 
+    let apps = await _apps.find({},  appProjection); 
+
+    let results = [];
+    if(global.__config.encryptKey){
+
+      for (let index = 0; index < apps.length; index++) {
+        let app = apps[index];
+        app.appPublicKey = hashService.aesDecrypt(apps[index].appPublicKey);
+
+        if(app.TWILIOAccountSid) app.TWILIOAccountSid = hashService.aesDecrypt(apps[index].TWILIOAccountSid);
+        if(app.TWILIOToken) app.TWILIOToken = hashService.aesDecrypt(apps[index].TWILIOToken);
+        if(app.TWILIOPhoneNumber) app.TWILIOPhoneNumber = hashService.aesDecrypt(apps[index].TWILIOPhoneNumber); 
+         
+        results.push(app);
+      }
+      
+    }
+    else results = apps;
+
+    callback(results); 
   }
 
 
@@ -170,13 +205,35 @@ class AppService {
 
     let _apps = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let apps;
+    let results = [];
+
     if(params.name){
       if(params.case == "true") apps = await _apps.find({name: params.name}, appProjection).sort({createdAt: 'desc'}); 
       else apps = await _apps.find( { "name" : { $regex : new RegExp(params.name, "i") } }, appProjection).sort({createdAt: 'desc'});
     }
     else apps = await _apps.find({}, appProjection).sort({createdAt: 'desc'}); 
      
-    callback(apps); 
+    if(apps.length){
+      
+      if(global.__config.encryptKey){
+       
+        for (let index = 0; index < apps.length; index++) {
+          let app = apps[index];
+          app.appPublicKey = hashService.aesDecrypt(apps[index].appPublicKey);
+
+          if(app.TWILIOAccountSid) app.TWILIOAccountSid = hashService.aesDecrypt(apps[index].TWILIOAccountSid);
+          if(app.TWILIOToken) app.TWILIOToken = hashService.aesDecrypt(apps[index].TWILIOToken);
+          if(app.TWILIOPhoneNumber) app.TWILIOPhoneNumber = hashService.aesDecrypt(apps[index].TWILIOPhoneNumber); 
+          
+          results.push(app);
+        }
+
+      }
+      else results = apps;
+    }
+
+
+    callback(results); 
   }
 
 

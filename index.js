@@ -39,6 +39,7 @@ const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
 if(process.env.DB_CONN_STRING) global.__config.db.connectionString = process.env.DB_CONN_STRING;
 if(process.env.SEND_GRID_API_KEY) global.__config.sendGrid.apiKey = process.env.SEND_GRID_API_KEY;
 if(process.env.PORT) global.__config.serverPort = process.env.PORT; 
+if(process.env.ENCRYPT_KEY) global.__config.encryptKey = process.env.ENCRYPT_KEY;
 
 const key = process.argv[2] || process.env.PASS_KEY;
 if(key) global.__config.passKey = key;
