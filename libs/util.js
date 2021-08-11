@@ -31,6 +31,7 @@ const fs = require('fs');
 const cert = fs.readFileSync(global.privateKey, 'utf8'); 
 const serverPrivateKey = { key: cert, passphrase: global.__config.passKey }; 
 const _ = require('lodash'); 
+const hashService = require('./cosync/hashService');
 
 function setHeader(res){
 	res.setHeader("Content-Type", "application/json; charset=UTF-8");
@@ -145,7 +146,7 @@ exports.generateAuthJWTToken = function(user, app){
 	let metaData = user.metaData || {}; 
 
 	let payload = {
-		aud: app.realmAppId,
+		aud: app.realmAppId || 'none',
 		sub: user.handle,
 		exp: getTimestamp(app.userJWTExpiration)
 	}; 
@@ -182,8 +183,8 @@ exports.generateAuthJWTToken = function(user, app){
 		if(finalMetaData[key] !== undefined) payload[key] = finalMetaData[key]; 
 	} 
 
-	 
-	let _privateKey = Buffer.from(app.appPrivateKey, 'base64'); 
+	let hashKey = hashService.aesDecrypt(app.appPrivateKey);
+	let _privateKey = Buffer.from(hashKey, 'base64'); 
 	let appPrivateKey = _privateKey.toString('utf8'); 
 	return jwt.sign(payload, appPrivateKey, { algorithm: 'RS256' });  
 
@@ -222,7 +223,8 @@ exports.generateSignToken = function(data, app){
     if(data.senderHandle)  payload.senderHandle = data.senderHandle;
     if(data.senderUserId)  payload.senderUserId = data.senderUserId; 
      
-    let _privateKey = Buffer.from(app.appPrivateKey, 'base64');
+	let hashKey = hashService.aesDecrypt(app.appPrivateKey);
+    let _privateKey = Buffer.from(hashKey, 'base64');
     let appPrivateKey = _privateKey.toString('utf8'); 
     const token = jwt.sign(payload, appPrivateKey, { algorithm: 'RS256' });
     return token;
