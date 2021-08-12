@@ -197,10 +197,9 @@ class AppUserService {
      
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
     let tempalte = await _email.findOne({ appId: app.appId, templateName: 'signUp' }); 
-    let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup); 
-      
-    let code = util.getRandomNumber(); 
-    
+    let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
+     
+    let code =  oldSignup ? oldSignup.code : util.getRandomNumber(); 
 
     let tml;
     let handle = req.body.handle.toLowerCase();
