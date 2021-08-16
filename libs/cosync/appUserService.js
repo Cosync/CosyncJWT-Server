@@ -35,6 +35,7 @@ let twoFactorService = require('./authenticatorService');
 let emailService = require('./emailService'); 
 let twilioService = require('./twilioService');
 let hashService  = require('./hashService');
+const _ = require('lodash');
 
 const appProjection = {
   __v: false,
@@ -286,48 +287,51 @@ class AppUserService {
       Sincerely,
       ${app.name}`,
       html: tml
-    };
+    }; 
 
-    if(oldSignup){
-      code = oldSignup.code; 
-      oldSignup.status = 'pending';
-      oldSignup.updatedAt = util.getCurrentTime();
-      oldSignup.save();
-      callback(true);
-    }
-    else{
+    try {
+      
+      if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
 
-      try {
-       
-        if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
+      if(app.metaData.length){
+        
+        for (let index = 0; index < app.metaData.length; index++) {
+          const field = app.metaData[index]; 
 
-        if(app.metaData.length){
-          
-          for (let index = 0; index < app.metaData.length; index++) {
-            const field = app.metaData[index]; 
+          let value = _.get(metaData, field.path);
 
-            let value = _.get(metaData, field.path);
+          if(value !== undefined) _.set(finalMetaData, field.path, value);
 
-            if(value !== undefined) _.set(finalMetaData, field.path, value);
+          if(field.required && value === undefined){ 
+            callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+              
+            return;
+          }
 
-            if(field.required && value === undefined){ 
-              callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
-               
-              return;
-            }
-
-          };
-        }
-
-
-      } catch (error) {
-        callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
-        return;
+        };
       }
 
-      callback(true); 
 
-      let hashedPassword = await hashService.generateHash(req.body.password);
+    } catch (error) {
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      return;
+    }
+
+    callback(true); 
+
+
+    let hashedPassword = await hashService.generateHash(req.body.password);
+
+    if(oldSignup){ 
+      
+      oldSignup.status = 'pending';
+      oldSignup.updatedAt = util.getCurrentTime();
+      oldSignup.metaData = finalMetaData;
+      oldSignup.password = hashedPassword;
+      oldSignup.save();
+      
+    }
+    else{
 
       let item = {
         handle: handle, 
@@ -343,8 +347,7 @@ class AppUserService {
 
       let signupUser = new _signupTbl(item);
       signupUser.save(); 
-
-    }  
+    } 
 
     emailService.send(emailData);
   }
