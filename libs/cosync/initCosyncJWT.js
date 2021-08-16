@@ -31,7 +31,7 @@ const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');   
 let util = require("../util"); 
 let atob = require('atob'); 
-
+let hashService  = require('./hashService');
 
 class InitCosyncJWT {
 
@@ -82,7 +82,8 @@ class InitCosyncJWT {
         }  
 
         data.app = app;
-        data.app.appRealmPublicKey = atob(app.appPublicKey); 
+        data.app.appPublicKey = hashService.aesDecrypt(app.appPublicKey);
+        data.app.appRealmPublicKey = atob(data.app.appPublicKey); 
        
         let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
         let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
@@ -149,7 +150,8 @@ class InitCosyncJWT {
             return;
         }  
         data.app = app;
-        data.app.appRealmPublicKey = atob(app.appPublicKey); 
+        data.app.appPublicKey = hashService.aesDecrypt(app.appPublicKey);
+        data.app.appRealmPublicKey = atob(data.app.appPublicKey); 
 
         let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
         let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
@@ -201,7 +203,7 @@ class InitCosyncJWT {
     async remove(req, callback) {  
 
         let error = {status: 'Fails', message: 'Invalid Data'};
-        let data = req.body;
+        let data = req.body; 
 
         if(data.projectId == "" || !data.projectId || !data.publicKey || data.publicKey == "" || !data.privateKey || data.privateKey == ""){
             callback(null, error); 
@@ -221,7 +223,8 @@ class InitCosyncJWT {
         } 
 
         data.app = app;
-        data.app.appRealmPublicKey = atob(app.appPublicKey); 
+        data.app.appPublicKey = hashService.aesDecrypt(app.appPublicKey);
+        data.app.appRealmPublicKey = atob(data.app.appPublicKey); 
 
 
         let cosyncJWT = require(`../cosyncJWT/${app.appData.CosyncJWTVersion}/initVersion`);

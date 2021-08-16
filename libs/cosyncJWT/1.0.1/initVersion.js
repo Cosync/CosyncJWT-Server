@@ -31,8 +31,7 @@ let mongoose = require('mongoose');
 let atob = require('atob'); 
 const CONT = require('../../../config/constants');
 const SCHEMA = require('../../../config/schema');  
-let REALM_API_URL = "https://realm.mongodb.com/api/admin/v3.0";
-
+let REALM_API_URL = "https://realm.mongodb.com/api/admin/v3.0"; 
 
 
 class InitVersion {
@@ -472,13 +471,10 @@ class InitVersion {
     }
 
 
-    async reinit(data, app, callback){
+    async reinit(data,  callback){
 
-        let error = {status: 'Fails', message: 'Invalid Data'}; 
-
-        data.app = app;
+        let error = {status: 'Fails', message: 'Invalid Data'};  
         
-        data.app.appRealmPublicKey =  atob(app.appPublicKey); 
         let that = this;
 
         this.mongodbRealmlogin(data, async function(token){
@@ -592,27 +588,10 @@ class InitVersion {
     }
 
 
-    async remove(req, callback){
+    async remove(data, callback){
 
-        let error = {status: 'Fails', message: 'Invalid Data'};
-      
-        let data = req.body;
-
-        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-        let app = await _app.findOne({ appId: data.appId});
-
-        if(!app ) {
-            callback(null, error); 
-            return;
-        } 
-        if(data.projectId == "" || !data.projectId || !data.publicKey || data.publicKey == "" || !data.privateKey || data.privateKey == ""){
-            callback(null, error); 
-            return;
-        } 
-
-        data.app = app;
+        let error = {status: 'Fails', message: 'Invalid Data'}; 
        
-        data.app.appRealmPublicKey =  atob(app.appPublicKey); 
         let that = this;
 
         this.mongodbRealmlogin(data, async function(token){
