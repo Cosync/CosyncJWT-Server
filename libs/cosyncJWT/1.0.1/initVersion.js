@@ -27,7 +27,7 @@
 
 let request = require("request");
 let mongoose = require('mongoose');   
- 
+let hashService  = require('../../cosync/hashService');
 let atob = require('atob'); 
 const CONT = require('../../../config/constants');
 const SCHEMA = require('../../../config/schema');  
@@ -47,6 +47,12 @@ class InitVersion {
         let error = {status: 'Fails', message: 'Invalid Data'}; 
       
         let that = this;
+
+        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+        let cosyncApp = await _app.findOne({ appId: data.appId }); 
+        data.app = cosyncApp;
+        data.app.appPublicKey = hashService.aesDecrypt(cosyncApp.appPublicKey);
+        data.app.appRealmPublicKey = atob(data.app.appPublicKey); 
 
         this.mongodbRealmlogin(data, async function(token){
                 
@@ -106,7 +112,7 @@ class InitVersion {
 
 
     getSecret(data, token, realmApp){
-        return new Promise((resolve, reject) => {   
+        return new Promise((resolve, reject) => {
 
             const options = {
                 method: 'GET',
@@ -477,6 +483,12 @@ class InitVersion {
         
         let that = this;
 
+        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+        let cosyncApp = await _app.findOne({ appId: data.appId }); 
+        data.app = cosyncApp;
+        data.app.appPublicKey = hashService.aesDecrypt(cosyncApp.appPublicKey);
+        data.app.appRealmPublicKey = atob(data.app.appPublicKey); 
+
         this.mongodbRealmlogin(data, async function(token){
                 
             let app = await that.getApplications(data, token.access_token);
@@ -594,6 +606,12 @@ class InitVersion {
        
         let that = this;
 
+        let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+        let cosyncApp = await _app.findOne({ appId: data.appId }); 
+        data.app = cosyncApp;
+        data.app.appPublicKey = hashService.aesDecrypt(cosyncApp.appPublicKey);
+        data.app.appRealmPublicKey = atob(data.app.appPublicKey); 
+        
         this.mongodbRealmlogin(data, async function(token){
                 
             let app = await that.getApplications(data, token.access_token);

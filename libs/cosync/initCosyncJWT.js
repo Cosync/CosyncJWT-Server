@@ -79,11 +79,7 @@ class InitCosyncJWT {
         if(!app ) {
             callback(null, error); 
             return;
-        }  
-
-        data.app = app;
-        data.app.appPublicKey = hashService.aesDecrypt(app.appPublicKey);
-        data.app.appRealmPublicKey = atob(data.app.appPublicKey); 
+        }
        
         let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
         let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
@@ -116,7 +112,7 @@ class InitCosyncJWT {
                 if(app.appData) app.appData = { CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: app.appData.CosyncEngineVersion};
                 else app.appData = {CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: null};
                 app.updatedAt = util.getCurrentTime();
-                app.realmAppId = req.body.realmAppId;
+                if(req.body.realmAppId) app.realmAppId = req.body.realmAppId;
                 app.save();
 
                 callback(app.appData);
@@ -149,10 +145,7 @@ class InitCosyncJWT {
             callback(null, error); 
             return;
         }  
-        data.app = app;
-        data.app.appPublicKey = hashService.aesDecrypt(app.appPublicKey);
-        data.app.appRealmPublicKey = atob(data.app.appPublicKey); 
-
+        
         let _version = mongoose.model(CONT.TABLE.VERSIONS, SCHEMA.version);  
         let vesions = await _version.find({service: "CosyncJWT"}).sort({createdAt: 'desc'}); 
        
@@ -222,15 +215,9 @@ class InitCosyncJWT {
             return;
         } 
 
-        data.app = app;
-        data.app.appPublicKey = hashService.aesDecrypt(app.appPublicKey);
-        data.app.appRealmPublicKey = atob(data.app.appPublicKey); 
-
-
         let cosyncJWT = require(`../cosyncJWT/${app.appData.CosyncJWTVersion}/initVersion`);
         cosyncJWT.remove(data, function(result, error){
             if(result){
-
                 
                 if(app.appData) app.appData = { CosyncJWTVersion:null, CosyncEngineVersion: app.appData.CosyncEngineVersion};
                 else app.appData = {CosyncJWTVersion:null, CosyncEngineVersion: null};
