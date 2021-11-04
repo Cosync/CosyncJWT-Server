@@ -1032,8 +1032,20 @@ class AppService {
       callback(null, error); 
       return;
     }   
+
+    let metaData = [];
+
+    data.metaData.forEach(item => {
+      metaData.push({
+        id: item.id,
+        path: item.path,
+        required: item.required || false,
+        fieldName: item.fieldName,
+        canEdit: item.canEdit || false
+      });
+    });
     
-    app.metaData = data.metaData; 
+    app.metaData = metaData;
     app.updatedAt = util.getCurrentTime();
     app.save();
 
@@ -1057,8 +1069,19 @@ class AppService {
       callback(null, error); 
       return;
     }  
+
+    let metaDataInvite = [];
+
+    data.metaDataInvite.forEach(item => {
+      metaDataInvite.push({
+        id: item.id,
+        path: item.path,
+        required: item.required || false,
+        fieldName: item.fieldName
+      });
+    });
     
-    app.metaDataInvite = data.metaDataInvite; 
+    app.metaDataInvite = metaDataInvite; 
     app.updatedAt = util.getCurrentTime();
     app.save();
 

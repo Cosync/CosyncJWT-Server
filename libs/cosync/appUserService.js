@@ -865,19 +865,25 @@ class AppUserService {
     let user = await _appUserTbl.findOne({ handle: req.handle, appId: req.appId});
 
     if (user) {
+       
       let finalMetaData = {}; 
 
       for (let index = 0; index < app.metaData.length; index++) {
         const field = app.metaData[index]; 
-        let value = _.get(metaData, field.path); 
-        if(value) _.set(finalMetaData, field.path, value); 
+        
+        let value = _.get(metaData, field.path);
 
-        if(field.required && value === undefined){
+        if(value && field.canEdit === true) _.set(finalMetaData, field.path, value);  
+        else if (value && !field.canEdit){
           callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
           return;
         }
+        else if(field.required && value === undefined){
+          callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+          return;
+        }
+      };
 
-      }; 
 
       if(user.metaData){ // get old invite meta data
 
