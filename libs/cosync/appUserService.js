@@ -35,7 +35,7 @@ let twoFactorService = require('./authenticatorService');
 let emailService = require('./emailService'); 
 let twilioService = require('./twilioService');
 let hashService  = require('./hashService');
-const _ = require('lodash');
+const _ = require('lodash'); 
 
 const appProjection = {
   __v: false,
@@ -158,10 +158,7 @@ class AppUserService {
       return;
     }
     
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
+    if(!this.checkAppStatus(app, callback)) return;
 
     if(!app.signupEnabled) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_SIGNUPABLE);
@@ -364,10 +361,8 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
+    
+    if(!this.checkAppStatus(app, callback)) return;
 
     if(!app.signupEnabled) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_SIGNUPABLE);
@@ -504,10 +499,7 @@ class AppUserService {
       return;
     } 
 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    }
+    if(!this.checkAppStatus(app, callback)) return;
 
     let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);  
     let user = await _user.findOne({ handle: params.handle, appId:app.appId });
@@ -606,6 +598,8 @@ class AppUserService {
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.findOne({ appId: data.appId});
          
+    if(!this.checkAppStatus(app, callback)) return;
+
     if(!data.code){
       callback(false,  util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
       return;
@@ -635,6 +629,21 @@ class AppUserService {
   
   }
 
+  checkAppStatus(app, callback){
+    
+
+      if(app.status == 'inactive') {
+        callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
+        return false;
+      } 
+      else if(app.status == 'migrated') {
+        callback(null, util.INTERNAL_STATUS_CODE.APP_IS_MIGRATED);
+        return false;
+      } 
+      else return true;
+
+     
+  }
 
 
   async forgotPassword(req, callback){
@@ -645,10 +654,8 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
+
+    if(!this.checkAppStatus(app, callback)) return;
 
 
     let handle = req.body.handle.toLowerCase()
@@ -710,10 +717,8 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
+
+    if(!this.checkAppStatus(app, callback)) return;
 
   
     let handle = req.body.handle.toLowerCase();
@@ -761,11 +766,7 @@ class AppUserService {
       return;
     } 
 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
- 
+    if(!this.checkAppStatus(app, callback)) return;
 
     let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
     let user = await _appUserTbl.findOne({ handle: req.handle, appId: req.appId});
@@ -798,10 +799,8 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
+
+    if(!this.checkAppStatus(app, callback)) return;
  
 
     let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
@@ -850,10 +849,7 @@ class AppUserService {
       return;
     }
 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    }  
+    if(!this.checkAppStatus(app, callback)) return; 
     
     let appMetaData = util.getAppMetaData(app);
     if(!appMetaData){
@@ -918,10 +914,7 @@ class AppUserService {
       return;
     } 
 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
+    if(!this.checkAppStatus(app, callback)) return;
 
     if(app.twoFactorVerification != "phone"){
       callback(null, util.INTERNAL_STATUS_CODE.APP_NO_PHONE_TWO_FACTOR);
@@ -970,10 +963,8 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
+    
+    if(!this.checkAppStatus(app, callback)) return;
 
 
     this.checkExistingPhone(app.appId, req.body.phone, async function(exist){
@@ -1022,10 +1013,7 @@ class AppUserService {
       return;
     }
 
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    }   
+    if(!this.checkAppStatus(app, callback)) return;  
 
     
     if(req.isGoogle && app.twoFactorVerification == 'none'){
@@ -1281,10 +1269,8 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     }
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
+
+    if(!this.checkAppStatus(app, callback)) return;
 
     if(!app.invitationEnabled) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_INVITATBLE);
@@ -1394,10 +1380,8 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     }
-    if(app.status != 'active') {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
-      return;
-    } 
+
+    if(!this.checkAppStatus(app, callback)) return;
 
     if(!app.invitationEnabled) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_INVITATBLE);

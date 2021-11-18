@@ -454,3 +454,43 @@ module.exports.emailTemplate = new mongooseSchema({
   }
   
 });
+
+
+
+module.exports.applicationLogs = new mongooseSchema({
+  appId: { 
+    type: String,
+    required: true,
+    index: true 
+  },
+  handle: { 
+    type: String, 
+    index: true 
+  },
+  action: {
+    required: true,
+    type: String,
+    index: true 
+  }, 
+  status: {
+    default: "success",
+    type: String,
+    index: true 
+  },  
+  logType: {
+    default: "app",
+    type: String,
+    index: true 
+  },  
+  value: { 
+    required: true,
+    type: String,
+    index: true,
+    default: "",
+  },  
+  createdAt: { 
+    type: Date,
+    default: new Date().toUTCString()
+  }
+  
+});

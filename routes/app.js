@@ -698,6 +698,33 @@ router.post("/importDatabase", uploadStrategy, async function (req, res) {
  
 
 
+
+
+
+router.get("/export", async function (req, res) {
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+  let valid =  req.query.appId;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  appService.exportAppDatabase(req, res, function(filename, error){
+    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    else { 
+
+      
+    }
+  });
+  
+});
+
+
  
 
 module.exports = router;

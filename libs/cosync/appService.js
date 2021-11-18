@@ -39,7 +39,7 @@ const fs = require('fs');
 const DIR = 'temp';
 const zipper = require('zip-local');
 const csv = require('csv-parser');
-
+const createCsvWriter = require('csv-writer').createObjectCsvWriter; 
 
 const appProjection = {
   __v: false,
@@ -1415,6 +1415,211 @@ class AppService {
     });
     
   }
+
+
+
+
+  async exportAppDatabase(req, res, callback){
+    
+
+    let data = req.query;
+    let error = {status: 'Fails', message: 'Invalid Data'};  
+   
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
+
+    if(!app ) {
+      callback(null, error); 
+      return;
+    } 
+
+    let _users = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let users = await _users.find({ appId: data.appId });  
+
+    let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
+    let signups = await _signup.find({ appId: data.appId });
+
+    let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite);
+    let invites = await _invite.find({ appId: data.appId });
+
+    let _emails = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+    let emails = await _emails.find({ appId: data.appId });
+
+    
+    let appDir = `${DIR}/${data.appId}`;
+
+    if (!fs.existsSync(appDir)){
+        fs.mkdirSync(appDir);
+    }
+
+
+    let today = util.getCurrentDate();
+
+    let appCol = `app-collection.csv`;
+    let path = `${appDir}/${appCol}`; 
+
+    const csvAppWriter = createCsvWriter({
+      path: path,
+      header: [ 
+        {id: 'name', title: 'name'}, 
+        {id: 'status', title: 'status'},
+        {id: 'jwtEnabled', title: 'jwtEnabled'},
+        {id: 'appPrivateKey', title: 'appPrivateKey'},
+        {id: 'appPublicKey', title: 'appPublicKey'},
+        {id: 'appToken', title: 'appToken'},
+        {id: 'appSecret', title: 'appSecret'},
+        {id: 'handle', title: 'handle'},
+        {id: 'invitationEnabled', title: 'invitationEnabled'},
+        {id: 'signupEnabled', title: 'signupEnabled'},
+        {id: 'signupFlow', title: 'signupFlow'},
+        {id: 'twoFactorVerification', title: 'twoFactorVerification'},
+        {id: 'emailExtension', title: 'emailExtension'},
+        {id: 'emailExtensionAPIKey', title: 'emailExtensionAPIKey'},
+        {id: 'emailExtensionSenderEmail', title: 'emailExtensionSenderEmail'},
+        {id: 'TWILIOAccountSid', title: 'TWILIOAccountSid'},
+        {id: 'TWILIOToken', title: 'TWILIOToken'},
+        {id: 'TWILIOPhoneNumber', title: 'TWILIOPhoneNumber'},
+        {id: 'googleAppName', title: 'googleAppName'},
+        {id: 'maxLoginAttempts', title: 'maxLoginAttempts'},
+        {id: 'passwordFilter', title: 'passwordFilter'},
+        {id: 'passwordMinLength', title: 'passwordMinLength'},
+        {id: 'passwordMinUpper', title: 'passwordMinUpper'},
+        {id: 'passwordMinLower', title: 'passwordMinLower'},
+        {id: 'passwordMinDigit', title: 'passwordMinDigit'},
+        {id: 'passwordMinSpecial', title: 'passwordMinSpecial'},
+        {id: 'userJWTExpiration', title: 'userJWTExpiration'},
+        {id: 'realmAppId', title: 'realmAppId'},
+        {id: 'appData', title: 'appData'},
+        {id: 'metaDataInvite', title: 'metaDataInvite'},
+        {id: 'metaData', title: 'metaData'},
+        {id: 'metaDataEmail', title: 'metaDataEmail'}, 
+        {id: 'createdAt', title: 'createdAt'},
+        {id: 'updatedAt', title: 'updatedAt'}
+      ]
+    });
+
+    app.appPrivateKey = hashService.aesDecrypt(app.appPrivateKey);
+    app.appPublicKey = hashService.aesDecrypt(app.appPublicKey);
+    app.appSecret = hashService.aesDecrypt(app.appSecret);
+
+    if(app.TWILIOAccountSid) app.TWILIOAccountSid = hashService.aesDecrypt(app.TWILIOAccountSid);
+    if(app.TWILIOToken) app.TWILIOToken = hashService.aesDecrypt(app.TWILIOToken);
+    if(app.TWILIOPhoneNumber) app.TWILIOPhoneNumber = hashService.aesDecrypt(app.TWILIOPhoneNumber);
+    if(app.emailExtensionAPIKey) app.emailExtensionAPIKey = hashService.aesDecrypt(app.emailExtensionAPIKey);
+
+    await csvAppWriter.writeRecords([app]);
+
+
+    let userCollection = `user-collection.csv`;
+    path = `${appDir}/${userCollection}`; 
+
+    const csvUserWriter = createCsvWriter({
+      path: path,
+      header: [ 
+        {id: 'handle', title: 'handle'},
+        {id: 'password', title: 'password'},
+        {id: 'status', title: 'status'},
+        {id: 'appId', title: 'appId'},
+        {id: 'twoFactorPhoneVerification', title: 'twoFactorPhoneVerification'},
+        {id: 'twoFactorGoogleVerification', title: 'twoFactorGoogleVerification'},
+        {id: 'googleSecretKey', title: 'googleSecretKey'},
+        {id: 'twoFactorCode', title: 'twoFactorCode'},
+        {id: 'phone', title: 'phone'},
+        {id: 'phoneVerified', title: 'phoneVerified'},
+        {id: 'phoneCode', title: 'phoneCode'},
+        {id: 'metaData', title: 'metaData'},
+        {id: 'lastLogin', title: 'lastLogin'},
+        {id: 'createdAt', title: 'createdAt'},
+        {id: 'updatedAt', title: 'updatedAt'}
+      ]
+    });
+
+    await csvUserWriter.writeRecords(users);
+
+    let signupCol = `signup-collection.csv`;
+
+    path = `${appDir}/${signupCol}`; 
+
+    const csvSignUpWriter = createCsvWriter({
+      path: path,
+      header: [ 
+        {id: 'handle', title: 'handle'},
+        {id: 'password', title: 'password'},
+        {id: 'status', title: 'status'},
+        {id: 'appId', title: 'appId'}, 
+        {id: 'code', title: 'code'}, 
+        {id: 'metaData', title: 'metaData'}, 
+        {id: 'createdAt', title: 'createdAt'},
+        {id: 'updatedAt', title: 'updatedAt'}
+      ]
+    });
+    await csvSignUpWriter.writeRecords(signups);
+
+
+    let inviteCol = `invite-collection.csv`;
+    path = `${appDir}/${inviteCol}`; 
+    const csvInviteWriter = createCsvWriter({
+      path: path,
+      header: [ 
+        {id: 'handle', title: 'handle'},
+        {id: 'senderHandle', title: 'senderHandle'},
+        {id: 'senderUserId', title: 'senderUserId'},
+        {id: 'code', title: 'code'},
+        {id: 'status', title: 'status'},
+        {id: 'appId', title: 'appId'}, 
+        {id: 'metaData', title: 'metaData'}, 
+        {id: 'createdAt', title: 'createdAt'},
+        {id: 'updatedAt', title: 'updatedAt'}
+      ]
+    });
+    await csvInviteWriter.writeRecords(invites);
+   
+
+    let emailTemplateCol = `email-template-collection.csv`;
+    path = `${appDir}/${emailTemplateCol}`; 
+
+    const csvEmailTemplateWriter = createCsvWriter({
+      path: path,
+      header: [ 
+        {id: 'appId', title: 'appId'},
+        {id: 'subject', title: 'subject'},
+        {id: 'replyTo', title: 'replyTo'},
+        {id: 'templateName', title: 'templateName'}, 
+        {id: 'htmlTemplate', title: 'htmlTemplate'}, 
+        {id: 'createdAt', title: 'createdAt'},
+        {id: 'updatedAt', title: 'updatedAt'}
+      ]
+    });
+    await csvEmailTemplateWriter.writeRecords(emails);
+
+
+    let source = `${DIR}/${data.appId}.zip`;
+    zipper.sync.zip(appDir).compress().save(source);
+
+    console.log('The CSV file was written successfully')
+    
+     
+
+    callback(true);
+    
+    res.setHeader('Content-Disposition', 'attachment; filename="' + data.appId + '"');
+    res.setHeader('Content-Type', 'application/zip'); 
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");  
+
+    let stream = fs.createReadStream(source);
+    stream.pipe(res);
+    stream.on("error", err => console.log(err)); 
+    stream.on("end", () => {
+      fs.unlinkSync(source); 
+      fs.rm(`${DIR}/${data.appId}`, { recursive: true }, function(res){
+        console.log(res);
+      });
+    }); 
+ 
+  }
+
+
  
 
  
