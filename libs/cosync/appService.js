@@ -678,6 +678,31 @@ class AppService {
           callback(app); 
 
           break; 
+          case 'emailExtension':
+         
+            app.emailExtension = data.emailExtension; 
+            app.updatedAt = util.getCurrentTime();
+            app.save(); 
+            delete app.appPrivateKey;
+            delete app.appSecret;
+            callback(app);  
+  
+  
+            break; 
+          case 'emailExtensionAPIKey':
+           
+            let encryptedKey = hashService.aesEncrypt(data.emailExtensionAPIKey); 
+             
+            app.emailExtensionAPIKey = encryptedKey;
+            app.emailExtensionSenderEmail= data.emailExtensionSenderEmail;
+            app.updatedAt = util.getCurrentTime();
+            app.save(); 
+            delete app.appPrivateKey;
+            delete app.appSecret;
+            callback(app);  
+   
+  
+            break; 
 
         default:
           callback(null, error);

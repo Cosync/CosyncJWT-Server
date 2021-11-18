@@ -346,7 +346,9 @@ class AppUserService {
       signupUser.save(); 
     } 
 
-    emailService.send(emailData);
+    
+    if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, null, app);
+    else emailService.send(emailData);
   }
 
 
@@ -697,7 +699,10 @@ class AppUserService {
         html: tml
       };
 
-      emailService.send(emailData);
+     
+
+      if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, null, app);
+      else emailService.send(emailData);
     }
     else{
       callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
@@ -1061,9 +1066,9 @@ class AppUserService {
               filename: "QRCode.png"
             }
 
-            emailService.sendQR(emailData, QRimage).then(res => {
-                
-            }); 
+            if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, QRimage, app);
+            else emailService.send(emailData, QRimage); 
+          
             
             user.googleSecretKey = twoFactor.googleSecretKey;
             user.save();
@@ -1253,7 +1258,9 @@ class AppUserService {
       };
 
 
-      emailService.send(emailData); 
+      
+      if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, null, app);
+      else emailService.send(emailData);
 
     }
     else callback(false);
@@ -1347,7 +1354,9 @@ class AppUserService {
       html: tml
     };
 
-    emailService.send(emailData);
+    
+    if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, null, app);
+    else emailService.send(emailData);
     
     
 

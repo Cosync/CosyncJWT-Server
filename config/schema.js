@@ -54,6 +54,14 @@ module.exports.application = new mongooseSchema({
     comment: 'Allow app jwt',
     index: true 
   }, 
+  emailExtension: {
+    default: false,
+    type: Boolean,
+    comment: 'Enable app email to use owned domain email',
+    index: true 
+  },
+  emailExtensionAPIKey: String,
+  emailExtensionSenderEmail: String,
   appPrivateKey: String,
   appPublicKey: String,
   appToken: String, 
