@@ -30,6 +30,7 @@ const express = require('express');
 const router = express.Router();
 const appUser = require('../libs/cosync/appUserService');  
 const appService = require('../libs/cosync/appService');
+const appLogService = require('../libs/cosync/appLogsService');
 const util = require('../libs/util');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
@@ -54,8 +55,14 @@ router.post("/login", async (req, res) => {
   data.appId = req.appId;
   
   appUser.getAppUserAuth(data, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(data.appId, 'login', JSON.stringify(_error), 'error', 'user'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(data.appId, 'login', true, 'success', 'user'); 
+      util.responseFormat(res, result);
+    } 
   });
 });
 
@@ -86,8 +93,14 @@ router.post("/loginComplete", async (req, res) => {
   data.handle = verified.handle;
 
   appUser.verifyTwoFactor(data, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(data.appId, 'loginComplete', JSON.stringify(error), 'error', 'user'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(data.appId, 'loginComplete', true, 'success', 'user'); 
+      util.responseFormat(res, result);
+    } 
   });
 });
 
@@ -117,8 +130,14 @@ router.post("/signup", async (req, res) => {
   
   appUser.signup(req, function(result, error){ 
     
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(req.appId, 'signup', JSON.stringify(error), 'error', 'user'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(req.appId, 'signup', JSON.stringify(result), 'success', 'user'); 
+      util.responseFormat(res, result);
+    } 
   });
 });
 
@@ -146,8 +165,14 @@ router.post("/completeSignup", async (req, res) => {
 
   appUser.completeSignup(signUpData, function(result, error){ 
     
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(error), 'error', 'user'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(signUpData), 'success', 'user'); 
+      util.responseFormat(res, result);
+    } 
   });
 });
 
@@ -184,8 +209,14 @@ router.get("/completeSignup", async (req, res) => {
 
   appUser.completeSignup(signUpData, function(result, error){ 
     
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(error), 'error', 'user'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(signUpData), 'success', 'user'); 
+      util.responseFormat(res, result);
+    } 
   });
 }); 
 
@@ -204,8 +235,14 @@ router.post("/invite", async (req, res) => {
   
   appUser.inviteUser(req, function(result, error){ 
   
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(req.appId, 'invite', JSON.stringify(error), 'error', 'user'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(req.appId, 'invite', JSON.stringify(req.body), 'success', 'user'); 
+      util.responseFormat(res, result);
+    } 
   });
 }); 
 
@@ -226,8 +263,15 @@ router.post("/register", async (req, res) => {
   
   appUser.verifyInvite(req, function(result, error){ 
     
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(req.appId, 'register', JSON.stringify(error), 'error', 'user');
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(req.appId, 'register', JSON.stringify(req.body), 'success', 'user');
+      util.responseFormat(res, result);
+    }
+
   });
 }); 
 
@@ -243,8 +287,14 @@ router.post("/forgotPassword", async (req, res) => {
   }
   appUser.forgotPassword(req, function(result, error){ 
     
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      appLogService.addLog(req.appId, 'forgotPassword', JSON.stringify(error), 'error', 'user');
+    } 
+    else{
+      appLogService.addLog(req.appId, 'forgotPassword', JSON.stringify(req.body), 'success', 'user');
+      util.responseFormat(res, result);
+    }
   });
    
 });
@@ -268,8 +318,14 @@ router.post("/resetPassword", async (req, res) => {
 
   appUser.resetPassword(req, function(result, error){ 
     
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      appLogService.addLog(req.appId, 'resetPassword', JSON.stringify(error), 'error', 'user');
+    }
+    else{
+      appLogService.addLog(req.appId, 'resetPassword', JSON.stringify({handle: req.body.handle}), 'success', 'user');
+      util.responseFormat(res, result);
+    }
   });
    
 });
@@ -292,22 +348,26 @@ router.post("/changePassword", async (req, res) => {
 
   appUser.changePassword(req, function(result, error){ 
     
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(req.appId, 'changePassword', JSON.stringify(error), 'error', 'user');
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(req.appId, 'changePassword', JSON.stringify({handle: req.handle}), 'success', 'user');
+      util.responseFormat(res, result);
+    }
   });
    
 });
 
 
-router.get("/getUser", async (req, res) => {
- 
-  
+router.get("/getUser", async (req, res) => { 
+
   if (!req.handle)
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_DATA, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
-  }
- 
+  } 
 
   appUser.getUser(req, function(result, error){ 
     if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -320,8 +380,14 @@ router.get("/getUser", async (req, res) => {
 router.post("/setUserMetadata", async (req, res) => {  
 
   appUser.setUserMetaData(req, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      appLogService.addLog(req.appId, 'setUserMetadata', JSON.stringify(error), 'error', 'user');
+    } 
+    else{
+      appLogService.addLog(req.appId, 'setUserMetadata', JSON.stringify(req.body), 'success', 'user');
+      util.responseFormat(res, result);
+    }
   });
 });
 
@@ -363,8 +429,14 @@ router.post("/setPhone", async (req, res) => {
 
   
   appUser.setPhone(req, function(result, error){ 
-    if(result) util.responseFormat(res, true);
-    else util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    if(result) { 
+      appLogService.addLog(req.appId, 'setPhone', JSON.stringify(req.body), 'success', 'user');
+      util.responseFormat(res, true);
+    }
+    else{
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      appLogService.addLog(req.appId, 'setPhone', JSON.stringify(error), 'error', 'user');
+    } 
   });
    
 });
@@ -393,8 +465,16 @@ router.post("/verifyPhone", async (req, res) => {
   } 
   
   appUser.verifyPhone(req, function(result, error){ 
-    if(result) util.responseFormat(res, result);
-    else util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    if(result){
+      appLogService.addLog(req.appId, 'verifyPhone', JSON.stringify({handle: req.handle}), 'success', 'user');
+      util.responseFormat(res, result);
+    } 
+    else{
+      let err = error;
+      err.handle = req.handle;
+      appLogService.addLog(req.appId, 'verifyPhone', JSON.stringify(err), 'error', 'user');
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
   });
    
 });
@@ -411,8 +491,16 @@ router.post("/setTwoFactorGoogleVerification", async (req, res) => {
   req.isGoogle = true;
 
   appUser.requestTwoFactorVerifications(req, function(result, error){ 
-    if(result) util.responseFormat(res, result);
-    else util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    if(result){
+      appLogService.addLog(req.appId, 'setTwoFactorGoogleVerification', JSON.stringify({handle: req.handle}), 'success', 'user');
+      util.responseFormat(res, result);
+    } 
+    else{
+      let err = error;
+      err.handle = req.handle;
+      appLogService.addLog(req.appId, 'setTwoFactorGoogleVerification', JSON.stringify(err), 'error', 'user');
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
   });
    
 });
@@ -428,8 +516,16 @@ router.post("/setTwoFactorPhoneVerification", async (req, res) => {
   }
   req.isPhone = true;
   appUser.requestTwoFactorVerifications(req, function(result, error){ 
-    if(result) util.responseFormat(res, result);
-    else util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    if(result){
+      appLogService.addLog(req.appId, 'setTwoFactorPhoneVerification', JSON.stringify({handle: req.handle}), 'success', 'user');
+      util.responseFormat(res, result);
+    } 
+    else{
+      let err = error;
+      err.handle = req.handle;
+      appLogService.addLog(req.appId, 'setTwoFactorPhoneVerification', JSON.stringify(err), 'error', 'user');
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
   });
    
 });
