@@ -34,6 +34,7 @@ const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');  
 const twilioService = require('../twilioService');
 const appUserService = require('./appUserService');
+let appLogService = require('./appLogsService');
 const hashService  = require('./hashService');
 const fs = require('fs');
 const DIR = 'temp';
@@ -122,7 +123,7 @@ class AppService {
       let app = new _app(item); 
       app.save();
       
-      this.createAppEmailTemplate(app);
+      this.createAppEmailTemplate(app); 
     }
     
   }
@@ -261,8 +262,11 @@ class AppService {
     _signup.deleteMany({ "appId": id }, function (err) {});  
 
     
-    let _reset = mongoose.model(CONT.TABLE.RESET_PASSWORDS, SCHEMA.resetPassword);
-    _reset.deleteMany({ "appId": id }, function (err) {}); 
+    let _password = mongoose.model(CONT.TABLE.RESET_PASSWORDS, SCHEMA.resetPassword);
+    _password.deleteMany({ "appId": id }, function (err) {}); 
+
+    let _logs = mongoose.model(CONT.TABLE.APP_LOGS, SCHEMA.applicationLogs);
+    _logs.deleteMany({ "appId": id }, function (err) {}); 
 
   }
 
@@ -297,9 +301,7 @@ class AppService {
         if(app){
           callback(null, `App '${data.name}' already exists.`);
           return;
-        } 
-
-        
+        }  
       } 
       
 
@@ -931,6 +933,99 @@ class AppService {
     let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup); 
     let signupUser = new _signupTbl(item);
     signupUser.save();
+  }
+
+
+  async getAppLogs(params, callback) {  
+    let appLogData = {};
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    var app = await _app.findOne({ appId: params.appId }); 
+    if (!app) {
+      callback(null);
+      return; 
+    } 
+
+    let offset = params.offset ? parseInt(params.offset) : 0;
+    offset = offset >= 0 ? offset : 0;
+    
+    let limit = params.limit ? parseInt(params.limit) : 25;
+    limit = limit >= 25 ? limit : 25;
+
+    offset = offset * limit;
+
+    let query = {appId: params.appId};
+
+    if(params.type && params.type != "all") query.logType = params.type;
+    if(params.status && params.status != "all") query.status = params.status;
+
+    let fromDate, toDate;
+
+    if(params.fromDate != undefined && params.fromDate != ""  && params.toDate != undefined && params.toDate != ""){
+
+      fromDate =  new Date(params.fromDate).toUTCString();
+      toDate =  new Date(params.toDate).toUTCString();
+      if(fromDate && toDate){ 
+        query.createdAt = {
+          $gte: fromDate,
+          $lt: toDate
+        }
+      }
+
+      if(toDate){
+        query.createdAt = { 
+          $lt: toDate
+        }
+      }
+
+      if(fromDate){
+        query.createdAt = {
+          $gte: fromDate 
+        }
+      }
+
+
+    }  
+    else if(params.toDate ){
+      toDate =  new Date(params.toDate).toUTCString();
+      if(toDate){
+        query.createdAt = { 
+          $lt: toDate
+        }
+      }
+      
+
+    }
+    else if(params.fromDate ){
+      fromDate =  new Date(params.fromDate).toUTCString();
+      if(fromDate){
+        query.createdAt = {
+          $gte: fromDate 
+        }
+      }
+     
+    }
+
+    if(params.filterAction){ 
+      let orQuery = []  
+       
+      if(params.filterAction != "all"){
+        let filterAction = params.filterAction.split(",");  
+        orQuery = [{action:{ $in: filterAction }}];
+
+      }
+        
+      if(orQuery.length) query.$or = orQuery; 
+       
+    }
+    
+
+    let _logs = mongoose.model(CONT.TABLE.APP_LOGS, SCHEMA.applicationLogs);
+    let logs = await _logs.find(query).sort({createdAt: 'desc'}).skip(offset).limit(limit);
+    appLogData.totalLog = await this.countTable(_logs, query);
+    appLogData.logs = logs;
+
+    callback(appLogData);
+
   }
 
 

@@ -28,6 +28,7 @@
 const express = require('express');
 const router = express.Router();
 const appService = require('../libs/cosync/appService'); 
+const appLogService = require('../libs/cosync/appLogsService');
 const appUserService = require('../libs/cosync/appUserService');  
 let initCosyncJWT = require('../libs/cosync/initCosyncJWT'); 
 let initCosyncEngine = require('../libs/cosync/initCosyncEngine'); 
@@ -48,9 +49,13 @@ router.post("/", async (req, res) => {
 
     appService.addApp(req.body, function(result, err){
         if(err){  
-            util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
+          util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
+          appLogService.addLog("undefined", 'create', JSON.stringify(_error), 'error', 'app'); 
         } 
-        else util.responseFormat(res, result);
+        else{
+          appLogService.addLog(result.appId, 'create', true, 'success', 'app'); 
+          util.responseFormat(res, result);
+        } 
       });
 });
 
@@ -202,12 +207,17 @@ router.post("/update", async (req, res) => {
     }
 
 
-    appService.updateApp(req.body, function(result, err){
+    appService.updateApp(req.body, function(result, err){ 
+      
         if(err){ 
             _error.message = err;
             util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+            appLogService.addLog(req.body.appId, 'update', JSON.stringify(_error), 'error', 'app'); 
         } 
-        else util.responseFormat(res, result);
+        else{
+          util.responseFormat(res, result);
+          appLogService.addLog(req.body.appId, 'update', JSON.stringify(req.body), 'success', 'app'); 
+        } 
       });
 });
 
@@ -228,10 +238,14 @@ router.post("/deleteMetadata", async (req, res) => {
 
   appService.deleteMetadata(req.body, function(result, err){
       if(err){ 
-          
-          util.responseFormat(res, {status: 'Fails', message:err}, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        let error = {status: 'Fails', message:err};
+        appLogService.addLog(req.body.appId, 'deleteMetadata', JSON.stringify(error), 'error', 'app'); 
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       } 
-      else util.responseFormat(res, result);
+      else{
+        appLogService.addLog(req.body.appId, 'deleteMetadata', true, 'success', 'app'); 
+        util.responseFormat(res, result);
+      } 
     });
 });
 
@@ -250,8 +264,13 @@ router.delete("/:appId",
         if(error){
             _error.message = error;
             util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+            appLogService.addLog(req.params.appId, 'deleteApp', JSON.stringify(_error), 'error', 'app'); 
         } 
-        else util.responseFormat(res, result);
+        else{
+          appLogService.addLog(req.params.appId, 'deleteApp', true, 'success', 'app'); 
+
+          util.responseFormat(res, result);
+        } 
       });
       
     } catch (e) {
@@ -282,8 +301,14 @@ router.post("/user",
     }
 
     appUserService.updateAppUser(req.body, function(data, err){
-      if(data) util.responseFormat(res, data);
-      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      if(data){
+        util.responseFormat(res, data);
+        appLogService.addLog(req.body.appId, 'updateAppUser', true, 'success', 'app'); 
+      } 
+      else{
+        appLogService.addLog(req.body.appId, 'updateAppUser', JSON.stringify(_error), 'error', 'app'); 
+        util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      } 
     });
   }
 );
@@ -305,8 +330,16 @@ router.post("/resetUserPassword",
     } 
 
     appUserService.updateAppUserPasword(req.body, function(data, err){
-      if(data) util.responseFormat(res, data);
-      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      if(data){
+        appLogService.addLog(req.body.appId, 'resetUserPassword', JSON.stringify({userId:req.body.userId}), 'success', 'app'); 
+        util.responseFormat(res, data);
+      } 
+      else{
+        let error = _error;
+        error.userId = req.body.userId;
+        appLogService.addLog(req.body.appId, 'resetUserPassword', JSON.stringify(error), 'error', 'app'); 
+        util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      } 
     });
   }
 ); 
@@ -322,8 +355,14 @@ router.post("/updateAppUserMetaData", async (req, res) => {
   } 
 
   appUserService.updateAppUserMetaData(req, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, true);
+    if(error){
+      appLogService.addLog(req.body.appId, 'updateAppUserMetaData', JSON.stringify(error), 'error', 'app'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      util.responseFormat(res, true);
+      appLogService.addLog(req.body.appId, 'updateAppUserMetaData', JSON.stringify(req.body), 'success', 'app'); 
+    } 
   });
    
 });
@@ -339,8 +378,14 @@ router.post("/initCosyncJWT", async (req, res) => {
   } 
 
   initCosyncJWT.init(req, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(req.body.appId, 'initCosyncJWT', JSON.stringify(error), 'error', 'app'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(req.body.appId, 'initCosyncJWT', true, 'success', 'app'); 
+      util.responseFormat(res, result);
+    } 
   });
    
 });
@@ -356,8 +401,14 @@ router.post("/reinitCosyncJWT", async (req, res) => {
   } 
 
   initCosyncJWT.reinit(req, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(req.body.appId, 'reinitCosyncJWT', JSON.stringify(error), 'error', 'app'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(req.body.appId, 'reinitCosyncJWT', true, 'success', 'app'); 
+      util.responseFormat(res, result);
+    } 
   });
    
 });
@@ -374,8 +425,14 @@ router.post("/removeCosyncJWT", async (req, res) => {
   } 
 
   initCosyncJWT.remove(req, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(req.body.appId, 'removeCosyncJWT', JSON.stringify(error),  'error', 'app'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(req.body.appId, 'removeCosyncJWT', true, 'success', 'app'); 
+      util.responseFormat(res, result);
+    } 
   });
    
 });
@@ -391,8 +448,14 @@ router.post("/initCosyncEngine", async (req, res) => {
   } 
 
   initCosyncEngine.init(req, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(req.body.appId, 'initCosyncEngine', JSON.stringify(error),  'error', 'app'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(req.body.appId, 'initCosyncEngine', true, 'success', 'app'); 
+      util.responseFormat(res, result);
+    } 
   });
    
 });
@@ -408,8 +471,14 @@ router.post("/reinitCosyncEngine", async (req, res) => {
   } 
 
   initCosyncEngine.reinit(req, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      appLogService.addLog(req.body.appId, 'reinitCosyncEngine', JSON.stringify(error),  'error', 'app'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(req.body.appId, 'reinitCosyncEngine', true, 'success', 'app'); 
+      util.responseFormat(res, result);
+    } 
   });
    
 }); 
@@ -447,8 +516,14 @@ router.post("/saveUserSchema", async function (req, res) {
     }
 
     appService.saveUserSchema(req, function(result, error){
-      if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      else util.responseFormat(res, true);
+      if(error){
+        appLogService.addLog(req.body.appId, 'saveUserSchema', JSON.stringify(error),  'error', 'app'); 
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      } 
+      else {
+        appLogService.addLog(req.body.appId, 'saveUserSchema', true, 'success', 'app'); 
+        util.responseFormat(res, true);
+      }
     });
     
   }
@@ -466,8 +541,14 @@ router.post("/updateAppSetting", async (req, res) => {
     
 
   appService.updateAppSetting(req, function(result, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      appLogService.addLog(req.body.appId, 'updateAppSetting', req.body.setting,  'error', 'app'); 
+    } 
+    else{
+      appLogService.addLog(req.body.appId, 'updateAppSetting', req.body.setting, 'success', 'app'); 
+      util.responseFormat(res, result);
+    } 
   });
      
 });
@@ -486,8 +567,14 @@ router.post("/testAppTwilio", async (req, res) => {
   try {  
 
     appService.testAppTwilio(req, function(result, error){
-      if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      else util.responseFormat(res, result);
+      if(error){
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        appLogService.addLog(req.body.appId, 'testAppTwilio', JSON.stringify(error),  'error', 'app'); 
+      } 
+      else{
+        appLogService.addLog(req.body.appId, 'testAppTwilio', true, 'success', 'app'); 
+        util.responseFormat(res, result);
+      } 
     });
     
   } catch (e) {
@@ -511,9 +598,15 @@ router.post("/addUser", async function (req, res) {
       return;
     }
 
-    appService.addUser(req.body, function(data, err){
-      if(data) util.responseFormat(res, data);
-      else util.responseFormat(res, err, util.HTTP_STATUS_CODE.FORBIDDEN);
+    appService.addUser(req.body, function(data, error){
+      if(data){
+        appLogService.addLog(req.body.appId, 'addUser', JSON.stringify(data), 'success', 'app'); 
+        util.responseFormat(res, data);
+      } 
+      else{
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.FORBIDDEN);
+        appLogService.addLog(req.body.appId, 'addUser', JSON.stringify(error),  'error', 'app'); 
+      } 
     });
   }
 );
@@ -533,14 +626,38 @@ router.post("/removeUser",
       return;
     }
 
-    appService.removeUser(req.body, function(data, err){
-      if(data) util.responseFormat(res, data);
-      else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    appService.removeUser(req.body, function(data, error){
+      if(data){
+        appLogService.addLog(req.body.appId, 'removeUser', JSON.stringify(req.body),  'success', 'app'); 
+        util.responseFormat(res, data);
+      } 
+      else{
+        appLogService.addLog(req.body.appId, 'removeUser', JSON.stringify(error),  'error', 'app'); 
+        util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      } 
     });
   }
 );
 
 
+router.get("/logs", async function (req, res) {
+  if (req.scope != 'server')
+  { 
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+  let valid = req.query.appId;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  appService.getAppLogs(req.query, function(data, err){
+    if(data) util.responseFormat(res, data);
+    else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+  });
+})
   
 router.get("/stat",
   async function (req, res) {
@@ -600,8 +717,14 @@ router.post("/updateEmailTemplate", async function (req, res) {
   }
 
   appService.updateEmailTemplate(req, function(data, err){
-    if(data) util.responseFormat(res, data);
-    else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    if(data){
+      appLogService.addLog(req.body.appId, 'updateEmailTemplate', JSON.stringify(data),  'success', 'app'); 
+      util.responseFormat(res, data);
+    } 
+    else{
+      appLogService.addLog(req.body.appId, 'updateEmailTemplate', JSON.stringify(_error),  'error', 'app'); 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    } 
   });
 });
 
@@ -619,8 +742,14 @@ router.post("/updateAppMetaData", async (req, res) => {
   try {  
 
     appService.updateAppMetaData(req, function(result, error){
-      if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      else util.responseFormat(res, result);
+      if(error){
+        appLogService.addLog(req.body.appId, 'updateAppMetaData', JSON.stringify(_error),  'error', 'app'); 
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      } 
+      else{
+        appLogService.addLog(req.body.appId, 'updateAppMetaData', JSON.stringify(result),  'success', 'app'); 
+        util.responseFormat(res, result);
+      } 
     });
     
   } catch (e) {
@@ -642,8 +771,14 @@ router.post("/updateAppInviteMetaData", async (req, res) => {
   try {  
 
     appService.updateAppInviteMetaData(req, function(result, error){
-      if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      else util.responseFormat(res, result);
+      if(error){
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        appLogService.addLog(req.body.appId, 'updateAppInviteMetaData', JSON.stringify(error),  'error', 'app'); 
+      } 
+      else{
+        appLogService.addLog(req.body.appId, 'updateAppInviteMetaData', JSON.stringify(result),  'success', 'app'); 
+        util.responseFormat(res, result);
+      } 
     });
     
   } catch (e) {
@@ -666,8 +801,14 @@ router.post("/reset", async (req, res) => {
   try { 
 
     appService.resetApp(req.body, function(result, error){
-      if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      else util.responseFormat(res, result);
+      if(error){
+        appLogService.addLog(req.body.appId, 'resetApp', JSON.stringify(error),  'error', 'app'); 
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      } 
+      else{
+        appLogService.addLog(req.body.appId, 'resetApp', true,  'success', 'app'); 
+        util.responseFormat(res, result);
+      } 
     });
     
   } catch (e) {
@@ -689,8 +830,14 @@ router.post("/importDatabase", uploadStrategy, async function (req, res) {
   }
 
   appService.importDatabase(req, res, function(result){
-    if(result.status == 'fails') util.responseFormat(res, result, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+    if(result.status == 'fails'){
+      appLogService.addLog("undefined", 'importDatabase', JSON.stringify(result),  'error', 'app'); 
+      util.responseFormat(res, result, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else{
+      appLogService.addLog(result.appId, 'importDatabase', JSON.stringify(result),  'success', 'app'); 
+      util.responseFormat(res, result);
+    } 
   })
    
   
@@ -715,10 +862,12 @@ router.get("/export", async function (req, res) {
   }
 
   appService.exportAppDatabase(req, res, function(filename, error){
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    if(error){
+      appLogService.addLog(req.query.appId, 'exportAppDatabase', JSON.stringify(error),  'error', 'app'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
     else { 
-
-      
+      appLogService.addLog(req.query.appId, 'exportAppDatabase', true,  'success', 'app');  
     }
   });
   
