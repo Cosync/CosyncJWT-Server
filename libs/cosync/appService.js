@@ -356,10 +356,9 @@ class AppService {
           callback(app); 
         }
         
-      }
-      
-     
+      } 
   }
+ 
 
 
   async getCosyncVersions(callback) {

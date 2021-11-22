@@ -26,6 +26,7 @@
 */
  
 let sgMail = require('@sendgrid/mail');  
+const appLogService = require('./appLogsService');
 
 class EmailService {
 
@@ -106,18 +107,34 @@ class EmailService {
                     // console.log(response.body);
                     resolve(true)
                 }).catch(err => {
+
                     console.log(err);
                     let message = JSON.stringify(err);
+                    
                     if(err.response.body && err.response.body.errors) that.sendToAppOwner(app, message);
 
-                    if(err.response.body.errors) appLogService.addLog(app.appId, 'sendEmail', JSON.stringify(err.response.body.errors[0]), "error"); 
-                    else appLogService.addLog(app.appId, 'sendEmail', message, "error"); 
+                    let error = {
+                        handle : data.to,
+                        message: message
+                    };
+
+                    if(err.response.body.errors)  error.message = JSON.stringify(err.response.body.errors[0])
+
+                    appLogService.addLog(app.appId, 'sendEmail', JSON.stringify(error), "error"); 
 
                     resolve(false)
                 })
                 
-            } catch (error) {
-                console.log(error);       
+            } catch (err) {
+                resolve(false)
+                console.log(error);     
+                
+                let error = {
+                    handle : data.to,
+                    message: JSON.stringify(err)
+                };
+                appLogService.addLog(app.appId, 'sendEmail', JSON.stringify(error), "error"); 
+
             }
 
              
@@ -172,12 +189,24 @@ class EmailService {
                 request.url = '/v3/mail/send';
 
                 sgClient.request(request).then(([response, body]) => {
-                    // console.log(response.statusCode);
-                    // console.log(response.body);
+                    
                     resolve(true)
                 }).catch(err => {
                     console.log(err.response.body.errors);
+
                     let message = JSON.stringify(err);
+                    
+                    if(err.response.body && err.response.body.errors) that.sendToAppOwner(app, message);
+
+                    let error = {
+                        handle : app.emailExtensionSenderEmail,
+                        message: message
+                    };
+
+                    if(err.response.body.errors)  error.message = JSON.stringify(err.response.body.errors[0])
+
+                    appLogService.addLog(app.appId, 'testExtentionService', JSON.stringify(error), "error");  
+                   
                     if(err.response.body && err.response.body.errors) that.sendToAppOwner(app, message)
                     if(err.response.body.errors) reject(err.response.body.errors[0])
                     else reject(message)
@@ -193,8 +222,10 @@ class EmailService {
     }
 
     
-    send(data, fileData) {
+    send(data, fileData, app) {
         return new Promise((resolve, reject) =>{
+            app = app ? app : { appId: "undefined"};
+
             let from = data.from;
             if(!from || from == "") from =  global.__config.noreplyEmail;
             const msg = {
@@ -223,7 +254,21 @@ class EmailService {
             }  
             
             sgMail.send(msg, false, function(err, res){ 
-                if(err) throw(err);
+                if(err) { 
+                    
+                    let message = JSON.stringify(err);
+                    let error = {
+                        handle : data.to,
+                        message: message
+                    };
+                    if(err.response.body.errors)  error.message = JSON.stringify(err.response.body.errors[0])
+                     
+                    console.log(error);
+
+                    appLogService.addLog(app.appId, 'sendEmail', JSON.stringify(error), "error"); 
+                    resolve(false)
+                }
+                else resolve(true)
             });
 
         });

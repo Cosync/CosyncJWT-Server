@@ -314,7 +314,7 @@ class AppUserService {
       return;
     }
 
-    callback(true); 
+   
 
 
     let hashedPassword = await hashService.generateHash(req.body.password);
@@ -340,15 +340,22 @@ class AppUserService {
         createdAt: util.getCurrentTime(),
         updatedAt: util.getCurrentTime(),
       };
-      
 
       let signupUser = new _signupTbl(item);
       signupUser.save(); 
     } 
 
+    let signupResult;
     
-    if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, null, app);
-    else emailService.send(emailData);
+    if(app.emailExtensionAPIKey && app.emailExtension){
+      signupResult = await emailService.sendAppMail(emailData, null, app); 
+    } 
+    else{
+      signupResult = await emailService.send(emailData , null, app);
+    } 
+
+    if(signupResult) callback(signupResult)
+    else callback(signupResult, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR)
   }
 
 
@@ -702,7 +709,7 @@ class AppUserService {
      
 
       if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, null, app);
-      else emailService.send(emailData);
+      else emailService.send(emailData, null, app);
     }
     else{
       callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
@@ -1242,7 +1249,7 @@ class AppUserService {
       user.password = await hashService.generateHash(data.hashValue);
       user.updatedAt = util.getCurrentTime();
       user.save();
-      callback(true); 
+      
 
       let tml = resetPasswordTemplate.split('%PASSWORD%').join(data.rawValue);
       tml = tml.split('%HANDLE%').join(user.handle);
@@ -1258,10 +1265,14 @@ class AppUserService {
       };
 
 
-      
-      if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, null, app);
-      else emailService.send(emailData);
-
+      let emailResult;
+      if(app.emailExtensionAPIKey && app.emailExtension){
+        emailResult = await emailService.sendAppMail(emailData, null, app);
+      } 
+      else {
+        emailResult = await emailService.send(emailData, null, app);
+      } 
+      callback(emailResult); 
     }
     else callback(false);
 
@@ -1356,9 +1367,7 @@ class AppUserService {
 
     
     if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, null, app);
-    else emailService.send(emailData);
-    
-    
+    else emailService.send(emailData, null, app);
 
     if(invite && invite.code) invite.save();
     else{

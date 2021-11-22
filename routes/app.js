@@ -50,7 +50,7 @@ router.post("/", async (req, res) => {
     appService.addApp(req.body, function(result, err){
         if(err){  
           util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
-          appLogService.addLog("undefined", 'create', JSON.stringify(_error), 'error', 'app'); 
+          //appLogService.addLog("undefined", 'create', JSON.stringify(_error), 'error', 'app'); 
         } 
         else{
           appLogService.addLog(result.appId, 'create', true, 'success', 'app'); 
@@ -62,7 +62,7 @@ router.post("/", async (req, res) => {
 
 
 
-// GET does not support body. Use post to send uid in body.
+
 router.get("/connection",
   async function (req, res) {
     if (req.scope != 'server') util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
@@ -71,7 +71,6 @@ router.get("/connection",
 );
 
 
-// GET does not support body. Use post to send uid in body.
 router.get("/allApps",
   async function (req, res) {
     if (req.scope != 'server')
@@ -210,9 +209,10 @@ router.post("/update", async (req, res) => {
     appService.updateApp(req.body, function(result, err){ 
       
         if(err){ 
-            _error.message = err;
-            util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-            appLogService.addLog(req.body.appId, 'update', JSON.stringify(_error), 'error', 'app'); 
+          let error = _error;
+          error.message = err;
+          util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+          appLogService.addLog(req.body.appId, 'update', JSON.stringify(error), 'error', 'app'); 
         } 
         else{
           util.responseFormat(res, result);
@@ -413,6 +413,36 @@ router.post("/reinitCosyncJWT", async (req, res) => {
    
 });
 
+
+
+
+router.post("/removeCosyncEngine", async (req, res) => {
+
+  if (req.scope != 'developer')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+   
+  try { 
+
+    initCosyncEngine.remove(req, function(result, error){
+      if(error){
+        appLogService.addLog(req.body.appId, 'removeCosyncEngine', JSON.stringify(error),  'error', 'app'); 
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      } 
+      else{
+        appLogService.addLog(req.body.appId, 'removeCosyncEngine', true, 'success', 'app'); 
+        util.responseFormat(res, result);
+      } 
+    }); 
+     
+    
+  } catch (e) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
+  }
+});
 
 
 

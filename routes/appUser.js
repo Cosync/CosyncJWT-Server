@@ -56,12 +56,19 @@ router.post("/login", async (req, res) => {
   
   appUser.getAppUserAuth(data, function(result, error){
     if(error){
-      appLogService.addLog(data.appId, 'login', JSON.stringify(_error), 'error', 'user'); 
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      error.handle = req.body.handle;
+      appLogService.addLog(data.appId, 'login', JSON.stringify(error), 'error', 'user'); 
+     
     } 
     else{
-      appLogService.addLog(data.appId, 'login', true, 'success', 'user'); 
       util.responseFormat(res, result);
+      let log = {
+        handle: data.handle,
+        status: true
+      };
+      appLogService.addLog(data.appId, 'login', JSON.stringify(log), 'success', 'user'); 
+     
     } 
   });
 });
@@ -94,12 +101,21 @@ router.post("/loginComplete", async (req, res) => {
 
   appUser.verifyTwoFactor(data, function(result, error){
     if(error){
-      appLogService.addLog(data.appId, 'loginComplete', JSON.stringify(error), 'error', 'user'); 
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      error.handle = data.handle;
+      appLogService.addLog(data.appId, 'loginComplete', JSON.stringify(error), 'error', 'user'); 
+      
     } 
     else{
-      appLogService.addLog(data.appId, 'loginComplete', true, 'success', 'user'); 
+      
       util.responseFormat(res, result);
+
+      let log = {
+        handle: data.handle,
+        status: true
+      }; 
+      appLogService.addLog(data.appId, 'loginComplete', JSON.stringify(log), 'success', 'user'); 
+
     } 
   });
 });
@@ -130,13 +146,21 @@ router.post("/signup", async (req, res) => {
   
   appUser.signup(req, function(result, error){ 
     
-    if(error){
-      appLogService.addLog(req.appId, 'signup', JSON.stringify(error), 'error', 'user'); 
-      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    } 
-    else{
-      appLogService.addLog(req.appId, 'signup', JSON.stringify(result), 'success', 'user'); 
+    if(result){
       util.responseFormat(res, result);
+      let log = {
+        handle: req.body.handle,
+        status: true
+      }; 
+
+      appLogService.addLog(req.appId, 'signup', JSON.stringify(log), 'success', 'user');
+
+    } 
+    else{ 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = req.body.handle;
+      appLogService.addLog(req.appId, 'signup', JSON.stringify(error), 'error', 'user'); 
     } 
   });
 });
@@ -166,12 +190,23 @@ router.post("/completeSignup", async (req, res) => {
   appUser.completeSignup(signUpData, function(result, error){ 
     
     if(error){
-      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(error), 'error', 'user'); 
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = signUpData.handle;
+      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(error), 'error', 'user'); 
+      
     } 
     else{
-      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(signUpData), 'success', 'user'); 
+
       util.responseFormat(res, result);
+
+      let log = {
+        handle: signUpData.handle,
+        status: true
+      }; 
+
+      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(log), 'success', 'user'); 
+      
     } 
   });
 });
@@ -210,12 +245,22 @@ router.get("/completeSignup", async (req, res) => {
   appUser.completeSignup(signUpData, function(result, error){ 
     
     if(error){
-      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(error), 'error', 'user'); 
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = signUpData.handle;
+      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(error), 'error', 'user'); 
+      
     } 
     else{
-      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(signUpData), 'success', 'user'); 
       util.responseFormat(res, result);
+
+      let log = {
+        handle: signUpData.handle,
+        status: true
+      }; 
+
+      appLogService.addLog(signUpData.appId, 'completeSignup', JSON.stringify(log), 'success', 'user'); 
+      
     } 
   });
 }); 
@@ -236,11 +281,20 @@ router.post("/invite", async (req, res) => {
   appUser.inviteUser(req, function(result, error){ 
   
     if(error){
-      appLogService.addLog(req.appId, 'invite', JSON.stringify(error), 'error', 'user'); 
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      
+      error.handle = req.handle;
+      appLogService.addLog(req.appId, 'invite', JSON.stringify(error), 'error', 'user'); 
+      
     } 
     else{
-      appLogService.addLog(req.appId, 'invite', JSON.stringify(req.body), 'success', 'user'); 
+      let log = {
+        handle: req.handle,
+        email: req.body.handle,
+        status: true
+      }; 
+
+      appLogService.addLog(req.appId, 'invite', JSON.stringify(log), 'success', 'user'); 
       util.responseFormat(res, result);
     } 
   });
@@ -264,12 +318,22 @@ router.post("/register", async (req, res) => {
   appUser.verifyInvite(req, function(result, error){ 
     
     if(error){
-      appLogService.addLog(req.appId, 'register', JSON.stringify(error), 'error', 'user');
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = req.body.handle;
+      appLogService.addLog(req.appId, 'register', JSON.stringify(error), 'error', 'user');
+     
     } 
     else{
-      appLogService.addLog(req.appId, 'register', JSON.stringify(req.body), 'success', 'user');
       util.responseFormat(res, result);
+
+      let log = { 
+        handle: req.body.handle,
+        status: true
+      }; 
+
+      appLogService.addLog(req.appId, 'register', JSON.stringify(log), 'success', 'user');
+      
     }
 
   });
@@ -289,11 +353,21 @@ router.post("/forgotPassword", async (req, res) => {
     
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = req.body.handle;
       appLogService.addLog(req.appId, 'forgotPassword', JSON.stringify(error), 'error', 'user');
     } 
     else{
-      appLogService.addLog(req.appId, 'forgotPassword', JSON.stringify(req.body), 'success', 'user');
+
       util.responseFormat(res, result);
+
+      let log = { 
+        handle: req.body.handle,
+        status: true
+      }; 
+
+      appLogService.addLog(req.appId, 'forgotPassword', JSON.stringify(log), 'success', 'user');
+      
     }
   });
    
@@ -320,11 +394,20 @@ router.post("/resetPassword", async (req, res) => {
     
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = req.body.handle;
       appLogService.addLog(req.appId, 'resetPassword', JSON.stringify(error), 'error', 'user');
     }
     else{
-      appLogService.addLog(req.appId, 'resetPassword', JSON.stringify({handle: req.body.handle}), 'success', 'user');
+
       util.responseFormat(res, result);
+
+      let log = { 
+        handle: req.body.handle,
+        status: true
+      }; 
+      appLogService.addLog(req.appId, 'resetPassword', JSON.stringify(log), 'success', 'user');
+     
     }
   });
    
@@ -349,12 +432,22 @@ router.post("/changePassword", async (req, res) => {
   appUser.changePassword(req, function(result, error){ 
     
     if(error){
-      appLogService.addLog(req.appId, 'changePassword', JSON.stringify(error), 'error', 'user');
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = req.handle;
+      appLogService.addLog(req.appId, 'changePassword', JSON.stringify(error), 'error', 'user');
+      
     } 
     else{
-      appLogService.addLog(req.appId, 'changePassword', JSON.stringify({handle: req.handle}), 'success', 'user');
+
       util.responseFormat(res, result);
+
+      let log = { 
+        handle: req.handle,
+        status: true
+      }; 
+      appLogService.addLog(req.appId, 'changePassword', JSON.stringify(log), 'success', 'user');
+      
     }
   });
    
@@ -370,8 +463,27 @@ router.get("/getUser", async (req, res) => {
   } 
 
   appUser.getUser(req, function(result, error){ 
-    if(error) util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    else util.responseFormat(res, result);
+
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = req.handle;
+      appLogService.addLog(req.appId, 'getUser', JSON.stringify(error), 'error', 'user');
+      
+    } 
+    else{
+
+      util.responseFormat(res, result);
+
+      let log = { 
+        handle: req.handle,
+        status: true
+      }; 
+      appLogService.addLog(req.appId, 'getUser', JSON.stringify(log), 'success', 'user');
+      
+    }
+
+    
   });
    
 });
@@ -382,10 +494,17 @@ router.post("/setUserMetadata", async (req, res) => {
   appUser.setUserMetaData(req, function(result, error){
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = req.handle;
       appLogService.addLog(req.appId, 'setUserMetadata', JSON.stringify(error), 'error', 'user');
     } 
     else{
-      appLogService.addLog(req.appId, 'setUserMetadata', JSON.stringify(req.body), 'success', 'user');
+      let log = { 
+        handle: req.handle,
+        data: req.body,
+        status: true
+      }; 
+      appLogService.addLog(req.appId, 'setUserMetadata', JSON.stringify(log), 'success', 'user');
       util.responseFormat(res, result);
     }
   });
@@ -430,11 +549,21 @@ router.post("/setPhone", async (req, res) => {
   
   appUser.setPhone(req, function(result, error){ 
     if(result) { 
-      appLogService.addLog(req.appId, 'setPhone', JSON.stringify(req.body), 'success', 'user');
       util.responseFormat(res, true);
+
+      let log = { 
+        handle: req.handle,
+        data: req.body,
+        status: true
+      }; 
+
+      appLogService.addLog(req.appId, 'setPhone', JSON.stringify(log), 'success', 'user');
+      
     }
     else{
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = req.handle;
       appLogService.addLog(req.appId, 'setPhone', JSON.stringify(error), 'error', 'user');
     } 
   });
@@ -466,14 +595,24 @@ router.post("/verifyPhone", async (req, res) => {
   
   appUser.verifyPhone(req, function(result, error){ 
     if(result){
-      appLogService.addLog(req.appId, 'verifyPhone', JSON.stringify({handle: req.handle}), 'success', 'user');
+
       util.responseFormat(res, result);
+
+      let log = { 
+        handle: req.handle, 
+        status: true
+      }; 
+
+      appLogService.addLog(req.appId, 'verifyPhone', JSON.stringify(log), 'success', 'user');
+     
     } 
     else{
-      let err = error;
-      err.handle = req.handle;
-      appLogService.addLog(req.appId, 'verifyPhone', JSON.stringify(err), 'error', 'user');
-      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST); 
+     
+      error.handle = req.handle;
+      appLogService.addLog(req.appId, 'verifyPhone', JSON.stringify(error), 'error', 'user');
+     
     } 
   });
    
@@ -492,14 +631,22 @@ router.post("/setTwoFactorGoogleVerification", async (req, res) => {
 
   appUser.requestTwoFactorVerifications(req, function(result, error){ 
     if(result){
-      appLogService.addLog(req.appId, 'setTwoFactorGoogleVerification', JSON.stringify({handle: req.handle}), 'success', 'user');
       util.responseFormat(res, result);
+
+      let log = { 
+        handle: req.handle, 
+        status: true
+      }; 
+
+      appLogService.addLog(req.appId, 'setTwoFactorGoogleVerification', JSON.stringify(log), 'success', 'user');
+      
     } 
     else{
-      let err = error;
-      err.handle = req.handle;
-      appLogService.addLog(req.appId, 'setTwoFactorGoogleVerification', JSON.stringify(err), 'error', 'user');
-      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST); 
+     
+      error.handle = req.handle;
+      appLogService.addLog(req.appId, 'setTwoFactorGoogleVerification', JSON.stringify(error), 'error', 'user');
+      
     } 
   });
    
@@ -517,14 +664,20 @@ router.post("/setTwoFactorPhoneVerification", async (req, res) => {
   req.isPhone = true;
   appUser.requestTwoFactorVerifications(req, function(result, error){ 
     if(result){
-      appLogService.addLog(req.appId, 'setTwoFactorPhoneVerification', JSON.stringify({handle: req.handle}), 'success', 'user');
       util.responseFormat(res, result);
+      let log = { 
+        handle: req.handle, 
+        status: true
+      }; 
+      appLogService.addLog(req.appId, 'setTwoFactorPhoneVerification', JSON.stringify(log), 'success', 'user');
+      
     } 
     else{
-      let err = error;
-      err.handle = req.handle;
-      appLogService.addLog(req.appId, 'setTwoFactorPhoneVerification', JSON.stringify(err), 'error', 'user');
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      
+      error.handle = req.handle;
+      appLogService.addLog(req.appId, 'setTwoFactorPhoneVerification', JSON.stringify(error), 'error', 'user');
+     
     } 
   });
    
