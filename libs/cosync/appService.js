@@ -35,6 +35,7 @@ const SCHEMA = require('../../config/schema');
 const twilioService = require('../twilioService');
 const appUserService = require('./appUserService');
 let appLogService = require('./appLogsService');
+let emailService = require('./emailService'); 
 const hashService  = require('./hashService');
 const fs = require('fs');
 const DIR = 'temp';
@@ -713,6 +714,26 @@ class AppService {
   }
 
 
+
+  async testEmailExtention(req, callback){ 
+   
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: req.body.appId});
+
+    if(!app ) {
+      callback(null, error); 
+      return;
+    } 
+
+    emailService.testExtentionService(app).then(result => { 
+      callback(true); 
+    })
+    .catch(err => { 
+      callback(null, err); 
+    })
+      
+     
+  }
 
   async testAppTwilio(req, callback){
     let error = {status: 'Fails', message: 'Invalid Data'};

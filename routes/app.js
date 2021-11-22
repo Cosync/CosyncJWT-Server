@@ -264,11 +264,9 @@ router.delete("/:appId",
         if(error){
             _error.message = error;
             util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-            appLogService.addLog(req.params.appId, 'deleteApp', JSON.stringify(_error), 'error', 'app'); 
+            
         } 
-        else{
-          appLogService.addLog(req.params.appId, 'deleteApp', true, 'success', 'app'); 
-
+        else{ 
           util.responseFormat(res, result);
         } 
       });
@@ -418,7 +416,7 @@ router.post("/reinitCosyncJWT", async (req, res) => {
 
 router.post("/removeCosyncEngine", async (req, res) => {
 
-  if (req.scope != 'developer')
+  if (req.scope != 'server')
   {
     util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
     return;
@@ -551,7 +549,7 @@ router.post("/saveUserSchema", async function (req, res) {
         util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       } 
       else {
-        appLogService.addLog(req.body.appId, 'saveUserSchema', true, 'success', 'app'); 
+        appLogService.addLog(req.body.appId, 'saveUserSchema', JSON.stringify(req.body), 'success', 'app'); 
         util.responseFormat(res, true);
       }
     });
@@ -585,6 +583,32 @@ router.post("/updateAppSetting", async (req, res) => {
 
 
 
+router.post("/testEmailExtention", async function (req, res) {
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+  let valid = req.body.appId;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  appService.testEmailExtention(req, function(result, error) {
+
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST); 
+    } 
+    else{
+      util.responseFormat(res, true); 
+    } 
+
+    
+  })
+})
+
 router.post("/testAppTwilio", async (req, res) => {
 
   if (req.scope != 'server')
@@ -602,7 +626,7 @@ router.post("/testAppTwilio", async (req, res) => {
         appLogService.addLog(req.body.appId, 'testAppTwilio', JSON.stringify(error),  'error', 'app'); 
       } 
       else{
-        appLogService.addLog(req.body.appId, 'testAppTwilio', true, 'success', 'app'); 
+        appLogService.addLog(req.body.appId, 'testAppTwilio', JSON.stringify(req.body), 'success', 'app'); 
         util.responseFormat(res, result);
       } 
     });
