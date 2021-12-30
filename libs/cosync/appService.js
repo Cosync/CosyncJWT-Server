@@ -267,7 +267,11 @@ class AppService {
     _password.deleteMany({ "appId": id }, function (err) {}); 
 
     let _logs = mongoose.model(CONT.TABLE.APP_LOGS, SCHEMA.applicationLogs);
-    _logs.deleteMany({ "appId": id }, function (err) {}); 
+    _logs.deleteMany({ "appId": id }, function (err) {});  
+    
+    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+    _email.deleteMany({ "appId": id }, function (err) {});
+   
 
   }
 
