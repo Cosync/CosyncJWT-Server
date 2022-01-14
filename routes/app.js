@@ -583,7 +583,7 @@ router.post("/updateAppSetting", async (req, res) => {
 
 
 
-router.post("/testEmailExtention", async function (req, res) {
+router.post("/testEmailExtension", async function (req, res) {
   if (req.scope != 'server')
   {
     util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
@@ -596,7 +596,7 @@ router.post("/testEmailExtention", async function (req, res) {
     return;
   }
 
-  appService.testEmailExtention(req, function(result, error) {
+  appService.testEmailExtension(req, function(result, error) {
 
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST); 
@@ -801,7 +801,7 @@ router.post("/updateAppMetaData", async (req, res) => {
         util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       } 
       else{
-        appLogService.addLog(req.body.appId, 'updateAppMetaData', JSON.stringify(result),  'success', 'app'); 
+        appLogService.addLog(req.body.appId, 'updateAppMetaData', JSON.stringify(req.body.metaData),  'success', 'app'); 
         util.responseFormat(res, result);
       } 
     });

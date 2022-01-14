@@ -46,7 +46,7 @@ let emailServiceTestTemplate = `
            <td width="310" valign="middle" style="border-top:1px solid #e3e3e3;border-bottom:1px solid #e3e3e3;padding:12px 0">
                <h1 style="line-height:20pt;font-family:Segoe UI Light;font-size:18pt;color:#ffffff;font-weight:normal">
                    
-               <span ><font color="#FFFFFF">Test CosyncJWT email extention service.</font></span>
+               <span ><font color="#FFFFFF">Test CosyncJWT email extension service.</font></span>
 
                </h1>
            </td>
@@ -229,7 +229,7 @@ class EmailService {
         });
     }
 
-    testExtentionService(app){
+    testExtensionService(app){
         return new Promise((resolve, reject) =>{
             try { 
                 const sgClient = new Client(); 
@@ -254,7 +254,7 @@ class EmailService {
                     },
                     "personalizations": [
                         {
-                        "subject": "Test CosyncJWT Email Extention",
+                        "subject": "Test CosyncJWT Email Extension",
                         "to": [
                             {
                                 "email": app.emailExtensionSenderEmail
@@ -265,7 +265,7 @@ class EmailService {
                     "reply_to": {
                         "email": from, 
                     },
-                    "subject":  "Test CosyncJWT Email Extention"
+                    "subject":  "Test CosyncJWT Email Extension"
                 }; 
 
                 let that = this;
@@ -276,7 +276,7 @@ class EmailService {
                 request.url = '/v3/mail/send';
 
                 sgClient.request(request).then(([response, body]) => {
-                    appLogService.addLog(app.appId, 'testExtentionService', true);  
+                    appLogService.addLog(app.appId, 'testExtensionService', true);  
                     resolve(true)
                 }).catch(err => {
                     console.log(err.response.body.errors);
@@ -290,7 +290,7 @@ class EmailService {
 
                     if(err.response.body.errors)  error.message = JSON.stringify(err.response.body.errors[0])
 
-                    appLogService.addLog(app.appId, 'testExtentionService', JSON.stringify(error), "error");  
+                    appLogService.addLog(app.appId, 'testExtensionService', JSON.stringify(error), "error");  
                    
                      
                     if(err.response.body.errors) reject(err.response.body.errors[0])

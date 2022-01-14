@@ -719,7 +719,7 @@ class AppService {
 
 
 
-  async testEmailExtention(req, callback){ 
+  async testEmailExtension(req, callback){ 
    
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.findOne({ appId: req.body.appId});
@@ -729,7 +729,7 @@ class AppService {
       return;
     } 
 
-    emailService.testExtentionService(app).then(result => { 
+    emailService.testExtensionService(app).then(result => { 
       callback(true); 
     })
     .catch(err => { 
