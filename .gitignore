@@ -106,3 +106,4 @@ dist
 config.js
 temp
 .deployment
+.DS_Store

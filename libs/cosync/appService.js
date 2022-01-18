@@ -32,7 +32,7 @@ const nrsa = require('node-rsa');
 const util = require('../util'); 
 const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');  
-const twilioService = require('../twilioService');
+const twilioService = require('./twilioService');
 const appUserService = require('./appUserService');
 let appLogService = require('./appLogsService');
 let emailService = require('./emailService'); 
@@ -557,9 +557,9 @@ class AppService {
               return;
             } 
 
-            app.TWILIOAccountSid = data.TWILIOAccountSid; 
-            app.TWILIOToken = data.TWILIOToken;
-            app.TWILIOPhoneNumber = data.TWILIOPhoneNumber;
+            app.TWILIOAccountSid = hashService.aesEncrypt(data.TWILIOAccountSid); 
+            app.TWILIOToken = hashService.aesEncrypt(data.TWILIOToken);
+            app.TWILIOPhoneNumber = hashService.aesEncrypt(data.TWILIOPhoneNumber);
            
           }  
           else if(data.twoFactorVerification == 'google' && data.googleAPP_NAME) app.googleAPP_NAME = data.googleAPP_NAME;

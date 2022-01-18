@@ -72,7 +72,7 @@ class TwilioService {
                     callback(false, err);
                 });
         } catch (error) {
-            
+            console.log("Twilio Errors: ", error)
             callback(false, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR);
             return;
         }
