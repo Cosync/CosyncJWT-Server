@@ -45,13 +45,13 @@ exports = async function assetUpload(changeEvent){
         
         let contentType = data.contentType;
 
-        let filename = `${data.uid}/${data.filePath}`;
+        let bucketLocation = `${data.uid}/${data.path}`;
         
-        if(data.filePath.split("/").pop() == data.uid) filename = data.filePath;
+        if(data.path.split("/").pop() == data.uid) bucketLocation = data.path;
         
-        filename = await context.functions.execute("CosyncSanitizeFileName", filename); 
+        bucketLocation = await context.functions.execute("CosyncSanitizeFileName", bucketLocation); 
 
-        let mainFile = await context.functions.execute("CosyncCreatePresignedURL", filename, data); 
+        let mainFile = await context.functions.execute("CosyncCreatePresignedURL", bucketLocation, data); 
 
         let updateData = {
             "status": "initialized",
@@ -89,7 +89,7 @@ exports = async function assetUpload(changeEvent){
 
         if(contentType.indexOf("image") >=0 || contentType.indexOf("video") >=0){
             
-            let filenameSplit = filename.split("-");
+            let filenameSplit = bucketLocation.split("-");
         
             let filenameSmall;
 

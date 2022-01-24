@@ -25,7 +25,7 @@
  * For questions about this license, you may write to mailto:info@cosync.io
 */
  
-exports = async function createPresignedURL(filename, data){ 
+exports = async function createPresignedURL(path, data){ 
       
     const s3 = context.services.get("CosyncS3StorageService").s3("S3REGION");  
     
@@ -36,8 +36,8 @@ exports = async function createPresignedURL(filename, data){
 
     if(data.expirationHours === 0){
 
-        filename = "public/"+filename; 
-        readUrl = "https://S3BUCKET.s3.amazonaws.com/"+filename; 
+        path = "public/"+path; 
+        readUrl = "https://S3BUCKET.s3.amazonaws.com/"+path; 
     } 
     else{
        
@@ -46,7 +46,7 @@ exports = async function createPresignedURL(filename, data){
 
         readUrl = await s3.PresignURL({
             "Bucket": "S3BUCKET",
-            "Key": filename, 
+            "Key": path, 
             "Method": "GET", 
             "ExpirationMS": parseInt(expReadTime),
             "ContentType": data.contentType
@@ -60,11 +60,11 @@ exports = async function createPresignedURL(filename, data){
 
     const writeUrl = await s3.PresignURL({
         "Bucket": "S3BUCKET",
-        "Key": filename, 
+        "Key": path, 
         "Method": "PUT", 
         "ExpirationMS": millisecondInDay,
         "ContentType": data.contentType
     });  
  
-    return { readUrl: readUrl,  writeUrl: writeUrl, path: filename, expiration: expiration};
+    return { readUrl: readUrl,  writeUrl: writeUrl, path: path, expiration: expiration};
 }

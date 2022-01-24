@@ -214,7 +214,7 @@ if(!secret) {
   console.info('Look like you provided invalid pass key');
   process.exit(0);
 }
-else console.warn('Here is your server secret token: ', secret);
+else console.log('Here is your server secret token: ', secret);
  
 
 
