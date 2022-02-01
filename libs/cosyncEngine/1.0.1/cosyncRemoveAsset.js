@@ -30,6 +30,7 @@ exports = async function cosyncRemoveAsset(id){
   
     const mongodb = context.services.get("mongodb-atlas"); 
     const collectionAsset = mongodb.db("DATABASE_NAME").collection("CosyncAsset");
+    const collectionAssetUpload = mongodb.db("DATABASE_NAME").collection("CosyncAssetUpload");
     const currentUser = context.user
     if(!id) return false;
 
@@ -85,5 +86,5 @@ exports = async function cosyncRemoveAsset(id){
     collectionAsset.deleteOne({"_id":asset._id}); 
     collectionAssetUpload.deleteOne({"_id":asset._id});
     
-    return true;
+    return id;
 }

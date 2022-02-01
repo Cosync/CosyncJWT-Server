@@ -29,130 +29,123 @@ exports = async function assetUpload(changeEvent){
 
     const mongodb = context.services.get("mongodb-atlas");
     const collection = mongodb.db("DATABASE_NAME").collection("CosyncAssetUpload");
-    const assetCollection = mongodb.db("DATABASE_NAME").collection("CosyncAsset");
+    const collectionAsset = mongodb.db("DATABASE_NAME").collection("CosyncAsset");
     const docId = changeEvent.documentKey._id; 
     const data = changeEvent.fullDocument;
      
-    if(data.status == 'uploaded') { 
+    if(data.status == 'uploaded') { // upload asset is finished
+
+        let asset = data;
+        asset.createdAt = new Date();
+        asset.updatedAt = new Date();
+        asset.status = 'active';
+        
+        delete asset.writeUrl;
+        delete asset.writeUrlSmall;
+        delete asset.writeUrlMedium;
+        delete asset.writeUrlLarge;
+        delete asset.writeUrlVideoPreview;
+
+        if(data.contentType.indexOf('video')>= 0) asset.urlVideoPreview = data.url;
+
+        // create asset object in asset table
+        collectionAsset.updateOne({ "_id": docId }, asset,  { upsert: true });  
+        
         collection.updateOne({ "_id": docId },{ "$set": {status: 'completed'} });  
-        assetCollection.updateOne({ "_id": docId }, { "$set": {status: 'active'} });
-        return;  
+
+        return;
     } 
-    else if(data.status != 'pending' || data.writeUrl || data.writeUrlSmall || data.writeUrlMedium || data.writeUrlLarge) return;  
-
-    try {
-        
-        
-        let contentType = data.contentType;
-
-        let bucketLocation = `${data.uid}/${data.path}`;
-        
-        if(data.path.split("/").pop() == data.uid) bucketLocation = data.path;
-        
-        bucketLocation = await context.functions.execute("CosyncSanitizeFileName", bucketLocation); 
-
-        let mainFile = await context.functions.execute("CosyncCreatePresignedURL", bucketLocation, data); 
-
-        let updateData = {
-            "status": "initialized",
-            "writeUrl" : mainFile.writeUrl, 
-            "path": mainFile.path,
-            "updatedAt": new Date()
-        }; 
-        
-
-        let assetData = { 
-            _id: docId,
-            _partition: data.assetPartition || data._partition,
-            path: mainFile.path,
-            expirationHours: data.expirationHours, 
-            contentType: data.contentType,
-            caption: data.caption || "",
-            containerId : data.containerId || "",
-            size: data.size || 0,
-            duration: data.duration || 0,
-            color: data.color || "#000000",
-            xRes: data.xRes || 0,
-            yRes: data.yRes || 0, 
-            status: 'pending',
-            uid: data.uid,  
-            url: mainFile.readUrl,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        }; 
-
-        if(mainFile.expiration){
-            updateData.expiration = mainFile.expiration;
-            assetData.expiration = updateData.expiration;
-        } 
- 
-
-        if(contentType.indexOf("image") >=0 || contentType.indexOf("video") >=0){
-            
-            let filenameSplit = bucketLocation.split("-");
-        
-            let filenameSmall;
-
-            if(contentType.indexOf("video") >=0 ){ 
-                
-                filenameSplit.splice(filenameSplit.length - 1, 0, 'videopreview'); 
-
-                let urlVideoPreview = filenameSplit.toString(); 
-                urlVideoPreview = urlVideoPreview.split(",").join("-");
-
-                let newPath = urlVideoPreview.split(".");
-                newPath[newPath.length - 1] = '.png';
-
-                let previewImagePath = newPath.toString(); 
-                previewImagePath = previewImagePath.split(",").join("-"); 
-                 
-                let imageThumb = {
-                    expirationHours: data.expirationHours,
-                    contentType: 'image/png', 
-                };
-                
-                let previewImage = await context.functions.execute("CosyncCreatePresignedURL", previewImagePath, imageThumb); 
-
-                updateData.writeUrlVideoPreview = previewImage.writeUrl;
-                assetData.urlVideoPreview = previewImage.readUrl;
-
-                filenameSmall = previewImagePath.split("-videopreview-").join("-small-"); 
-            }
-            else{
-
-                filenameSplit.splice(filenameSplit.length - 1, 0, 'small'); 
-                filenameSmall = filenameSplit.toString();
-                filenameSmall = filenameSmall.split(",").join("-");
-            }  
-
-            let small = await context.functions.execute("CosyncCreatePresignedURL", filenameSmall, data);
-
-            let filenameMedium = filenameSmall.split("-small-").join("-medium-"); 
-            let medium = await context.functions.execute("CosyncCreatePresignedURL", filenameMedium, data);
-
-            let filenameLarge = filenameSmall.split("-small-").join("-large-");  
-            let large = await context.functions.execute("CosyncCreatePresignedURL", filenameLarge, data); 
-
-            assetData.urlSmall = small.readUrl;
-            updateData.writeUrlSmall = small.writeUrl;
-
-            assetData.urlMedium = medium.readUrl;
-            updateData.writeUrlMedium = medium.writeUrl;
-
-            assetData.urlLarge = large.readUrl;
-            updateData.writeUrlLarge = large.writeUrl;  
-            
-        } 
-        
-        const update = { "$set": updateData };  
-        collection.updateOne({ "_id": docId }, update); 
-        assetCollection.insertOne(assetData); 
-
-    } catch (error) {
-        const update = { "$set": {status: 'error'} };  
-        collection.updateOne({ "_id": docId }, update); 
+    else if(data.status != 'pending' || data.writeUrl || data.writeUrlSmall || data.writeUrlMedium || data.writeUrlLarge){
+        return;
     }
+    else{ // request upload asset
+        
+        try {
+            
+            let contentType = data.contentType;
 
+            let bucketLocation = `${data.uid}/${data.filePath}`;
+            
+            if(data.filePath.split("/").pop() == data.uid) bucketLocation = data.filePath;
+            bucketLocation = await context.functions.execute("CosyncSanitizeFileName", bucketLocation); 
+
+            let mainFile = await context.functions.execute("CosyncCreatePresignedURL", bucketLocation, data); 
+
+            let updateData = {
+                "status": "initialized",
+                "writeUrl" : mainFile.writeUrl, 
+                "url" : mainFile.readUrl, 
+                "path": mainFile.path,
+                "updatedAt": new Date()
+            }; 
     
+            if(mainFile.expiration){
+                updateData.expiration = mainFile.expiration; 
+            }
 
+            if(contentType.indexOf("image") >=0 || contentType.indexOf("video") >=0){
+                
+                let filenameSplit = bucketLocation.split("-");
+            
+                let filenameSmall;
+
+                if(contentType.indexOf("video") >=0 ){ 
+                    
+                    filenameSplit.splice(filenameSplit.length - 1, 0, 'videopreview'); 
+
+                    let urlVideoPreview = filenameSplit.toString(); 
+                    urlVideoPreview = urlVideoPreview.split(",").join("-");
+
+                    let newPath = urlVideoPreview.split(".");
+                    newPath[newPath.length - 1] = '.png';
+
+                    let previewImagePath = newPath.toString(); 
+                    previewImagePath = previewImagePath.split(",").join("-"); 
+                    
+                    let imageThumb = {
+                        expirationHours: data.expirationHours,
+                        contentType: 'image/png', 
+                    };
+                    
+                    let previewImage = await context.functions.execute("CosyncCreatePresignedURL", previewImagePath, imageThumb); 
+
+                    updateData.writeUrlVideoPreview = previewImage.writeUrl;
+                    updateData.urlVideoPreview = previewImage.readUrl;
+
+                    filenameSmall = previewImagePath.split("-videopreview-").join("-small-"); 
+                }
+                else{
+
+                    filenameSplit.splice(filenameSplit.length - 1, 0, 'small'); 
+                    filenameSmall = filenameSplit.toString();
+                    filenameSmall = filenameSmall.split(",").join("-");
+                }  
+
+                let small = await context.functions.execute("CosyncCreatePresignedURL", filenameSmall, data);
+
+                let filenameMedium = filenameSmall.split("-small-").join("-medium-"); 
+                let medium = await context.functions.execute("CosyncCreatePresignedURL", filenameMedium, data);
+
+                let filenameLarge = filenameSmall.split("-small-").join("-large-");  
+                let large = await context.functions.execute("CosyncCreatePresignedURL", filenameLarge, data); 
+
+                
+                updateData.writeUrlSmall = small.writeUrl;
+                updateData.urlSmall = small.readUrl;
+            
+                updateData.writeUrlMedium = medium.writeUrl;
+                updateData.urlMedium = medium.readUrl;
+                
+                updateData.writeUrlLarge = large.writeUrl;  
+                updateData.urlLarge = large.readUrl;  
+            } 
+            
+            const update = { "$set": updateData };  
+            collection.updateOne({ "_id": docId }, update);
+
+        } catch (error) {
+            const update = { "$set": {status: 'error'} };  
+            collection.updateOne({ "_id": docId }, update); 
+        }
+    }
 }

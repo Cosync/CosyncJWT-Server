@@ -34,7 +34,7 @@ exports = async function createPresignedURL(path, data){
     let millisecondInDay = 86400000;
     let millisecondInWeek = 604800000;
 
-    if(data.expirationHours === 0){
+    if(data.expirationHours === 0 || !data.expirationHours){
 
         path = "public/"+path; 
         readUrl = "https://S3BUCKET.s3.amazonaws.com/"+path; 
