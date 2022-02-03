@@ -33,30 +33,44 @@ exports = async function assetUpload(changeEvent){
     const docId = changeEvent.documentKey._id; 
     const data = changeEvent.fullDocument;
      
-    if(data.status == 'uploaded') { // upload asset is finished
+    if(data.status == 'uploaded') { // upload asset is finished  
 
-        let asset = data;
-        asset.createdAt = new Date();
-        asset.updatedAt = new Date();
-        asset.status = 'active';
-        
-        delete asset.writeUrl;
-        delete asset.writeUrlSmall;
-        delete asset.writeUrlMedium;
-        delete asset.writeUrlLarge;
-        delete asset.writeUrlVideoPreview;
+        let asset = { 
+            _id: docId,
+            _partition: data.assetPartition || data._partition,
+            path: data.path,
+            sessionId: data.sessionId,
+            expirationHours: data.expirationHours, 
+            expiration: data.expiration,
+            contentType: data.contentType,
+            caption: data.caption || "", 
+            size: data.size || 0,
+            duration: data.duration,
+            color: data.color || "#000000",
+            xRes: data.xRes || 0,
+            yRes: data.yRes || 0,  
+            status : 'active',
+            uid: data.uid,  
+            url: data.url,
+            urlSmall: data.urlSmall,
+            urlMedium: data.urlMedium,
+            urlLarge: data.urlLarge,
+            urlVideoPreview: data.urlVideoPreview,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        }; 
 
-        if(data.contentType.indexOf('video')>= 0) asset.urlVideoPreview = data.url;
+        if(data.expirationHours == 0 && data.contentType.indexOf('video')>= 0) asset.urlVideoPreview = data.url;
 
         // create asset object in asset table
         collectionAsset.updateOne({ "_id": docId }, asset,  { upsert: true });  
         
         collection.updateOne({ "_id": docId },{ "$set": {status: 'completed'} });  
 
-        return;
+        
     } 
     else if(data.status != 'pending' || data.writeUrl || data.writeUrlSmall || data.writeUrlMedium || data.writeUrlLarge){
-        return;
+        // nothing here
     }
     else{ // request upload asset
         
