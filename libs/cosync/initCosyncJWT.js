@@ -111,8 +111,7 @@ class InitCosyncJWT {
             if(result){
                 if(app.appData) app.appData = { CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: app.appData.CosyncEngineVersion};
                 else app.appData = {CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: null};
-                app.updatedAt = util.getCurrentTime();
-                if(req.body.realmAppId) app.realmAppId = req.body.realmAppId;
+                app.updatedAt = util.getCurrentTime(); 
                 app.save();
 
                 callback(app.appData);
