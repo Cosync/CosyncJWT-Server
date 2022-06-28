@@ -1280,10 +1280,20 @@ class AppService {
       importedApp.appId = tempApp.appId;
       importedApp.name = tempApp.name;
       importedApp.appToken = tempApp.appToken;
-      importedApp.appSecret = tempApp.appSecret; 
+      
       importedApp.createdAt = tempApp.createdAt;
       importedApp.updatedAt = tempApp.updatedAt;
       importedApp.appData = {};
+
+      importedApp.appSecret = hashService.aesEncrypt(tempApp.appSecret);
+      importedApp.appPublicKey = hashService.aesEncrypt(data.app.appPublicKey);
+      importedApp.appPrivateKey = hashService.aesEncrypt(data.app.appPrivateKey);  
+
+      if(importedApp.TWILIOAccountSid) importedApp.TWILIOAccountSid = hashService.aesEncrypt(importedApp.TWILIOAccountSid);
+      if(importedApp.TWILIOToken) importedApp.TWILIOToken = hashService.aesEncrypt(importedApp.TWILIOToken);
+      if(importedApp.TWILIOPhoneNumber) importedApp.TWILIOPhoneNumber = hashService.aesEncrypt(importedApp.TWILIOPhoneNumber);
+      if(importedApp.emailExtensionAPIKey) importedApp.emailExtensionAPIKey = hashService.aesEncrypt(importedApp.emailExtensionAPIKey);
+
 
       _app.create(importedApp, function(error, doc){
 
@@ -1407,27 +1417,33 @@ class AppService {
               } 
 
               if(!found){
-                fs.rmdirSync(location, { recursive: true });
+                fs.rm(location, { recursive: true });
                 callback(error); 
               }
               else{
 
                 that.addDataToTable(appData, function(result){
-                  fs.rmdirSync(location, { recursive: true });
+                  fs.rm(location, { recursive: true }, function(){
+                    
+                  });
                   callback(result); 
                 });
               }
              
             } catch(err) {
 
-              fs.rmdirSync(location, { recursive: true });
+              fs.rm(location, { recursive: true }, function(){
+
+              });
               callback(error); 
             }
             
           });
         }
         else {
-          fs.rmdirSync(location, { recursive: true });
+          fs.rm(location, { recursive: true }, function(){
+
+          });
           callback(false);
         }
 
@@ -1438,7 +1454,9 @@ class AppService {
 
     writeStream.on('error', () => {
       console.log('wrote all data to file error');
-      fs.rmdirSync(location, { recursive: true });
+      fs.rm(location, { recursive: true }, function(){
+
+      });
       callback(false);
     });
     
