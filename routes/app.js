@@ -830,7 +830,7 @@ router.post("/updateAppInviteMetaData", async (req, res) => {
         appLogService.addLog(req.body.appId, 'updateAppInviteMetaData', JSON.stringify(error),  'error', 'app'); 
       } 
       else{
-        appLogService.addLog(req.body.appId, 'updateAppInviteMetaData', JSON.stringify(result),  'success', 'app'); 
+        appLogService.addLog(req.body.appId, 'updateAppInviteMetaData', JSON.stringify(result.metaDataInvite),  'success', 'app'); 
         util.responseFormat(res, result);
       } 
     });
@@ -860,7 +860,7 @@ router.post("/reset", async (req, res) => {
         util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       } 
       else{
-        appLogService.addLog(req.body.appId, 'resetApp', true,  'success', 'app'); 
+        appLogService.addLog(req.body.appId, 'resetApp', 'true',  'success', 'app'); 
         util.responseFormat(res, result);
       } 
     });
@@ -889,7 +889,7 @@ router.post("/importDatabase", uploadStrategy, async function (req, res) {
       util.responseFormat(res, result, util.HTTP_STATUS_CODE.BAD_REQUEST);
     } 
     else{
-      appLogService.addLog(result.appId, 'importDatabase', JSON.stringify(result),  'success', 'app'); 
+      appLogService.addLog(result.appId, 'importDatabase', 'true',  'success', 'app'); 
       util.responseFormat(res, result);
     } 
   })
@@ -921,7 +921,7 @@ router.get("/export", async function (req, res) {
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
     } 
     else { 
-      appLogService.addLog(req.query.appId, 'exportAppDatabase', true,  'success', 'app');  
+      appLogService.addLog(req.query.appId, 'exportAppDatabase', 'true',  'success', 'app');  
     }
   });
   
