@@ -37,6 +37,13 @@ let multer = require('multer')
     , uploadStrategy = multer({ storage: inMemoryStorage }).single('file');
     
 const util = require('../libs/util');
+const azure = require('azure-sb');
+let notificationHubService;
+if (global.__config.azureNotification ){
+  notificationHubService = azure.createNotificationHubService(global.__config.azureNotification.hubname,global.__config.azureNotification.connectionstring);
+}
+
+
 let _error = {status: 'Fails', message: 'Invalid Data'};
 
 router.post("/", async (req, res) => {
@@ -928,6 +935,40 @@ router.get("/export", async function (req, res) {
 });
 
 
- 
+router.post("/remoteNotification", async function (req, res) {
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+  let valid =  req.body.userId;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  if(!notificationHubService) return
+
+  var payload = {
+    data: {
+      message: req.body.message
+    }
+  };
+  
+  let tags = {
+    userId: req.body.userId
+  }
+  notificationHubService.apns.send(tags, payload, function(error){
+    if(!error){
+      //notification sent
+    }
+    console.log("notificationHubService ", error)
+  });
+
+
+
+
+})
 
 module.exports = router;

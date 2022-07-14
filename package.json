@@ -12,6 +12,7 @@
     "@sendgrid/mail": "^7.4.4",
     "atob": "^2.1.2",
     "authenticator": "^1.1.5",
+    "azure-sb": "^0.11.2",
     "bcrypt": "^5.0.1",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",

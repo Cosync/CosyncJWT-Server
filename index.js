@@ -41,6 +41,11 @@ if(process.env.SEND_GRID_API_KEY) global.__config.sendGrid.apiKey = process.env.
 if(process.env.PORT) global.__config.serverPort = process.env.PORT; 
 if(process.env.ENCRYPT_KEY) global.__config.encryptKey = process.env.ENCRYPT_KEY;
 
+
+if(process.env.AZURE_HUB_NAME) global.__config.azureNotification.hubname = process.env.AZURE_HUB_NAME;
+if(process.env.AZURE_HUB_CONN) global.__config.azureNotification.connectionstring = process.env.AZURE_HUB_CONN;
+
+
 const key = process.argv[2] || process.env.PASS_KEY;
 if(key) global.__config.passKey = key;
 
@@ -215,8 +220,7 @@ if(!secret) {
   process.exit(0);
 }
 else console.log('Here is your server secret token: ', secret);
- 
-
+  
 
 require('./libs/cosync/databaseService').init(function(res){
 
