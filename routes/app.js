@@ -940,30 +940,27 @@ router.post("/remoteNotification", async function (req, res) {
   {
     util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
     return;
-  }
+  } 
 
   let valid =  req.body.userId;
-  if(!valid) {
+  if(!valid || !notificationHubService) {
     util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   }
+  // return back to request, no delay
+  util.responseFormat(res, true);
 
-  if(!notificationHubService) return
-
-  var payload = {
-    data: {
-      message: req.body.message
-    }
+  let payload={
+    alert: req.body.message
   };
   
-  let tags = {
-    userId: req.body.userId
-  }
+  let tags = `$UserId:{${req.body.userId}}`;
   notificationHubService.apns.send(tags, payload, function(error){
     if(!error){
       //notification sent
     }
-    console.log("notificationHubService ", error)
+    else  console.log("notificationHubService apns error ", error);
+     
   });
 
 
