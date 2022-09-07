@@ -46,13 +46,25 @@ class InitCosyncEngine {
                 "status" : "active", 
                 "name" : "CosyncEngine",
                 "service" : "CosyncEngine",
-                "desc" : "Cosync Engine for Storage Solutions for AWS",
+                "desc" : "Cosync Engine for Storage Solutions for AWS with MongoDB Partition Base",
                 "versionNumber" : "1.0.1",
                 "createdAt": util.getCurrentTime(),
                 "updatedAt": util.getCurrentTime()
             }
             let version = new _version(item); 
             version.save();
+
+            let item2 = {
+                "status" : "active", 
+                "name" : "CosyncEngine",
+                "service" : "CosyncEngine",
+                "desc" : "Cosync Engine for Storage Solutions for AWS with MongoDB Flexible Sync",
+                "versionNumber" : "1.0.2",
+                "createdAt": util.getCurrentTime(),
+                "updatedAt": util.getCurrentTime()
+            }
+            let version2 = new _version(item2); 
+            version2.save();
         }
     }
  
@@ -205,9 +217,9 @@ class InitCosyncEngine {
         !data.s3Region || data.s3Region == "" || 
         !data.publicKey || data.publicKey == "" || 
         !data.privateKey || data.privateKey == ""){
-        callback(null, error); 
-        return;
-    } 
+            callback(null, error); 
+            return;
+        } 
 
         let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
         let app = await _app.findOne({ appId: data.appId });
