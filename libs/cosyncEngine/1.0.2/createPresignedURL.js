@@ -59,7 +59,7 @@ exports = async function createPresignedURL(path, data){
     if(data.expirationHours === 0 || !data.expirationHours){
 
         params.path = "public/"+path; 
-        readUrl = "https://AWS_BUCKET_REGION.s3.amazonaws.com/"+path; 
+        readUrl = "https://AWS_BUCKET_NAME.s3.amazonaws.com/"+path; 
     } 
     else{
        
