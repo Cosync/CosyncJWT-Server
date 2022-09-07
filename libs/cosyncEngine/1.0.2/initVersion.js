@@ -133,14 +133,14 @@ class InitVersion {
                 return;
             }
 
-            let newsecret = await that.createSecret(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app);
+            let newsecret = await that.createSecret(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app, data.projectId);
             if(newsecret.error) {
                 error.message = newsecret.error;
                 callback(null, error); 
                 return;
             } 
             
-            let newKey = await that.createSecret(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app);
+            let newKey = await that.createSecret(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app, data.projectId);
             if(newKey.error) {
                 error.message = newKey.error;
                 callback(null, error); 
@@ -327,7 +327,7 @@ class InitVersion {
 
 
 
-    createSecret(name, value, token, app){
+    createSecret(name, value, token, app, projectId){
         return new Promise((resolve, reject) => {  
 
             let item ={
@@ -337,7 +337,7 @@ class InitVersion {
 
             const options = {
                 method: 'POST',
-                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/secrets`,
+                url: `${REALM_API_URL}/groups/${projectId}/apps/${app._id}/secrets`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -548,14 +548,14 @@ class InitVersion {
 
             await that.clearEngineAsync(data, loginResult.access_token, app);
 
-            let newsecret = await that.createSecret(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app);
+            let newsecret = await that.createSecret(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app, data.projectId);
             if(newsecret.error) {
                 error.message = newsecret.error;
                 callback(null, error); 
                 return;
             }
 
-            let newKey = await that.createSecret(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app);
+            let newKey = await that.createSecret(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app, data.projectId);
             if(newKey.error) {
                 error.message = newKey.error;
                 callback(null, error); 

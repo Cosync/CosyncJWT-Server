@@ -639,7 +639,7 @@ class InitVersion {
 
 
 
-    async remove(req, callback) {
+    async remove(data, callback) {
 
         let error = {status: 'Fails', message: 'Invalid Data'}; 
         let that = this;
