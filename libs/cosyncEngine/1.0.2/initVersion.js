@@ -166,13 +166,13 @@ class InitVersion {
             for (let index = 0; index < deployList.length; index++) {
                 let item = deployList[index];
                 
-                let content = await this.readFileContent(`./libs/cosyncEngine/1.0.1/${item.func.path}`); 
+                let content = await this.readFileContent(`./libs/cosyncEngine/1.0.2/${item.func.path}`); 
                 
                 content = content.split('DATABASE_NAME').join(realmConfig.realmDatabase);  
                 content = content.split('AWS_BUCKET_NAME').join(realmConfig.s3Bucket);
                 content = content.split('AWS_BUCKET_REGION').join(realmConfig.s3Region);
                 content = content.split('APP_SECRET').join(realmConfig.app.appSecret);
-                content = content.split('COSYNC_API_URL').join(global.__config.apiurl);
+                
                 item.func.source = content;
         
                 let deploy = await this.createFunction(realmConfig, token, item, app); 
@@ -181,6 +181,8 @@ class InitVersion {
                     return;
                 }
             } 
+
+            callback({status: true, message: 'Function is deployed successfully.'});
         
     }
 
@@ -580,7 +582,7 @@ class InitVersion {
 
 
 
-    async remove(req, callback) {
+    async remove(data, callback) {
 
         let error = {status: 'Fails', message: 'Invalid Data'}; 
         let that = this;

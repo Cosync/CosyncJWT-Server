@@ -163,7 +163,7 @@ class InitVersion {
                 content = content.split('S3BUCKET').join(realmConfig.s3Bucket);
                 content = content.split('S3REGION').join(realmConfig.s3Region);
                 content = content.split('APP_SECRET').join(realmConfig.app.appSecret);
-                content = content.split('COSYNC_API_URL').join(global.__config.apiurl);
+                
                 item.func.source = content;
         
                 let deploy = await this.createFunction(realmConfig, token, item, app); 
