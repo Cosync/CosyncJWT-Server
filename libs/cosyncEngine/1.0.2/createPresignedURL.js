@@ -41,25 +41,26 @@ exports = async function createPresignedURL(path, data){
         params: { Bucket: "AWS_BUCKET_REGION" },
     });
 
+    let readUrl, expReadTime, expiration;
+    let secondInHour = 3600;
+    let secondInDay = 86400;
+    let secondInWeek = 604800;
     
     let params = {
         Bucket: "AWS_BUCKET_NAME",
         Key: path,
-        Expires: 60 * 60 * 24, // 1 day
+        Expires: secondInDay, // 1 day
         ContentType: data.contentType 
     };
 
      
     
-    let readUrl, expReadTime, expiration;
-    let secondInHour = 3600;
-    let secondInDay = 864000;
-    let secondInWeek = 6048000;
+  
 
     if(data.expirationHours === 0 || !data.expirationHours){
 
         params.Key = "public/"+path; 
-        readUrl = "https://AWS_BUCKET_NAME.s3.amazonaws.com/"+path; 
+        readUrl = "https://AWS_BUCKET_NAME.s3.amazonaws.com/"+params.Key; 
     } 
     else{
        
@@ -78,5 +79,5 @@ exports = async function createPresignedURL(path, data){
     params.Expires = secondInDay
     const writeUrl = await S3Bucket.getSignedUrlPromise('putObject', params); 
  
-    return { readUrl: readUrl,  writeUrl: writeUrl, path: path, expiration: expiration};
+    return { readUrl: readUrl,  writeUrl: writeUrl, path: params.Key, expiration: expiration};
 }

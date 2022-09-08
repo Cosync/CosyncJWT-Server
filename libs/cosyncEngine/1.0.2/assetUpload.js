@@ -77,7 +77,7 @@ exports = async function assetUpload(changeEvent){
             
             let contentType = data.contentType;
 
-            let bucketLocation = `${data.uid}/${data.filePath}`;
+            let bucketLocation = `${data.userId}/${data.filePath}`;
             
             if(data.filePath.split("/").pop() == data.userId) bucketLocation = data.filePath;
             bucketLocation = await context.functions.execute("CosyncSanitizeFileName", bucketLocation); 
