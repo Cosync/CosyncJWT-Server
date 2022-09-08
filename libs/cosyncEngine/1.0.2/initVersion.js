@@ -124,7 +124,7 @@ class InitVersion {
                 return;
             }
 
-            let secret = await that.getCosyncSecret(data, loginResult.access_token, app);
+            let secret = await that.getCosyncSecretValue(data, loginResult.access_token, app);
 
             if(secret) {
                 error.status = "Duplicate"
@@ -133,14 +133,14 @@ class InitVersion {
                 return;
             }
 
-            let newsecret = await that.createSecret(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app, data.projectId);
+            let newsecret = await that.createSecretValue(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app, data.projectId);
             if(newsecret.error) {
                 error.message = newsecret.error;
                 callback(null, error); 
                 return;
             } 
             
-            let newKey = await that.createSecret(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app, data.projectId);
+            let newKey = await that.createSecretValue(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app, data.projectId);
             if(newKey.error) {
                 error.message = newKey.error;
                 callback(null, error); 
@@ -329,17 +329,18 @@ class InitVersion {
 
 
 
-    createSecret(name, value, token, app, projectId){
+    createSecretValue(name, value, token, app, projectId){
         return new Promise((resolve, reject) => {  
 
             let item ={
                 "name": name,
-                "value": value
+                "value": value,
+                "private": true
             };
 
             const options = {
                 method: 'POST',
-                url: `${REALM_API_URL}/groups/${projectId}/apps/${app._id}/secrets`,
+                url: `${REALM_API_URL}/groups/${projectId}/apps/${app._id}/values`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -358,12 +359,12 @@ class InitVersion {
 
 
 
-    getCosyncSecret(realmConfig, token, app){
+    getCosyncSecretValue(realmConfig, token, app){
         return new Promise((resolve, reject) => {   
 
             const options = {
                 method: 'GET',
-                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/secrets`,
+                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/values`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -514,11 +515,11 @@ class InitVersion {
         }
  
 
-        let secrets = await this.getAllSecrets(realmConfig, token, app); 
-        for (let index = 0; index < secrets.length; index++) {
-            const secret = secrets[index];
-            if(secret.name == AWS_S3_SECRET_KEY_NAME)  await this.removeSecret(realmConfig, token, app, secret);
-            else if(secret.name == AWS_S3_KEY_NAME)  await this.removeSecret(realmConfig, token, app, secret);
+        let values = await this.getAllSecretsValue(realmConfig, token, app); 
+        for (let index = 0; index < values.length; index++) {
+            const secret = values[index];
+            if(secret.name == AWS_S3_SECRET_KEY_NAME)  await this.removeSecretValue(realmConfig, token, app, secret);
+            else if(secret.name == AWS_S3_KEY_NAME)  await this.removeSecretValue(realmConfig, token, app, secret);
         } 
        
 
@@ -550,14 +551,14 @@ class InitVersion {
 
             await that.clearEngineAsync(data, loginResult.access_token, app);
 
-            let newsecret = await that.createSecret(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app, data.projectId);
+            let newsecret = await that.createSecretValue(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app, data.projectId);
             if(newsecret.error) {
                 error.message = newsecret.error;
                 callback(null, error); 
                 return;
             }
 
-            let newKey = await that.createSecret(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app, data.projectId);
+            let newKey = await that.createSecretValue(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app, data.projectId);
             if(newKey.error) {
                 error.message = newKey.error;
                 callback(null, error); 
@@ -611,12 +612,12 @@ class InitVersion {
 
 
 
-    getAllSecrets(data, token, app){
+    getAllSecretsValue(data, token, app){
         return new Promise((resolve, reject) => {   
 
             const options = {
                 method: 'GET',
-                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/secrets`,
+                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/values`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -624,9 +625,9 @@ class InitVersion {
                 json: true
             }  
 
-            request(options, async function(error, response, dataSecret){  
+            request(options, async function(error, response, value){  
                 
-                resolve(dataSecret); 
+                resolve(value); 
 
             })
 
@@ -634,12 +635,12 @@ class InitVersion {
     }
 
 
-    removeSecret(data, token, app, secret){
+    removeSecretValue(data, token, app, value){
         return new Promise((resolve, reject) => {   
 
             const removeOptions = {
                 method: 'DELETE',
-                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/secrets/${secret._id}`,
+                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/values/${value._id}`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -660,7 +661,7 @@ class InitVersion {
             let that = this;
             const options = {
                 method: 'GET',
-                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/secrets`,
+                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/values`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -668,11 +669,11 @@ class InitVersion {
             }  
 
             request(options, async function(error, response, body){  
-                let dataSecret = JSON.parse(body);
+                let dataValue = JSON.parse(body);
                 let oldCosyncAWSSecretAccessKey, oldCosyncAWSAccessKey;
 
-                for (let index = 0; index < dataSecret.length; index++) {
-                    const element = dataSecret[index];
+                for (let index = 0; index < dataValue.length; index++) {
+                    const element = dataValue[index];
                     if(element.name == AWS_S3_SECRET_KEY_NAME) oldCosyncAWSSecretAccessKey = element;
                     else if(element.name == AWS_S3_KEY_NAME) oldCosyncAWSAccessKey = element;
                 } 
@@ -692,7 +693,7 @@ class InitVersion {
     }
 
 
-    updateSecretKeyValue(name, value, token, secretId){
+    updateSecretKeyValue(name, value, token, valueId){
         return new Promise((resolve, reject) => {  
 
             let updateValue = {
@@ -702,7 +703,7 @@ class InitVersion {
              
             const updateOptions = {
                 method: 'PUT',
-                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/secrets/${secretId}`,
+                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/values/${valueId}`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`

@@ -58,7 +58,7 @@ exports = async function createPresignedURL(path, data){
 
     if(data.expirationHours === 0 || !data.expirationHours){
 
-        params.path = "public/"+path; 
+        params.Key = "public/"+path; 
         readUrl = "https://AWS_BUCKET_NAME.s3.amazonaws.com/"+path; 
     } 
     else{
@@ -72,7 +72,7 @@ exports = async function createPresignedURL(path, data){
 
         expiration = new Date();
         expiration.setMilliseconds(expiration.getMilliseconds() + expReadTime);
-
+        
     } 
    
     params.Expires = secondInDay

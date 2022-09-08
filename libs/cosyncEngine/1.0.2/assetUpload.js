@@ -79,7 +79,7 @@ exports = async function assetUpload(changeEvent){
 
             let bucketLocation = `${data.uid}/${data.filePath}`;
             
-            if(data.filePath.split("/").pop() == data.uid) bucketLocation = data.filePath;
+            if(data.filePath.split("/").pop() == data.userId) bucketLocation = data.filePath;
             bucketLocation = await context.functions.execute("CosyncSanitizeFileName", bucketLocation); 
 
             let mainFile = await context.functions.execute("CosyncCreatePresignedURL", bucketLocation, data); 
