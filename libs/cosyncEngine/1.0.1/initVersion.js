@@ -28,7 +28,10 @@
 let request = require("request");     
 let REALM_API_URL = "https://realm.mongodb.com/api/admin/v3.0";
 let fs = require('fs');
+ 
 
+const AWS_S3_SECRET_KEY_NAME = "CosyncAWSSecretAccessKey";
+const AWS_S3_KEY_NAME = "CosyncAWSAccessKey";
 
 let deployList = [
     {
@@ -108,9 +111,9 @@ class InitVersion {
       
         let that = this;
 
-        this.mongodbRealmlogin(data, async function(token){
+        this.mongodbRealmlogin(data, async function(loginResult){
                 
-            let app = await that.getApplications(data, token.access_token);
+            let app = await that.getApplications(data, loginResult.access_token);
             if(!app || app.status == 'fails'){ 
                 if(app) callback(null, app); 
                 else callback(null, error); 
@@ -121,7 +124,7 @@ class InitVersion {
                 return;
             }
 
-            let secret = await that.getSecret(data, token.access_token, app);
+            let secret = await that.getCosyncSecretValue(data, loginResult.access_token, app);
 
             if(secret) {
                 error.status = "Duplicate"
@@ -130,18 +133,24 @@ class InitVersion {
                 return;
             }
 
-            let newsecret = await that.createSecret(data, token.access_token, app);
+            let newsecret = await that.createSecretValue(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app, data.projectId);
             if(newsecret.error) {
                 error.message = newsecret.error;
                 callback(null, error); 
                 return;
-            }
+            } 
             
-            
-            that.deployFunctionAndTrigger(data, token.access_token, app, async function(result){
+            let newKey = await that.createSecretValue(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app, data.projectId);
+            if(newKey.error) {
+                error.message = newKey.error;
+                callback(null, error); 
+                return;
+            } 
+
+            that.deployFunctionAndTrigger(data, loginResult.access_token, app, async function(result){
                 if(result.status == false) {
 
-                    that.clearEngineAsync(data, token.access_token, app);  
+                    that.clearEngineAsync(data, loginResult.access_token, app);  
                     callback(null, result); 
                     
                 }
@@ -157,11 +166,11 @@ class InitVersion {
             for (let index = 0; index < deployList.length; index++) {
                 let item = deployList[index];
                 
-                let content = await this.readFileContent(`./libs/cosyncEngine/1.0.1/${item.func.path}`); 
+                let content = await this.readFileContent(`./libs/cosyncEngine/1.0.2/${item.func.path}`); 
                 
-                content = content.split('DATABASE_NAME').join(realmConfig.realmDatabase); 
-                content = content.split('S3BUCKET').join(realmConfig.s3Bucket);
-                content = content.split('S3REGION').join(realmConfig.s3Region);
+                content = content.split('DATABASE_NAME').join(realmConfig.realmDatabase);  
+                content = content.split('AWS_BUCKET_NAME').join(realmConfig.s3Bucket);
+                content = content.split('AWS_BUCKET_REGION').join(realmConfig.s3Region);
                 content = content.split('APP_SECRET').join(realmConfig.app.appSecret);
                 
                 item.func.source = content;
@@ -171,19 +180,9 @@ class InitVersion {
                     callback(deploy);
                     return;
                 }
-            }
-        
-            let service = await this.createService(realmConfig, token, app);
-        
-            if(service){
-                await this.createServiceRule(realmConfig, token, app, service);
-                callback({status: true, message: 'Function is deployed successfully.'});
             } 
-            else{
-                callback({status: false, message: 'FAIL, function is not deployed.'});
-                 
-            }
-            
+
+            callback({status: true, message: 'Function is deployed successfully.'});
         
     }
 
@@ -200,70 +199,8 @@ class InitVersion {
         });
     }
 
-
-    createService(realmConfig, token, app){
-
-        return new Promise((resolve, reject) => {   
-            let serviceConfig = {
-                "name": "CosyncS3StorageService",
-                "type": "aws",
-                "config":{
-                    "accessKeyId": realmConfig.awsAccessKey,
-                    "region": realmConfig.s3Region
-                },
-                "secret_config": {
-                    "secretAccessKey":  "CosyncAWSSecretAccessKey"
-                }
-            };
-
-            const options = {
-                method: 'POST',
-                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/services`,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: serviceConfig,
-                json: true  // JSON stringifies the body automatically
-            }
-
-            request(options, function(error, response, body){  
-                if(body && body.name) resolve(body);
-                else resolve(null);
-            })
-        })
-    }
-
-
-
-    createServiceRule(realmConfig, token, app, service){
-        return new Promise((resolve, reject) => {   
-            let config = { 
-                "name": "CosyncS3Rule",
-                "actions": [
-                    "s3:*"
-                ]
-            };
-
-            const options = {
-                method: 'POST',
-                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/services/${service._id}/rules`,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: config,
-                json: true  // JSON stringifies the body automatically
-            }
-
-            request(options, function(error, response, body){ 
-                 
-                if(body && body.name) resolve(body);
-                else resolve(null); 
-            });
-        })
-    }
-
+ 
+ 
 
     createFunction(realmConfig, token, data, app){
 
@@ -392,17 +329,18 @@ class InitVersion {
 
 
 
-    createSecret(realmConfig, token, app){
+    createSecretValue(name, value, token, app, projectId){
         return new Promise((resolve, reject) => {  
 
             let item ={
-                "name":"CosyncAWSSecretAccessKey",
-                "value":realmConfig.awsSecretAccessKey
+                "name": name,
+                "value": value,
+                "private": true
             };
 
             const options = {
                 method: 'POST',
-                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/secrets`,
+                url: `${REALM_API_URL}/groups/${projectId}/apps/${app._id}/values`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -421,12 +359,12 @@ class InitVersion {
 
 
 
-    getSecret(realmConfig, token, app){
+    getCosyncSecretValue(realmConfig, token, app){
         return new Promise((resolve, reject) => {   
 
             const options = {
                 method: 'GET',
-                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/secrets`,
+                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/values`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -438,8 +376,14 @@ class InitVersion {
                 let oldSecret;
                 for (let index = 0; index < data.length; index++) {
                     const element = data[index];
-                    if(element.name == 'CosyncAWSSecretAccessKey') oldSecret = element;
+                    if(element.name == AWS_S3_SECRET_KEY_NAME ){
+                        oldSecret = element; 
+                    } 
+                    else if(element.name == AWS_S3_KEY_NAME ){
+                        oldSecret = element; 
+                    } 
                 }
+
                 resolve(oldSecret);
             })
 
@@ -526,8 +470,8 @@ class InitVersion {
                 json: true  // JSON stringifies the body automatically
             };
 
-            request(options2, async function(error, response, token){ 
-                callback(token);
+            request(options2, async function(error, response, result){ 
+                callback(result);
             })
         })
         
@@ -569,20 +513,13 @@ class InitVersion {
 
             if( oldFunc) await this.deleteFunction(realmConfig, token, app, oldFunc._id);
         }
+ 
 
-        let services = await this.getAllCosyncService(realmConfig, token, app);
-        for (let index = 0; index < services.length; index++) {
-            const item = services[index];
-            if(item.name == "CosyncS3StorageService"){ 
-                await this.getCosyncServiceRule(realmConfig, token, app, item);
-                await this.deleteService(realmConfig, token, app, item);
-            }
-        }
-
-        let secrets = await this.getAllSecrets(realmConfig, token, app); 
-        for (let index = 0; index < secrets.length; index++) {
-            const secret = secrets[index];
-            if(secret.name == 'CosyncAWSSecretAccessKey')  await this.removeSecret(realmConfig, token, app, secret);
+        let values = await this.getAllSecretsValue(realmConfig, token, app); 
+        for (let index = 0; index < values.length; index++) {
+            const secret = values[index];
+            if(secret.name == AWS_S3_SECRET_KEY_NAME)  await this.removeSecretValue(realmConfig, token, app, secret);
+            else if(secret.name == AWS_S3_KEY_NAME)  await this.removeSecretValue(realmConfig, token, app, secret);
         } 
        
 
@@ -598,9 +535,9 @@ class InitVersion {
         
         let that = this;
 
-        this.mongodbRealmlogin(data, async function(token){
+        this.mongodbRealmlogin(data, async function(loginResult){
                 
-            let app = await that.getApplications(data, token.access_token);
+            let app = await that.getApplications(data, loginResult.access_token);
 
             if(!app || app.status == 'fails'){ 
                 if(app) callback(null, app); 
@@ -612,19 +549,26 @@ class InitVersion {
                 return;
             }
 
-            await that.clearEngineAsync(data, token.access_token, app);
+            await that.clearEngineAsync(data, loginResult.access_token, app);
 
-            let newsecret = await that.createSecret(data, token.access_token, app);
+            let newsecret = await that.createSecretValue(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, loginResult.access_token, app, data.projectId);
             if(newsecret.error) {
                 error.message = newsecret.error;
                 callback(null, error); 
                 return;
             }
 
-            that.deployFunctionAndTrigger(data, token.access_token, app, function(result){
+            let newKey = await that.createSecretValue(AWS_S3_KEY_NAME, data.awsAccessKey, loginResult.access_token, app, data.projectId);
+            if(newKey.error) {
+                error.message = newKey.error;
+                callback(null, error); 
+                return;
+            }
+
+            that.deployFunctionAndTrigger(data, loginResult.access_token, app, function(result){
                 if(result.status == false) {
 
-                    that.clearEngineAsync(data, token.access_token, app);
+                    that.clearEngineAsync(data, loginResult.access_token, app);
 
                     error.message = newsecret.error;
                     callback(null, error); 
@@ -644,9 +588,9 @@ class InitVersion {
         let error = {status: 'Fails', message: 'Invalid Data'}; 
         let that = this;
 
-        this.mongodbRealmlogin(data, async function(token){
+        this.mongodbRealmlogin(data, async function(loginResult){
                 
-            let app = await that.getApplications(data, token.access_token);
+            let app = await that.getApplications(data, loginResult.access_token);
 
             if(!app || app.status == 'fails'){ 
 
@@ -658,7 +602,7 @@ class InitVersion {
                 callback(app); 
             }
             else{
-                let result = await that.clearEngineAsync(data, token.access_token, app); 
+                let result = await that.clearEngineAsync(data, loginResult.access_token, app); 
                 callback(result); 
             } 
         });
@@ -668,12 +612,12 @@ class InitVersion {
 
 
 
-    getAllSecrets(data, token, app){
+    getAllSecretsValue(data, token, app){
         return new Promise((resolve, reject) => {   
 
             const options = {
                 method: 'GET',
-                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/secrets`,
+                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/values`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -681,9 +625,9 @@ class InitVersion {
                 json: true
             }  
 
-            request(options, async function(error, response, dataSecret){  
+            request(options, async function(error, response, value){  
                 
-                resolve(dataSecret); 
+                resolve(value); 
 
             })
 
@@ -691,12 +635,12 @@ class InitVersion {
     }
 
 
-    removeSecret(data, token, app, secret){
+    removeSecretValue(data, token, app, value){
         return new Promise((resolve, reject) => {   
 
             const removeOptions = {
                 method: 'DELETE',
-                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/secrets/${secret._id}`,
+                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/values/${value._id}`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -714,10 +658,10 @@ class InitVersion {
 
     updateSecret(data, token, app){
         return new Promise((resolve, reject) => {   
-
+            let that = this;
             const options = {
                 method: 'GET',
-                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/secrets`,
+                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/values`,
                 headers: {
                     "content-type": "application/json", 
                     "Authorization": `Bearer ${token}`
@@ -725,83 +669,57 @@ class InitVersion {
             }  
 
             request(options, async function(error, response, body){  
-                let dataSecret = JSON.parse(body);
-                let oldSecret;
+                let dataValue = JSON.parse(body);
+                let oldCosyncAWSSecretAccessKey, oldCosyncAWSAccessKey;
 
-                for (let index = 0; index < dataSecret.length; index++) {
-                    const element = dataSecret[index];
-                    if(element.name == 'CosyncAWSSecretAccessKey') oldSecret = element;
-                }
-                
-                let updateSecret = {
-                    "name":"CosyncAWSSecretAccessKey",
-                    "value": data.awsSecretAccessKey
-                }
-                const updateOptions = {
-                    method: 'PUT',
-                    url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/secrets/${oldSecret._id}`,
-                    headers: {
-                        "content-type": "application/json", 
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body:JSON.stringify(updateSecret) 
+                for (let index = 0; index < dataValue.length; index++) {
+                    const element = dataValue[index];
+                    if(element.name == AWS_S3_SECRET_KEY_NAME) oldCosyncAWSSecretAccessKey = element;
+                    else if(element.name == AWS_S3_KEY_NAME) oldCosyncAWSAccessKey = element;
+                } 
 
-                };
-
-                request(updateOptions, async function(error, response, body){  
-                    if(response.statusCode >= 200 && response.statusCode <= 290 || !error) resolve(true);
-                    else resolve(false)
+                that.updateSecretKeyValue(AWS_S3_SECRET_KEY_NAME, data.awsSecretAccessKey, token, oldCosyncAWSSecretAccessKey._id).then(res => {
+                    if (res) {
+                        that.updateSecretKeyValue(AWS_S3_KEY_NAME, data.awsAccessKey, token, oldCosyncAWSAccessKey._id).then(result => {
+                            resolve(result)
+                        })
+                    }
+                    else resolve(res)
                 })
-
+                
             })
 
         });
     }
 
 
+    updateSecretKeyValue(name, value, token, valueId){
+        return new Promise((resolve, reject) => {  
 
-    getAllCosyncService(realmConfig, token, app){
-        return new Promise((resolve, reject) => {   
-            const options = {
-                method: 'GET',
-                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/services`,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }, 
-                json: true  // JSON stringifies the body automatically
+            let updateValue = {
+                "name": name,
+                "value": value
             }
-            
-            request(options, async function(error, response, services){  
-                resolve(services);
+             
+            const updateOptions = {
+                method: 'PUT',
+                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/values/${valueId}`,
+                headers: {
+                    "content-type": "application/json", 
+                    "Authorization": `Bearer ${token}`
+                },
+                body:JSON.stringify(updateValue) 
+
+            };
+
+            request(updateOptions, async function(error, response, body){  
+                if(response.statusCode >= 200 && response.statusCode <= 290 || !error) resolve(true);
+                else resolve(false)
             })
+
         })
     }
-
-
-    getCosyncServiceRule(realmConfig, token, app, service){
-        return new Promise((resolve, reject) => {   
-            const options = {
-                method: 'GET',
-                url: `${REALM_API_URL}/groups/${realmConfig.projectId}/apps/${app._id}/services/${service._id}/rules`,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }, 
-                json: true  // JSON stringifies the body automatically
-            }
-            let that = this;
-            request(options, async function(error, response, rules){   
-                for (let index = 0; index < rules.length; index++) {
-                    const item = rules[index];
-                    if(item.name == "CosyncS3Rule") await that.deleteServiceRule(realmConfig, token, app, service, item);
-                }
-                resolve();
-            })
-        })
-    }
-
-
+ 
 
 
     getAllTriggers(data, token, app){
@@ -822,43 +740,7 @@ class InitVersion {
     }
 
 
-
-    deleteService(data, token, app, service){
-        return new Promise((resolve, reject) => {   
-            const options = {
-                method: 'DELETE',
-                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/services/${service._id}`,
-                headers: {
-                    "content-type": "application/json", 
-                    "Authorization": `Bearer ${token}`
-                } 
-            }  
-
-            request(options, async function(error, response, body){ 
-                resolve()
-            });
-        }); 
-    }
-
-
-
-    deleteServiceRule(data, token, app, service, rule){
-        return new Promise((resolve, reject) => {   
-            const options = {
-                method: 'DELETE',
-                url: `${REALM_API_URL}/groups/${data.projectId}/apps/${app._id}/services/${service._id}/rules/${rule._id}`,
-                headers: {
-                    "content-type": "application/json", 
-                    "Authorization": `Bearer ${token}`
-                } 
-            }  
-
-            request(options, async function(error, response, body){ 
-                resolve()
-            });
-        }); 
-    }
-
+ 
 
     deleteTrigger(data, token, app, trigger){
         return new Promise((resolve, reject) => {   

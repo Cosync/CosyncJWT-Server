@@ -22,49 +22,62 @@
  * @author Tola VOEUNG
  * 
  * @Editor Tola VOEUNG  
+ * Updated at: Sep, 2022
  * For questions about this license, you may write to mailto:info@cosync.io
 */
  
 exports = async function createPresignedURL(path, data){ 
-      
-    const s3 = context.services.get("CosyncS3StorageService").s3("S3REGION");  
     
+    const AWS = require('aws-sdk');
+    const config = {
+        accessKeyId: context.values.get("CosyncAWSAccessKey"),
+        secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
+        region: "AWS_BUCKET_REGION",
+    };
+    AWS.config.update(config);
+
+    const S3Bucket = new AWS.S3({
+        signatureVersion: 'v4',
+        params: { Bucket: "AWS_BUCKET_REGION" },
+    });
+
     let readUrl, expReadTime, expiration;
-    let millisecondInHour = 3600000;
-    let millisecondInDay = 86400000;
-    let millisecondInWeek = 604800000;
+    let secondInHour = 3600;
+    let secondInDay = 86400;
+    let secondInWeek = 604800;
+    
+    let params = {
+        Bucket: "AWS_BUCKET_NAME",
+        Key: path,
+        Expires: secondInDay, // 1 day
+        ContentType: data.contentType 
+    };
+
+     
+    
+  
 
     if(data.expirationHours === 0 || !data.expirationHours){
 
-        path = "public/"+path; 
-        readUrl = "https://S3BUCKET.s3.amazonaws.com/"+path; 
+        params.Key = "public/"+path; 
+        readUrl = "https://AWS_BUCKET_NAME.s3.amazonaws.com/"+params.Key; 
     } 
     else{
        
-        expReadTime = data.expirationHours ? ( parseFloat(data.expirationHours) * millisecondInHour ) : millisecondInDay;
-        expReadTime = expReadTime > millisecondInWeek ? millisecondInWeek : expReadTime;
+        expReadTime = data.expirationHours ? ( parseFloat(data.expirationHours) * secondInHour ) : secondInDay;
+        expReadTime = expReadTime > secondInWeek ? secondInWeek : expReadTime;
 
-        readUrl = await s3.PresignURL({
-            "Bucket": "S3BUCKET",
-            "Key": path, 
-            "Method": "GET", 
-            "ExpirationMS": parseInt(expReadTime),
-            "ContentType": data.contentType
-        });   
+        params.Expires = parseInt(expReadTime)
+        readUrl =  await S3Bucket.getSignedUrlPromise('getObject', params); 
+        
 
         expiration = new Date();
         expiration.setMilliseconds(expiration.getMilliseconds() + expReadTime);
-
+        
     } 
    
-
-    const writeUrl = await s3.PresignURL({
-        "Bucket": "S3BUCKET",
-        "Key": path, 
-        "Method": "PUT", 
-        "ExpirationMS": millisecondInDay,
-        "ContentType": data.contentType
-    });  
+    params.Expires = secondInDay
+    const writeUrl = await S3Bucket.getSignedUrlPromise('putObject', params); 
  
-    return { readUrl: readUrl,  writeUrl: writeUrl, path: path, expiration: expiration};
+    return { readUrl: readUrl,  writeUrl: writeUrl, path: params.Key, expiration: expiration};
 }

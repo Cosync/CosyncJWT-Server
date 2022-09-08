@@ -37,7 +37,6 @@ exports = async function assetUpload(changeEvent){
 
         let asset = { 
             _id: docId,
-            _partition: data.assetPartition || data._partition,
             path: data.path,
             sessionId: data.sessionId,
             expirationHours: data.expirationHours, 
@@ -50,7 +49,7 @@ exports = async function assetUpload(changeEvent){
             xRes: data.xRes || 0,
             yRes: data.yRes || 0,  
             status : 'active',
-            uid: data.uid,  
+            userId: data.userId,  
             url: data.url,
             urlSmall: data.urlSmall,
             urlMedium: data.urlMedium,
@@ -78,9 +77,9 @@ exports = async function assetUpload(changeEvent){
             
             let contentType = data.contentType;
 
-            let bucketLocation = `${data.uid}/${data.filePath}`;
+            let bucketLocation = `${data.userId}/${data.filePath}`;
             
-            if(data.filePath.split("/").pop() == data.uid) bucketLocation = data.filePath;
+            if(data.filePath.split("/").pop() == data.userId) bucketLocation = data.filePath;
             bucketLocation = await context.functions.execute("CosyncSanitizeFileName", bucketLocation); 
 
             let mainFile = await context.functions.execute("CosyncCreatePresignedURL", bucketLocation, data); 
