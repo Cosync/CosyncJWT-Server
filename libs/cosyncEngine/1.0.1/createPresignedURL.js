@@ -49,13 +49,9 @@ exports = async function createPresignedURL(path, data){
     let params = {
         Bucket: "AWS_BUCKET_NAME",
         Key: path,
-        Expires: secondInDay, // 1 day
-        ContentType: data.contentType 
+        Expires: secondInDay // 1 day
     };
 
-     
-    
-  
 
     if(data.expirationHours === 0 || !data.expirationHours){
 
@@ -72,11 +68,11 @@ exports = async function createPresignedURL(path, data){
         
 
         expiration = new Date();
-        expiration.setMilliseconds(expiration.getMilliseconds() + expReadTime);
+        expiration.setSeconds(expiration.setSeconds() + expReadTime);
         
     } 
-   
-    params.Expires = secondInDay
+    params.ContentType = data.contentType ;
+    params.Expires = secondInDay;
     const writeUrl = await S3Bucket.getSignedUrlPromise('putObject', params); 
  
     return { readUrl: readUrl,  writeUrl: writeUrl, path: params.Key, expiration: expiration};
