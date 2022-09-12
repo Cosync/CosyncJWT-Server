@@ -166,7 +166,7 @@ class InitVersion {
             for (let index = 0; index < deployList.length; index++) {
                 let item = deployList[index];
                 
-                let content = await this.readFileContent(`./libs/cosyncEngine/1.0.2/${item.func.path}`); 
+                let content = await this.readFileContent(`./libs/cosyncEngine/1.0.1/${item.func.path}`); 
                 
                 content = content.split('DATABASE_NAME').join(realmConfig.realmDatabase);  
                 content = content.split('AWS_BUCKET_NAME').join(realmConfig.s3Bucket);

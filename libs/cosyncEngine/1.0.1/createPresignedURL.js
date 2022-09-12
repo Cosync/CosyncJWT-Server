@@ -71,7 +71,7 @@ exports = async function createPresignedURL(path, data){
         expiration.setSeconds(expiration.setSeconds() + expReadTime);
         
     } 
-    params.ContentType = data.contentType ;
+    params.ContentType = data.contentType;
     params.Expires = secondInDay;
     const writeUrl = await S3Bucket.getSignedUrlPromise('putObject', params); 
  
