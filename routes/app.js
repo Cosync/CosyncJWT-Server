@@ -951,6 +951,7 @@ router.post("/remoteNotification", async function (req, res) {
   util.responseFormat(res, true);
 
   let payload={
+    senderId: req.body.senderId,
     alert: req.body.message
   };
   
