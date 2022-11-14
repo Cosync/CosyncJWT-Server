@@ -59,8 +59,8 @@ class mongooseService {
             console.log('Connecting to database is successful')
             callback(true);
         })
-        .catch((err) => {
-            console.error(err)
+        .catch((err) => { 
+            callback(false, err); 
         });
     }
 

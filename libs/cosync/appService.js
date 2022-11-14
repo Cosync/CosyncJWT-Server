@@ -1284,7 +1284,11 @@ class AppService {
       importedApp.createdAt = tempApp.createdAt;
       importedApp.updatedAt = tempApp.updatedAt;
       importedApp.appData = {};
+      if(importedApp.metaData && importedApp.metaData.length > 0){
 
+      }
+      else importedApp.metaData = null
+      
       importedApp.appSecret = hashService.aesEncrypt(tempApp.appSecret);
       importedApp.appPublicKey = hashService.aesEncrypt(data.app.appPublicKey);
       importedApp.appPrivateKey = hashService.aesEncrypt(data.app.appPrivateKey);  

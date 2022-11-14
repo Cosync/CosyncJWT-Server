@@ -98,7 +98,7 @@ class InitVersion {
                 
             }
             else if(result.error){
-                error.message = newsecret.error;
+                error.message = result.error;
                 callback(null, error); 
             }
             else callback(result); 
@@ -332,21 +332,22 @@ class InitVersion {
 
             let metadata_fields = [];
 
-            if(data.app.metaData && data.app.metaData.length > 0){
+            if(data.app.metaData && data.app.metaData.length > 0  && data.app.metaData[0].path){
 
                 let emailFieldName;
                 data.app.metaData.forEach(field => {
-                    
-                    let metaField = {
-                        "required": field.required,
-                        "name": field.path,
-                        "field_name": field.fieldName
-                    };
-                    
-                    metadata_fields.push(metaField);
 
-                    if(field.fieldName == "email") emailFieldName = true;
+                    if(field.path){ 
+                        let metaField = {
+                            "required": field.required,
+                            "name": field.path,
+                            "field_name": field.fieldName
+                        };
+                    
+                        metadata_fields.push(metaField);
 
+                        if(field.fieldName == "email") emailFieldName = true;
+                    }
                 });
 
                 if(!emailFieldName){ 

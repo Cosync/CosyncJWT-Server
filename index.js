@@ -219,15 +219,30 @@ if(!secret) {
   console.info('Look like you provided invalid pass key');
   process.exit(0);
 }
-else console.log('Here is your server secret token: ', secret);
+else{
+  
+  console.info('connecting to your database...');
+
+  require('./libs/cosync/databaseService').init(function(res, err){
+    if(res) {
+
+      
+      let initCosyncJWT = require('./libs/cosync/initCosyncJWT'); 
+      let initCosyncEngine = require('./libs/cosync/initCosyncEngine'); 
+
+      initCosyncJWT.create();
+      initCosyncEngine.create();
+
+      console.log('Here is your server secret token: ', secret);
+    }
+    else {
+      console.error('Fail to connect database: ', err.message);
+      console.error(err)
+      process.exit(0);
+    }
+  });
+
+} 
   
 
-require('./libs/cosync/databaseService').init(function(res){
-
-  let initCosyncJWT = require('./libs/cosync/initCosyncJWT'); 
-  let initCosyncEngine = require('./libs/cosync/initCosyncEngine'); 
-
-  initCosyncJWT.create();
-  initCosyncEngine.create();
-});
  
