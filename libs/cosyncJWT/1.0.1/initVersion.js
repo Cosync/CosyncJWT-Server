@@ -84,9 +84,10 @@ class InitVersion {
                 callback(null, error); 
                 return;
             }
+
             let result = await that.createJWTAuthProvider(data, token.access_token, app);
             if(!result) callback(null, error); 
-            else if(result.error == "auth provider with name 'custom-token' already exists") {
+            else if(result.error.indexOf("auth provider with name") >=0 && result.error.indexOf("custom-token") >= 0 ) {
                 that.deleteJWTAuthProvider(data, token.access_token, app, async function(){
                     let auth = await that.createJWTAuthProvider(data, token.access_token, app);
                     if(auth.error){
