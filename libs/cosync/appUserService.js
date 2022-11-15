@@ -213,7 +213,7 @@ class AppUserService {
           
           if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
 
-          if(app.metaData.length){
+          if(app.metaData && app.metaData.length){
             app.metaData.forEach(field => {
               let value = _.get(metaData, field.path);
 
@@ -290,7 +290,7 @@ class AppUserService {
       
       if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
 
-      if(app.metaData.length){
+      if(app.metaData && app.metaData.length){
         
         for (let index = 0; index < app.metaData.length; index++) {
           const field = app.metaData[index]; 
@@ -507,6 +507,10 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
+    else if (params.loginAnonymous && !app.anonymousLoginEnable ){
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_ANONYMOUS_LOGIN);
+      return;
+    }
 
     if(!this.checkAppStatus(app, callback)) return;
 
@@ -874,26 +878,27 @@ class AppUserService {
 
     if (user) {
        
-      let finalMetaData = {}; 
+      let finalMetaData = {};
 
-      for (let index = 0; index < app.metaData.length; index++) {
-        const field = app.metaData[index]; 
-        
-        let value = _.get(metaData, field.path);
+      if(app.metaData){
+        for (let index = 0; index < app.metaData.length; index++) {
+          const field = app.metaData[index]; 
+          
+          let value = _.get(metaData, field.path);
 
-        if(value && field.canEdit === true) _.set(finalMetaData, field.path, value);  
-        else if (value && !field.canEdit){
-          callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
-          return;
-        }
-        else if(field.required && value === undefined){
-          callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
-          return;
-        }
-      };
+          if(value && field.canEdit === true) _.set(finalMetaData, field.path, value);  
+          else if (value && !field.canEdit){
+            callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+            return;
+          }
+          else if(field.required && value === undefined){
+            callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+            return;
+          }
+        };
+      }
 
-
-      if(user.metaData){ // get old invite meta data
+      if(user.metaData && app.metaDataInvite){ // get old invite meta data
 
         for (let index = 0; index < app.metaDataInvite.length; index++) {
           const field = app.metaDataInvite[index]; 
@@ -1296,7 +1301,7 @@ class AppUserService {
     }
 
     let finalMetaData = {};
-    if(app.metaDataInvite.length){ 
+    if(app.metaDataInvite && app.metaDataInvite.length){ 
       
       let metaData = {};
       let valid = true;
@@ -1427,7 +1432,7 @@ class AppUserService {
       let metaData = {};
       try { 
 
-        if(app.metaData.length){
+        if(app.metaData && app.metaData.length){
 
           if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
 
