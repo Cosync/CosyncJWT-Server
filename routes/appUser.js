@@ -121,6 +121,47 @@ router.post("/loginComplete", async (req, res) => {
 });
 
 
+
+
+router.post("/loginAnonymous", async (req, res) => {
+ 
+  if (req.scope != "app")
+  {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  let valid = req.body.handle && req.appId && (req.body.handle.indexOf("ANON_") >= 0);
+  if (!valid)
+  {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  let data = req.body;
+  data.appId = req.appId;
+  
+  appUser.getANONUserAuth(data, function(result, error){
+    
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      error.handle = req.body.handle;
+      appLogService.addLog(data.appId, 'login', JSON.stringify(error), 'error', 'user'); 
+     
+    } 
+    else{
+      util.responseFormat(res, result);
+      let log = {
+        handle: data.handle,
+        status: true
+      };
+      appLogService.addLog(data.appId, 'login', JSON.stringify(log), 'success', 'user'); 
+     
+    } 
+  });
+});
+
+
 router.post("/signup", async (req, res) => {
  
   if (req.scope != "app")

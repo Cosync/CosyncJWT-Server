@@ -81,7 +81,7 @@ exports.INTERNAL_STATUS_CODE = {
 	SIGNUP_CODE_EXPRIRED:{code:411, message:"signup code expired."},
 	PHONE_NUMBER_ALREADY_IN_USE:{code:412, message:"phone number already in use"},
 	APP_IS_MIGRATED:{code:413, message:"app is migrated"},
-
+	APP_ISNOT_ANONYMOUS_LOGIN:{code:414, message:"pp does not support anonymous login"},
 	
 	ACCESS_TOKEN_EXPRIRED:{code:501, message:"access token expired"},
 	INTERNAL_SERVER_ERROR:{code:500, message:"internal server error"}, 
@@ -157,31 +157,36 @@ exports.generateAuthJWTToken = function(user, app){
 	if(app.metaDataEmail)  payload.email = user.handle;
 
 	let finalMetaData = {};
+
+	if(app.metaData && user.handle.indexOf('ANON_') < 0) {
+	 
+		for (let index = 0; index < app.metaData.length; index++) {
+			const field = app.metaData[index];  
+			if(field){ 
+				if(field.fieldName == 'email'){ 
+					_.set(finalMetaData, field.path, user.handle);
+					delete payload.email;
+				}
+
+				let value = _.get(metaData, field.path);
+				if(field.required && !value){ 
+					return null;
+				}
+				else if(value) _.set(finalMetaData, field.path, value);
+			}
+		}; 
+	}
+
+	if(app.metaDataInvite && user.handle.indexOf('ANON_') < 0) {
+		for (let index = 0; index < app.metaDataInvite.length; index++) {
+			const field = app.metaDataInvite[index];  
+			if(field){ 
+				let value = _.get(metaData, field.path);
+				if(value) _.set(finalMetaData, field.path, value);
+			}
+		}; 
+	}
 	
-	for (let index = 0; index < app.metaData.length; index++) {
-		const field = app.metaData[index];  
-		if(field){ 
-			if(field.fieldName == 'email'){ 
-				_.set(finalMetaData, field.path, user.handle);
-				delete payload.email;
-			}
-
-			let value = _.get(metaData, field.path);
-			if(field.required && !value){ 
-				return null;
-			}
-			else if(value) _.set(finalMetaData, field.path, value);
-		}
-	}; 
-
-	for (let index = 0; index < app.metaDataInvite.length; index++) {
-		const field = app.metaDataInvite[index];  
-		if(field){ 
-			let value = _.get(metaData, field.path);
-			if(value) _.set(finalMetaData, field.path, value);
-		}
-	}; 
-
 	for (const key in finalMetaData) {
 		if(finalMetaData[key] !== undefined) payload[key] = finalMetaData[key]; 
 	} 

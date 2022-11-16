@@ -497,7 +497,47 @@ class AppUserService {
     });
   }
 
+  async getANONUserAuth(params, callback) {
 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: params.appId});
+    if(!app){
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    } 
+    else if(!app.anonymousLoginEnabled ){
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_ANONYMOUS_LOGIN);
+      return;
+    }
+
+    if(!this.checkAppStatus(app, callback)) return;
+
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);  
+    let user = await _user.findOne({ handle: params.handle, appId:app.appId });
+    
+    if(!user){
+      params.password = "";
+      let tokenData = await this.addAppUserDataSkipPasswordHash(params, app); 
+      delete tokenData['signed-user-token']
+      
+      callback(tokenData)
+    }
+    else {
+      const jwtToken = util.generateAuthJWTToken(user, app); 
+      if(!jwtToken){
+        callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA)
+        return;
+      }
+      let scope = 'user';
+      let accessToken = util.generateAccessToken(user, scope); 
+
+      user.lastLogin = util.getCurrentTime();
+      user.save(); 
+
+      callback({'jwt':jwtToken, 'access-token':accessToken});
+    }
+
+  }
   
   async getAppUserAuth(params, callback) {
     
@@ -507,10 +547,7 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
-    else if (params.loginAnonymous && !app.anonymousLoginEnable ){
-      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_ANONYMOUS_LOGIN);
-      return;
-    }
+     
 
     if(!this.checkAppStatus(app, callback)) return;
 
@@ -538,8 +575,6 @@ class AppUserService {
         callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
         return; 
       } 
-
-       
       
       if(app.twoFactorVerification != 'none' && user.twoFactorGoogleVerification == true || (user.twoFactorPhoneVerification == true && user.phoneVerified == true) ){
         

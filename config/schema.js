@@ -54,6 +54,12 @@ module.exports.application = new mongooseSchema({
     comment: 'Allow app jwt',
     index: true 
   }, 
+  anonymousLoginEnabled: {
+    default: false,
+    type: Boolean,
+    comment: 'Allow anonumous login',
+    index: true 
+  }, 
   emailExtension: {
     default: false,
     type: Boolean,
@@ -84,6 +90,14 @@ module.exports.application = new mongooseSchema({
     comment: 'Allow app invitation',
     index: true 
   },
+
+  anonymousLoginEnabled: {
+    default: false,
+    type: Boolean,
+    comment: 'Allow app anonymous login',
+    index: true 
+  },
+
   signupEnabled: {
     default: true,
     type: Boolean,

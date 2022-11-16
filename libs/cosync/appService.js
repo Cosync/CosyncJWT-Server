@@ -516,6 +516,40 @@ class AppService {
 
           break;
 
+           case 'jwtEnabled':
+         
+          
+
+          if(app.jwtEnabled == data.jwtEnabled || typeof(data.jwtEnabled) != "boolean"){
+            callback(null, error);
+            return;
+          } 
+ 
+
+          app.jwtEnabled = data.jwtEnabled;
+          app.updatedAt = util.getCurrentTime();
+          app.save(); 
+          delete app.appPrivateKey;
+          delete app.appSecret;
+          callback(app); 
+
+          break;
+        case 'anonLogin':
+           
+            if(app.anonymousLoginEnabled == data.anonymousLoginEnabled || typeof(data.anonymousLoginEnabled) != "boolean"){
+              callback(null, error);
+              return;
+            } 
+
+            app.anonymousLoginEnabled = data.anonymousLoginEnabled;
+            app.updatedAt = util.getCurrentTime();
+            app.save(); 
+            delete app.appPrivateKey;
+            delete app.appSecret;
+            callback(app); 
+  
+            break;
+
         case 'signup':
            
             if(app.signupEnabled == data.signupEnabled || typeof(data.signupEnabled) != "boolean"){
