@@ -72,37 +72,44 @@ class InitVersion {
 
             if(secret) {
 
-                error.status = "Duplicate";
-                error.message = `Your MongoDB Realm JWT Secret is already existed: (${secret.name})`;
-                callback(null, error); 
-                return;
-            }
-
-            let newsecret = await that.createSecret(data, token.access_token, app);
-            if(newsecret.error) {
-                error.message = newsecret.error;
-                callback(null, error); 
-                return;
-            }
-
-            let result = await that.createJWTAuthProvider(data, token.access_token, app);
-            if(!result) callback(null, error); 
-            else if(result.error.indexOf("auth provider with name") >=0 && result.error.indexOf("custom-token") >= 0 ) {
-                that.deleteJWTAuthProvider(data, token.access_token, app, async function(){
-                    let auth = await that.createJWTAuthProvider(data, token.access_token, app);
-                    if(auth.error){
-                        error.message = newsecret.error;
-                        callback(null, error); 
-                    }
-                    else callback(auth); 
-                });
                 
+                let result = {};
+                result.status = "Duplicate";
+                result.message = `Your MongoDB Realm JWT Secret is already existed: (${secret.name})`;
+                callback(result); 
+                
+                return;
+            } 
+            else  {
+
+                let newsecret = await that.createSecret(data, token.access_token, app);
+                if(newsecret.error) {
+                    error.message = newsecret.error;
+                    callback(null, error); 
+                    return;
+                } 
+
+                let result = await that.createJWTAuthProvider(data, token.access_token, app);
+
+                if(!result) callback(null, error); 
+                else if(result.error.indexOf("auth provider with name") >=0 && result.error.indexOf("custom-token") >= 0 ) {
+                    that.deleteJWTAuthProvider(data, token.access_token, app, async function(){
+                        let auth = await that.createJWTAuthProvider(data, token.access_token, app);
+                        if(auth.error){
+                            error.message = newsecret.error;
+                            callback(null, error); 
+                        }
+                        else callback(auth); 
+                    });
+
+                     
+                }
+                else if(result.error){
+                    error.message = result.error;
+                    callback(null, error); 
+                }
             }
-            else if(result.error){
-                error.message = result.error;
-                callback(null, error); 
-            }
-            else callback(result); 
+           
 
         });
 
