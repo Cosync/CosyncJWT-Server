@@ -516,7 +516,7 @@ class AppUserService {
     let user = await _user.findOne({ handle: params.handle, appId:app.appId });
     
     if(!user){
-      params.password = "";
+      params.password = " ";
       let tokenData = await this.addAppUserDataSkipPasswordHash(params, app); 
       delete tokenData['signed-user-token']
       
