@@ -34,6 +34,13 @@ const fs = require('fs');
 global.publicKey = './config/publickey.pem';
 global.privateKey = './config/privatekey.pem';
 global.__config = require('./config/config.js'); 
+
+if(process.env.ENV == "local" || process.argv[3] == "local"){
+  global.publicKey = './config/publickey-local.pem';
+  global.privateKey = './config/privatekey-local.pem';
+  global.__config = require('./config/config-local.js'); 
+}
+
 const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
 
 if(process.env.DB_CONN_STRING) global.__config.db.connectionString = process.env.DB_CONN_STRING;

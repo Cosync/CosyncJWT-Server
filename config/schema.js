@@ -335,7 +335,7 @@ module.exports.user = new mongooseSchema({
       index: true 
     },
     password: {
-      required: true,
+      required: false,
       type: String,
       comment: 'password of the user.',
       index: true 
