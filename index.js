@@ -40,6 +40,11 @@ if(process.env.ENV == "local" || process.argv[3] == "local"){
   global.privateKey = './config/privatekey-local.pem';
   global.__config = require('./config/config-local.js'); 
 }
+else if(process.env.ENV == "prod" || process.argv[3] == "prod"){
+  global.publicKey = './config/publickey-prod.pem';
+  global.privateKey = './config/privatekey-prod.pem';
+  global.__config = require('./config/config-prod.js'); 
+}
 
 const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
 

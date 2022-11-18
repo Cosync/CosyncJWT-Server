@@ -107,3 +107,9 @@ config.js
 temp
 .deployment
 .DS_Store
+config/publickey-local.pem
+config/config-local.js
+config/privatekey-local.pem
+config/publickey-prod.pem
+config/privatekey-prod.pem
+config/config-prod.js
