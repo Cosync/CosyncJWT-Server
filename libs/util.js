@@ -81,7 +81,7 @@ exports.INTERNAL_STATUS_CODE = {
 	SIGNUP_CODE_EXPRIRED:{code:411, message:"signup code expired."},
 	PHONE_NUMBER_ALREADY_IN_USE:{code:412, message:"phone number already in use"},
 	APP_IS_MIGRATED:{code:413, message:"app is migrated"},
-	APP_ISNOT_ANONYMOUS_LOGIN:{code:414, message:"pp does not support anonymous login"},
+	APP_ISNOT_ANONYMOUS_LOGIN:{code:414, message:"app does not support anonymous login"},
 	
 	ACCESS_TOKEN_EXPRIRED:{code:501, message:"access token expired"},
 	INTERNAL_SERVER_ERROR:{code:500, message:"internal server error"}, 
