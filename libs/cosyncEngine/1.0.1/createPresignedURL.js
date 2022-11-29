@@ -68,7 +68,7 @@ exports = async function createPresignedURL(path, data){
         
 
         expiration = new Date();
-        expiration.setSeconds(expiration.setSeconds() + expReadTime);
+        expiration.setSeconds(expiration.getSeconds() + expReadTime);
         
     } 
     params.ContentType = data.contentType;
