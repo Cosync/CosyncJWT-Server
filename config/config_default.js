@@ -28,6 +28,7 @@
 module.exports  = {
   noreplyEmail:'email to send out',
   serverName: 'your server name', 
+  apiUrl:"your RESTful API url",
   serverPort: 3000,
   db: { 
     connectionString: 'your MongoDB database connection' 

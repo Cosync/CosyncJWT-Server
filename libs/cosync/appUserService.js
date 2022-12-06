@@ -268,7 +268,7 @@ class AppUserService {
     }
     else{
 
-      let link = `${global.__config.webbaseurl}clickthrough/${app.appToken}/${handle}/${code}`;
+      let link = `${global.__config.apiUrl}/api/appuser/completeSignup/${app.appToken}/${handle}/${code}`;
 
       tml = tempalte.htmlTemplate.split('%CODE%').join(`Please <a href="${link}">click here</a> to verify your sign up.`);
       tml = tml.split('%HANDLE%').join(handle); 

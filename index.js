@@ -149,6 +149,29 @@ app.use((req, res, next) => {
         }
         
       }  
+
+      else if(req.query.appToken) {
+        try {
+          let verified  = jwt.verify(req.query.appToken, serverPublicKey); 
+          if (verified && verified.scope == 'app') {
+            // good to go... 
+            req.scope = verified.scope; 
+            req.appId = verified.appId; 
+          } 
+          else{
+            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+            return;
+          } 
+        } catch (error) {
+          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+          return;
+        }
+        
+      }
+      else {
+        util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
+        return;
+      }
     
     } catch (error) {
       util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
