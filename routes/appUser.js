@@ -293,7 +293,7 @@ router.get("/completeSignup", async (req, res) => {
       
     } 
     else{
-      util.responseFormat(res, result);
+      util.responseHTMLFormat(res, result);
 
       let log = {
         handle: signUpData.handle,

@@ -407,17 +407,18 @@ class AppUserService {
         callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
         return;
       }
+
       if(app.signupFlow == 'link'){
         let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
         let emailTemplate = await _email.findOne({appId: signUpData.appId, templateName: 'clickThrough'}); 
 
         let template = emailTemplate.htmlTemplate.split('%APP_NAME%').join(app.name);
         template = template.split('%HANDLE%').join(signup.handle);
-        template = template.split('%CODE%').join(signup.code); 
-        result.htmlTemplate = template;
-      }
+        template = template.split('%CODE%').join(signup.code);  
+        callback(template);
+      } 
+      else callback(result);
       
-      callback(result);
     } 
     else if(signup.status == 'verified'){
       callback(null, util.INTERNAL_STATUS_CODE.HANDLE_ALREADY_REGISTERED);

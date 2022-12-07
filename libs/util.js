@@ -41,9 +41,28 @@ function setHeader(res){
 }
 
 
+function setHTMLHeader(res){
+	res.setHeader("Content-Type", 'text/html');
+	res.setHeader( "Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	res.setHeader("X-Powered-By", "Cosync, Inc.");
+	return res;
+}
+
+
 exports.responseFormat = function(res, result, statusCode) { 
 	
 	res = setHeader(res); 
+    let bodyResult = JSON.stringify(result);
+	res.setHeader("Content-Length", Buffer.byteLength(bodyResult));
+	statusCode = statusCode || 200;
+	if( typeof result == 'number') result = result.toString();
+	res.status(statusCode).send(result); 
+}
+
+
+exports.responseHTMLFormat = function(res, result, statusCode) { 
+	
+	res = setHTMLHeader(res); 
     let bodyResult = JSON.stringify(result);
 	res.setHeader("Content-Length", Buffer.byteLength(bodyResult));
 	statusCode = statusCode || 200;
