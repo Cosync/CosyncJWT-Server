@@ -267,8 +267,8 @@ class AppUserService {
       tml = tml.split('%APP_NAME%').join(app.name);
     }
     else{
-
-      let link = `${global.__config.apiUrl}/api/appuser/completeSignup?appToken=${app.appToken}&handle=${handle}&code=${code}`;
+      let modifiedEmail = handle.replace(/\+/g, "%2B");
+      let link = `${global.__config.apiUrl}/api/appuser/completeSignup?appToken=${app.appToken}&handle=${modifiedEmail}&code=${code}`;
 
       tml = tempalte.htmlTemplate.split('%CODE%').join(`Please <a href="${link}">click here</a> to verify your sign up.`);
       tml = tml.split('%HANDLE%').join(handle); 

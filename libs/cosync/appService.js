@@ -136,7 +136,7 @@ class AppService {
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
     let app = await _app.findOne({ appId: appId }, appProjection); 
 
-    if(global.__config.encryptKey){
+    if(app && global.__config.encryptKey){
       
       app.appPublicKey = hashService.aesDecrypt(app.appPublicKey); 
 
