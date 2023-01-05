@@ -25,8 +25,7 @@
  * For questions about this license, you may write to mailto:info@cosync.io
 */
  
-exports = async function cosyncRefreshAsset(id){ 
-      
+exports = async function cosyncRefreshAsset(id){
   
     const mongodb = context.services.get("mongodb-atlas"); 
     const collectionAsset = mongodb.db("DATABASE_NAME").collection("CosyncAsset");
@@ -39,29 +38,44 @@ exports = async function cosyncRefreshAsset(id){
     if(!asset || asset.status != 'active') return false;
     else if(!asset.expirationHours || asset.expirationHours == 0) return asset;
 
-    const s3 = context.services.get("CosyncS3StorageService").s3("S3REGION");  
-    
-    let expReadTime;
-    let millisecondInHour = 3600000;
-    let millisecondInDay = 86400000;
-    let millisecondInWeek = 604800000; 
-    
-    expReadTime = asset.expirationHours ? ( parseFloat(asset.expirationHours) * millisecondInHour ) : millisecondInDay;
-    expReadTime = expReadTime > millisecondInWeek ? millisecondInWeek : expReadTime; 
+    const AWS = require('aws-sdk');
+    const config = {
+        accessKeyId: context.values.get("CosyncAWSAccessKey"),
+        secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
+        region: "AWS_BUCKET_REGION",
+    };
+    AWS.config.update(config);
 
+    const s3 = new AWS.S3({
+        signatureVersion: 'v4',
+        params: { Bucket: "AWS_BUCKET_NAME" },
+    });
+    
+     
+    let secondInHour = 3600;
+    let secondInDay = 86400;
+    let secondInWeek = 604800; 
+
+    let expReadTime = asset.expirationHours ? ( parseFloat(asset.expirationHours) * secondInHour ) : secondInDay;
+    expReadTime = expReadTime > secondInWeek ? secondInWeek : expReadTime;
+    
+    let contentType = asset.contentType;
+
+    let params = {
+        Bucket: "AWS_BUCKET_NAME",
+        Key: asset.path,
+        Method: "GET", 
+        ContentType: contentType,
+        Expires: parseInt(expReadTime)
+    };
+
+    
     try {  
         
-        asset.url = await s3.PresignURL({
-            "Bucket": "S3BUCKET",
-            "Key": asset.path,
-            "Method": "GET", 
-            "ExpirationMS": parseInt(expReadTime),
-            "ContentType": asset.contentType
-        });   
+        asset.url = await s3.getSignedUrlPromise('getObject', params);   
 
         asset.expiration = new Date();
         asset.expiration.setMilliseconds(asset.expiration.getMilliseconds() + expReadTime);
-
 
         if(asset.contentType.indexOf('image') >= 0 || asset.contentType.indexOf('video') >= 0){
 
@@ -74,14 +88,10 @@ exports = async function cosyncRefreshAsset(id){
                     let filenameSplit = asset.urlVideoPreview.split("?").shift();
                     let urlVideoPreview = asset.uid +"/"+ filenameSplit.split(asset.uid).pop();  
                     
-                    
-                    asset.urlVideoPreview = await s3.PresignURL({
-                        "Bucket": "S3BUCKET",
-                        "Key": urlVideoPreview,
-                        "Method": "GET", 
-                        "ExpirationMS": parseInt(expReadTime),
-                        "ContentType": asset.contentType
-                    });
+                    params.Key = urlVideoPreview;
+                    contentType = "image/png"
+                    params.ContentType = contentType
+                    asset.urlVideoPreview = await s3.getSignedUrlPromise('getObject', params);  
         
                     filenameSmall = urlVideoPreview.split("-videopreview-").join("-small-");
                 }
@@ -95,31 +105,19 @@ exports = async function cosyncRefreshAsset(id){
 
             if(filenameSmall){ 
             
-                asset.urlSmall = await s3.PresignURL({
-                    "Bucket": "S3BUCKET",
-                    "Key": filenameSmall,
-                    "Method": "GET", 
-                    "ExpirationMS": parseInt(expReadTime),
-                    "ContentType": asset.contentType
-                }); 
+                params.Key = filenameSmall;
+                params.ContentType = contentType
+                asset.urlSmall = await s3.getSignedUrlPromise('getObject', params);   
 
-                let filenameMedium = filenameSmall.split("-small-").join("-medium-"); 
-                asset.urlMedium = await s3.PresignURL({
-                    "Bucket": "S3BUCKET",
-                    "Key": filenameMedium,
-                    "Method": "GET", 
-                    "ExpirationMS": parseInt(expReadTime),
-                    "ContentType": asset.contentType
-                }); 
+                let filenameMedium = filenameSmall.split("-small-").join("-medium-");  
+                params.Key = filenameMedium;
+                params.ContentType = contentType
+                asset.urlMedium = await s3.getSignedUrlPromise('getObject', params);   
 
                 let filenameLarge = filenameSmall.split("-small-").join("-large-");  
-                asset.urlLarge = await s3.PresignURL({
-                    "Bucket": "S3BUCKET",
-                    "Key": filenameLarge,
-                    "Method": "GET", 
-                    "ExpirationMS": parseInt(expReadTime),
-                    "ContentType": asset.contentType
-                }); 
+                params.Key = filenameLarge;
+                params.ContentType = contentType
+                asset.urlLarge = await s3.getSignedUrlPromise('getObject', params);   
             }
         } 
 

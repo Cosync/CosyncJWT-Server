@@ -40,13 +40,25 @@ exports = async function cosyncRemoveAsset(id){
 
     if(!asset) return false; 
     else if(asset.uid != currentUser.id) return 'INVALID_PERMISION';
-      
-    const s3 = context.services.get("CosyncS3StorageService").s3("S3REGION");  
 
-    await s3.DeleteObject({
-        "Bucket": "S3BUCKET",
+    const AWS = require('aws-sdk');
+    const config = {
+        accessKeyId: context.values.get("CosyncAWSAccessKey"),
+        secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
+        region: "AWS_BUCKET_REGION",
+    };
+    AWS.config.update(config);
+
+    const s3 = new AWS.S3({
+        signatureVersion: 'v4',
+        params: { Bucket: "AWS_BUCKET_NAME" },
+    });
+
+    await s3.deleteObject({
+        "Bucket": "AWS_BUCKET_NAME",
         "Key": asset.path 
     });   
+    
     
     let timestamp = asset.path.split('-').pop();
 
@@ -56,18 +68,18 @@ exports = async function cosyncRemoveAsset(id){
         let medium = asset.path.split(timestamp).join(`medium-${timestamp}`);
         let small = asset.path.split(timestamp).join(`small-${timestamp}`);
 
-        s3.DeleteObject({
-            "Bucket": "S3BUCKET",
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
             "Key": large
         }); 
 
-        s3.DeleteObject({
-            "Bucket": "S3BUCKET",
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
             "Key": medium
         }); 
 
-        s3.DeleteObject({
-            "Bucket": "S3BUCKET",
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
             "Key": small
         }); 
     }
@@ -76,8 +88,8 @@ exports = async function cosyncRemoveAsset(id){
         let filenameSplit = asset.urlVideoPreview.split("?").shift();
         let urlVideoPreview = asset.uid +"/"+ filenameSplit.split(asset.uid).pop();  
 
-        s3.DeleteObject({
-            "Bucket": "S3BUCKET",
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
             "Key": urlVideoPreview
         }); 
 

@@ -26,8 +26,7 @@
  * For questions about this license, you may write to mailto:info@cosync.io
 */
 
-exports = async function cosyncArchiveAsset(id){ 
-      
+exports = async function cosyncArchiveAsset(id){
   
     const mongodb = context.services.get("mongodb-atlas"); 
     const collectionAsset = mongodb.db("DATABASE_NAME").collection("CosyncAsset");

@@ -30,12 +30,26 @@ exports = async function removeAsset(changeEvent){
 
     const mongodb = context.services.get("mongodb-atlas"); 
     const collectionAssetUpload = mongodb.db("DATABASE_NAME").collection("CosyncAssetUpload"); 
-    const assetId = changeEvent.documentKey._id; 
-    const s3 = context.services.get("CosyncS3StorageService").s3("S3REGION"); 
+    const assetId = changeEvent.documentKey._id;  
+    
+    const AWS = require('aws-sdk');
+    const config = {
+        accessKeyId: context.values.get("CosyncAWSAccessKey"),
+        secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
+        region: "AWS_BUCKET_REGION",
+    };
+    AWS.config.update(config);
+
+    const s3 = new AWS.S3({
+        signatureVersion: 'v4',
+        params: { Bucket: "AWS_BUCKET_NAME" },
+    });
+    
     const asset = await collectionAssetUpload.findOne({_id: assetId});
 
-    await s3.DeleteObject({
-        "Bucket": "S3BUCKET",
+
+    await s3.deleteObject({
+        "Bucket": "AWS_BUCKET_NAME",
         "Key": asset.path 
     });   
     
@@ -47,18 +61,18 @@ exports = async function removeAsset(changeEvent){
         let medium = asset.path.split(timestamp).join(`medium-${timestamp}`);
         let small = asset.path.split(timestamp).join(`small-${timestamp}`);
 
-        s3.DeleteObject({
-            "Bucket": "S3BUCKET",
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
             "Key": large
         }); 
 
-        s3.DeleteObject({
-            "Bucket": "S3BUCKET",
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
             "Key": medium
         }); 
 
-        s3.DeleteObject({
-            "Bucket": "S3BUCKET",
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
             "Key": small
         }); 
     }
@@ -67,8 +81,8 @@ exports = async function removeAsset(changeEvent){
         let filenameSplit = asset.urlVideoPreview.split("?").shift();
         let urlVideoPreview = asset.uid +"/"+ filenameSplit.split(asset.uid).pop();  
 
-        s3.DeleteObject({
-            "Bucket": "S3BUCKET",
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
             "Key": urlVideoPreview
         }); 
 
