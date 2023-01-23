@@ -36,7 +36,7 @@ exports = async function createPresignedURL(path, data){
     };
     AWS.config.update(config);
 
-    const S3Bucket = new AWS.S3({
+    const s3 = new AWS.S3({
         signatureVersion: 'v4',
         params: { Bucket: "AWS_BUCKET_REGION" },
     });
@@ -64,7 +64,7 @@ exports = async function createPresignedURL(path, data){
         expReadTime = expReadTime > secondInWeek ? secondInWeek : expReadTime;
 
         params.Expires = parseInt(expReadTime)
-        readUrl =  await S3Bucket.getSignedUrlPromise('getObject', params); 
+        readUrl =  await s3.getSignedUrlPromise('getObject', params); 
         
 
         expiration = new Date();
@@ -73,7 +73,7 @@ exports = async function createPresignedURL(path, data){
     } 
     params.ContentType = data.contentType;
     params.Expires = secondInDay;
-    const writeUrl = await S3Bucket.getSignedUrlPromise('putObject', params); 
+    const writeUrl = await s3.getSignedUrlPromise('putObject', params); 
  
     return { readUrl: readUrl,  writeUrl: writeUrl, path: params.Key, expiration: expiration};
 }

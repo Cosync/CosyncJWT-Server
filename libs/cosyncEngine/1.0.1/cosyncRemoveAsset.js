@@ -57,7 +57,7 @@ exports = async function cosyncRemoveAsset(id){
     await s3.deleteObject({
         "Bucket": "AWS_BUCKET_NAME",
         "Key": asset.path 
-    });   
+    }).promise();
     
     
     let timestamp = asset.path.split('-').pop();
@@ -92,6 +92,25 @@ exports = async function cosyncRemoveAsset(id){
             "Bucket": "AWS_BUCKET_NAME",
             "Key": urlVideoPreview
         }); 
+
+        let filenameSmall = urlVideoPreview.split("-videopreview-").join("-small-"); 
+        let filenameMedium = filenameSmall.split("-small-").join("-medium-"); 
+        let filenameLarge = filenameSmall.split("-small-").join("-large-");  
+
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
+            "Key": filenameSmall
+        });
+        
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
+            "Key": filenameMedium
+        });
+
+        s3.deleteObject({
+            "Bucket": "AWS_BUCKET_NAME",
+            "Key": filenameLarge
+        });
 
     } 
 
