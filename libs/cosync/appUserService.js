@@ -548,12 +548,22 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
-     
+    
+    if (params.handle.indexOf("@") > 0 && !app.userNamesEnabled){
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_USERNAME_LOGIN);
+      return;
+    }
 
     if(!this.checkAppStatus(app, callback)) return;
 
     let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);  
-    let user = await _user.findOne({ handle: params.handle, appId:app.appId });
+    let query = {
+      $or: [ { handle: params.handle, appId:app.appId }, 
+             { userName: params.handle, appId:app.appId } 
+      ]
+  };
+
+    let user = await _user.findOne(query);
     
     if(!user){
       let response = util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS; 
@@ -880,8 +890,62 @@ class AppUserService {
     
   }
 
+  async checkAvailableUserName(req, callback){
 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: req.appId });
 
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    }
+
+    if(!app.userNamesEnabled) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_USERNAME_LOGIN);
+      return;
+    }
+
+    let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let username = await _appUserTbl.findOne({ userName: req.body,userName, appId: req.appId});
+
+    if (username) callback({available:false})
+    else callback({available:true})
+
+  }
+
+  async setUserName(req, callback){
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: req.appId });
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    }
+
+    if(!app.userNamesEnabled) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_USERNAME_LOGIN);
+      return;
+    }  
+    if(!this.checkAppStatus(app, callback)) return; 
+
+    let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let user = await _appUserTbl.findOne({ handle: req.handle, appId: req.appId});
+    if (!user) {
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      return;
+    }
+
+    let username = await _appUserTbl.findOne({ userName: req.body,userName, appId: req.appId});
+    if (username){
+      callback(null, util.INTERNAL_STATUS_CODE.USERNAME_ALREADY_IN_USE);
+      return
+    }
+
+    user.userName = req.body.userName;
+    user.updatedA = util.getCurrentTime()
+    user.save()
+
+  }
 
   async setUserMetaData(req, callback){
 

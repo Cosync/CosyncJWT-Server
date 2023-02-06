@@ -108,7 +108,9 @@ exports.INTERNAL_STATUS_CODE = {
 	HANDLE_ALREADY_REGISTERED:{code:601, message:"handle already registered"},
 	INVALID_DATA:{code:602, message:"invalid data"},
 	EMAIL_NOT_EXIST:{code:603, message:"email does not exist"},
-	INVALID_METADATA:{code:604, message:"invalid metadata"}
+	INVALID_METADATA:{code:604, message:"invalid metadata"},
+	USERNAME_ALREADY_IN_USE:{code:605, message:"user name already assigned"},
+	APP_ISNOT_USERNAME_LOGIN:{code:606, message:"app does not support username login"}
 };
 
 

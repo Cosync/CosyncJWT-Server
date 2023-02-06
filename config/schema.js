@@ -60,6 +60,12 @@ module.exports.application = new mongooseSchema({
     comment: 'Allow anonumous login',
     index: true 
   }, 
+  userNamesEnabled: {
+    default: false,
+    type: Boolean,
+    comment: 'Allow username login',
+    index: true 
+  }, 
   emailExtension: {
     default: false,
     type: Boolean,

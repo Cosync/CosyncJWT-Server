@@ -529,6 +529,53 @@ router.get("/getUser", async (req, res) => {
    
 });
 
+router.post("/userNameAvailable", async (req, res) => { 
+  let valid = req.body.userName && req.handle;
+  if (!valid)
+  {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+  appUser.checkAvailableUserName(req, function(result, error){
+    appUser.checkAvailableUserName(req, function(result, error){
+      if(error){
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      }
+      else {
+        util.responseFormat(res, result);
+      }
+    })
+  })
+})
+
+router.post("/setUserName", async (req, res) => {  
+
+  let valid = req.body.userName && req.handle;
+  if (!valid)
+  {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  appUser.setUserName(req, function(result, error){
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = req.handle;
+      error.userName = req.body.userName
+      appLogService.addLog(req.appId, 'setUserName', JSON.stringify(error), 'error', 'user');
+    } 
+    else{
+      let log = { 
+        handle: req.handle,
+        data: req.body,
+        status: true
+      }; 
+      appLogService.addLog(req.appId, 'setUserName', JSON.stringify(log), 'success', 'user');
+      util.responseFormat(res, result);
+    }
+  });
+})
 
 router.post("/setUserMetadata", async (req, res) => {  
 
