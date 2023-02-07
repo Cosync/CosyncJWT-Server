@@ -177,7 +177,7 @@ exports.generateAuthJWTToken = function(user, app){
 
 	if(app.metaDataEmail)  payload.email = user.handle;
 
-	let finalMetaData = {};
+	let finalMetadata = {};
 
 	if(app.metaData && user.handle.indexOf('ANON_') < 0) {
 	 
@@ -185,7 +185,7 @@ exports.generateAuthJWTToken = function(user, app){
 			const field = app.metaData[index];  
 			if(field){ 
 				if(field.fieldName == 'email'){ 
-					_.set(finalMetaData, field.path, user.handle);
+					_.set(finalMetadata, field.path, user.handle);
 					delete payload.email;
 				}
 
@@ -193,9 +193,13 @@ exports.generateAuthJWTToken = function(user, app){
 				if(field.required && !value){ 
 					return null;
 				}
-				else if(value) _.set(finalMetaData, field.path, value);
+				else if(value) _.set(finalMetadata, field.path, value);
 			}
-		}; 
+		} 
+	}
+
+	if (user.userName && app.userNamesEnabled){
+		_.set(finalMetadata, "userName", user.userName);
 	}
 
 	if(app.metaDataInvite && user.handle.indexOf('ANON_') < 0) {
@@ -203,13 +207,13 @@ exports.generateAuthJWTToken = function(user, app){
 			const field = app.metaDataInvite[index];  
 			if(field){ 
 				let value = _.get(metaData, field.path);
-				if(value) _.set(finalMetaData, field.path, value);
+				if(value) _.set(finalMetadata, field.path, value);
 			}
 		}; 
 	}
 	
-	for (const key in finalMetaData) {
-		if(finalMetaData[key] !== undefined) payload[key] = finalMetaData[key]; 
+	for (const key in finalMetadata) {
+		if(finalMetadata[key] !== undefined) payload[key] = finalMetadata[key]; 
 	} 
 
 	let hashKey = hashService.aesDecrypt(app.appPrivateKey);

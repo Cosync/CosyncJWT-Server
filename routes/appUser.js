@@ -146,7 +146,7 @@ router.post("/loginAnonymous", async (req, res) => {
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       error.handle = req.body.handle;
-      appLogService.addLog(data.appId, 'login', JSON.stringify(error), 'error', 'user'); 
+      appLogService.addLog(data.appId, 'loginAnonymous', JSON.stringify(error), 'error', 'user'); 
      
     } 
     else{
@@ -155,7 +155,7 @@ router.post("/loginAnonymous", async (req, res) => {
         handle: data.handle,
         status: true
       };
-      appLogService.addLog(data.appId, 'login', JSON.stringify(log), 'success', 'user'); 
+      appLogService.addLog(data.appId, 'loginAnonymous', JSON.stringify(log), 'success', 'user'); 
      
     } 
   });
@@ -579,7 +579,7 @@ router.post("/setUserName", async (req, res) => {
 
 router.post("/setUserMetadata", async (req, res) => {  
 
-  appUser.setUserMetaData(req, function(result, error){
+  appUser.setUserMetadata(req, function(result, error){
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
 

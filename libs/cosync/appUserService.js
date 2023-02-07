@@ -203,7 +203,7 @@ class AppUserService {
     let handle = req.body.handle.toLowerCase();
     
     let metaData;
-    let finalMetaData = {};
+    let finalMetadata = {};
 
 
     if(app.signupFlow == 'none'){
@@ -217,7 +217,7 @@ class AppUserService {
             app.metaData.forEach(field => {
               let value = _.get(metaData, field.path);
 
-              if(value !== undefined) _.set(finalMetaData, field.path, value); 
+              if(value !== undefined) _.set(finalMetadata, field.path, value); 
 
               if(field.required && value === undefined){ 
                 callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
@@ -239,7 +239,7 @@ class AppUserService {
           handle: handle, 
           password: hashedPassword,
           appId: req.appId,
-          metaData: finalMetaData,
+          metaData: finalMetadata,
           status: 'active',
           code: code,
           createdAt: util.getCurrentTime(),
@@ -297,7 +297,7 @@ class AppUserService {
 
           let value = _.get(metaData, field.path);
 
-          if(value !== undefined) _.set(finalMetaData, field.path, value);
+          if(value !== undefined) _.set(finalMetadata, field.path, value);
 
           if(field.required && value === undefined){ 
             callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
@@ -323,7 +323,7 @@ class AppUserService {
       
       oldSignup.status = 'pending';
       oldSignup.updatedAt = util.getCurrentTime();
-      oldSignup.metaData = finalMetaData;
+      oldSignup.metaData = finalMetadata;
       oldSignup.password = hashedPassword;
       oldSignup.save();
       
@@ -334,7 +334,7 @@ class AppUserService {
         handle: handle, 
         password: hashedPassword,
         appId: req.appId,
-        metaData: finalMetaData,
+        metaData: finalMetadata,
         status: 'pending',
         code: code,
         createdAt: util.getCurrentTime(),
@@ -548,8 +548,8 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
-    
-    if (params.handle.indexOf("@") > 0 && !app.userNamesEnabled){
+    // check if userName is provided
+    if (params.handle.indexOf("@") < 0 && !app.userNamesEnabled){
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_USERNAME_LOGIN);
       return;
     }
@@ -934,6 +934,10 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
       return;
     }
+    else if (user.userName && user.userName != "" ){
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      return;
+    }
 
     let username = await _appUserTbl.findOne({ userName: req.body,userName, appId: req.appId});
     if (username){
@@ -944,10 +948,10 @@ class AppUserService {
     user.userName = req.body.userName;
     user.updatedA = util.getCurrentTime()
     user.save()
-
+    callback(true)
   }
 
-  async setUserMetaData(req, callback){
+  async setUserMetadata(req, callback){
 
     let metaData;
     try {
@@ -978,7 +982,7 @@ class AppUserService {
 
     if (user) {
        
-      let finalMetaData = {};
+      let finalMetadata = {};
 
       if(app.metaData){
         for (let index = 0; index < app.metaData.length; index++) {
@@ -986,7 +990,7 @@ class AppUserService {
           
           let value = _.get(metaData, field.path);
 
-          if(value && field.canEdit === true) _.set(finalMetaData, field.path, value);  
+          if(value && field.canEdit === true) _.set(finalMetadata, field.path, value);  
           else if (value && !field.canEdit){
             callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
             return;
@@ -1003,11 +1007,11 @@ class AppUserService {
         for (let index = 0; index < app.metaDataInvite.length; index++) {
           const field = app.metaDataInvite[index]; 
           let value = _.get(user.metaData, field.path); 
-          if(value) _.set(finalMetaData, field.path, value);  
+          if(value) _.set(finalMetadata, field.path, value);  
         }; 
       }
 
-      user.metaData = finalMetaData;
+      user.metaData = finalMetadata;
       user.save();
 
       callback(true);
@@ -1300,21 +1304,21 @@ class AppUserService {
   validateUserMetaData(metaData, app){
     return new Promise((resolve, reject) => {  
 
-      let finalMetaData = {}; 
+      let finalMetadata = {}; 
 
       for (let index = 0; index < app.metaData.length; index++) {
         const field = app.metaData[index]; 
         let value = _.get(metaData, field.path); 
-        if(value !== undefined && value != "") _.set(finalMetaData, field.path, value);
+        if(value !== undefined && value != "") _.set(finalMetadata, field.path, value);
       }; 
 
       for (let index = 0; index < app.metaDataInvite.length; index++) {
         const field = app.metaDataInvite[index]; 
         let value = _.get(metaData, field.path); 
-        if(value !== undefined && value != "") _.set(finalMetaData, field.path, value);
+        if(value !== undefined && value != "") _.set(finalMetadata, field.path, value);
       }; 
       
-      resolve(finalMetaData);
+      resolve(finalMetadata);
 
     })
   } 
@@ -1400,7 +1404,7 @@ class AppUserService {
       return;
     }
 
-    let finalMetaData = {};
+    let finalMetadata = {};
     if(app.metaDataInvite && app.metaDataInvite.length){ 
       
       let metaData = {};
@@ -1417,7 +1421,7 @@ class AppUserService {
         let field = app.metaDataInvite[index];
         let value = _.get(metaData, field.path);
 
-        if(value !== undefined) _.set(finalMetaData, field.path, value); 
+        if(value !== undefined) _.set(finalMetadata, field.path, value); 
 
         if(field.required && value === undefined){ 
           valid = false;
@@ -1429,7 +1433,7 @@ class AppUserService {
 
       if(!valid) return;
     } 
-    this.createInvite(req, app, finalMetaData, callback);  
+    this.createInvite(req, app, finalMetadata, callback);  
   }
 
 
@@ -1528,7 +1532,7 @@ class AppUserService {
       data.senderUserId = invite.senderUserId;
         
       let valid = true;
-      let finalMetaData = {};
+      let finalMetadata = {};
       let metaData = {};
       try { 
 
@@ -1540,7 +1544,7 @@ class AppUserService {
             let field = app.metaData[index];
             let value = _.get(metaData, field.path);
 
-            if(value !== undefined) _.set(finalMetaData, field.path, value); 
+            if(value !== undefined) _.set(finalMetadata, field.path, value); 
 
             if(field.required && value === undefined){ 
               valid = false;
@@ -1559,13 +1563,13 @@ class AppUserService {
       
       if(!valid) return;
 
-      if(invite.metaData) _.merge(finalMetaData, invite.metaData);
+      if(invite.metaData) _.merge(finalMetadata, invite.metaData);
 
       invite.status = 'verified';
       invite.updatedAt = util.getCurrentTime();
       invite.save();
 
-      data.metaData = finalMetaData;
+      data.metaData = finalMetadata;
       
       this.addAppUserAccount(data, app, callback);
     }
