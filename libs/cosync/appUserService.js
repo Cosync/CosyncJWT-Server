@@ -875,6 +875,7 @@ class AppUserService {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         handle: user.handle,
+        userName: user.userName,
         twoFactorPhoneVerification: user.twoFactorPhoneVerification || false,
         twoFactorGoogleVerification: user.twoFactorGoogleVerification || false,
         appId: user.appId,
@@ -906,7 +907,7 @@ class AppUserService {
     }
 
     let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-    let username = await _appUserTbl.findOne({ userName: req.body,userName, appId: req.appId});
+    let username = await _appUserTbl.findOne({ userName: req.query.userName, appId: req.appId});
 
     if (username) callback({available:false})
     else callback({available:true})
@@ -939,7 +940,7 @@ class AppUserService {
       return;
     }
 
-    let username = await _appUserTbl.findOne({ userName: req.body,userName, appId: req.appId});
+    let username = await _appUserTbl.findOne({ userName: req.body.userName, appId: req.appId});
     if (username){
       callback(null, util.INTERNAL_STATUS_CODE.USERNAME_ALREADY_IN_USE);
       return

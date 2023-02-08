@@ -529,14 +529,14 @@ router.get("/getUser", async (req, res) => {
    
 });
 
-router.post("/userNameAvailable", async (req, res) => { 
-  let valid = req.body.userName && req.handle;
+router.get("/userNameAvailable", async (req, res) => { 
+  let valid = req.query.userName && req.handle;
   if (!valid)
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   }
-  appUser.checkAvailableUserName(req, function(result, error){
+ 
     appUser.checkAvailableUserName(req, function(result, error){
       if(error){
         util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -545,7 +545,7 @@ router.post("/userNameAvailable", async (req, res) => {
         util.responseFormat(res, result);
       }
     })
-  })
+ 
 })
 
 router.post("/setUserName", async (req, res) => {  

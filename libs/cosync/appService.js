@@ -498,8 +498,6 @@ class AppService {
           break;
 
         case 'jwtEnabled':
-         
-          
 
           if(app.jwtEnabled == data.jwtEnabled || typeof(data.jwtEnabled) != "boolean"){
             callback(null, error);
@@ -516,17 +514,15 @@ class AppService {
 
           break;
 
-           case 'jwtEnabled':
-         
-          
+        case 'userNamesEnabled': 
 
-          if(app.jwtEnabled == data.jwtEnabled || typeof(data.jwtEnabled) != "boolean"){
+          if(app.userNamesEnabled == data.userNamesEnabled || typeof(data.userNamesEnabled) != "boolean"){
             callback(null, error);
             return;
           } 
  
 
-          app.jwtEnabled = data.jwtEnabled;
+          app.userNamesEnabled = data.userNamesEnabled;
           app.updatedAt = util.getCurrentTime();
           app.save(); 
           delete app.appPrivateKey;
