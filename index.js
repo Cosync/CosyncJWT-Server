@@ -46,6 +46,8 @@ else if(process.env.ENV == "prod" || process.argv[3] == "prod"){
   global.__config = require('./config/config-prod.js'); 
 }
 
+console.log("your server enviroment is ", process.env.ENV || process.argv[3])
+;
 const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
 
 if(process.env.DB_CONN_STRING) global.__config.db.connectionString = process.env.DB_CONN_STRING;

@@ -110,7 +110,9 @@ exports.INTERNAL_STATUS_CODE = {
 	EMAIL_NOT_EXIST:{code:603, message:"email does not exist"},
 	INVALID_METADATA:{code:604, message:"invalid metadata"},
 	USERNAME_ALREADY_IN_USE:{code:605, message:"user name already assigned"},
-	APP_ISNOT_USERNAME_LOGIN:{code:606, message:"app does not support username login"}
+	APP_ISNOT_USERNAME_LOGIN:{code:606, message:"app does not support username login"},
+	USERNAME_DOES_NOT_EXIST:{code:607, message:"user name deos not exist"},
+	ACCOUNT_IS_NOT_VERIFIED:{code:608, message:"account has not been verified"}
 };
 
 

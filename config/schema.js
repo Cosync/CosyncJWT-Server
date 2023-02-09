@@ -346,6 +346,11 @@ module.exports.user = new mongooseSchema({
       comment: 'password of the user.',
       index: true 
     },  
+    userName: { 
+      type: String,
+      comment: 'username of the user.',
+      index: true 
+    },
     appId: {
       required: true,
       type: String,

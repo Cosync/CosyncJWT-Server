@@ -258,7 +258,8 @@ class AppUserService {
         callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
       }
       
-      return;
+
+      return; // no need email for signup flow NONE
     } 
 
     if(app.signupFlow == 'code'){
@@ -561,21 +562,25 @@ class AppUserService {
       $or: [ { handle: params.handle, appId:app.appId }, 
              { userName: params.handle, appId:app.appId } 
       ]
-  };
+    };
 
     let user = await _user.findOne(query);
     
     if(!user){
-      let response = util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS; 
+      
       if(app.signupFlow != 'none'){
         let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);  
         let signup = await _signup.findOne({ handle: params.handle, appId:app.appId });
-        if(signup) response.signup = {status: signup.status}; 
-      }
-      
-      callback(null, response);
-        
+        if(signup && signup.status == "pending") callback(null, util.INTERNAL_STATUS_CODE.ACCOUNT_IS_NOT_VERIFIED);
+
+      } 
+      else callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
+
+      return;
     } 
+    else if(user.status == 'pending'){
+      callback(null, util.INTERNAL_STATUS_CODE.ACCOUNT_IS_NOT_VERIFIED);
+    }
     else if(user.status != 'active'){
       callback(null, util.INTERNAL_STATUS_CODE.USER_IS_SUSPENDED);
     }
