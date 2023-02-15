@@ -171,6 +171,8 @@ class InitVersion {
                 content = content.split('DATABASE_NAME').join(realmConfig.realmDatabase);  
                 content = content.split('AWS_BUCKET_NAME').join(realmConfig.s3Bucket);
                 content = content.split('AWS_BUCKET_REGION').join(realmConfig.s3Region);
+                content = content.split('AWS_PUBLIC_BUCKET_NAME').join(realmConfig.s3BucketPublic);
+                content = content.split('AWS_PUBLIC_BUCKET_REGION').join(realmConfig.s3RegionPublic);
                 content = content.split('APP_SECRET').join(realmConfig.app.appSecret);
                 
                 item.func.source = content;
