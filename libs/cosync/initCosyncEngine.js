@@ -68,6 +68,8 @@ class InitCosyncEngine {
             !data.serviceId || data.serviceId == "" || 
             !data.s3Bucket || data.s3Bucket == "" || 
             !data.s3Region || data.s3Region == "" || 
+            !data.s3BucketPublic || data.s3BucketPublic == "" || 
+            !data.s3RegionPublic || data.s3RegionPublic == "" || 
             !data.publicKey || data.publicKey == "" || 
             !data.privateKey || data.privateKey == ""){
             callback(null, error); 
@@ -136,6 +138,8 @@ class InitCosyncEngine {
             !data.serviceId || data.serviceId == "" || 
             !data.s3Bucket || data.s3Bucket == "" || 
             !data.s3Region || data.s3Region == "" || 
+            !data.s3BucketPublic || data.s3BucketPublic == "" || 
+            !data.s3RegionPublic || data.s3RegionPublic == "" || 
             !data.publicKey || data.publicKey == "" || 
             !data.privateKey || data.privateKey == ""){
             callback(null, error); 
@@ -204,6 +208,8 @@ class InitCosyncEngine {
         !data.serviceId || data.serviceId == "" || 
         !data.s3Bucket || data.s3Bucket == "" || 
         !data.s3Region || data.s3Region == "" || 
+        !data.s3BucketPublic || data.s3BucketPublic == "" || 
+        !data.s3RegionPublic || data.s3RegionPublic == "" || 
         !data.publicKey || data.publicKey == "" || 
         !data.privateKey || data.privateKey == ""){
             callback(null, error); 
