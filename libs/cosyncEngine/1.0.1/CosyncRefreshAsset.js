@@ -57,19 +57,15 @@ exports = async function cosyncRefreshAsset(id){
     let secondInWeek = 604800; 
 
     let expReadTime = asset.expirationHours ? ( parseFloat(asset.expirationHours) * secondInHour ) : secondInDay;
-    expReadTime = expReadTime > secondInWeek ? secondInWeek : expReadTime;
-    
-    let contentType = asset.contentType;
+    expReadTime = expReadTime > secondInWeek ? secondInWeek : expReadTime; 
 
     let params = {
         Bucket: "AWS_BUCKET_NAME",
-        Key: asset.path,
-        Method: "GET", 
-        ContentType: contentType,
+        Key: asset.path, 
         Expires: parseInt(expReadTime)
     };
 
-    
+ 
     try {  
         
         asset.url = await s3.getSignedUrlPromise('getObject', params);   
@@ -88,11 +84,9 @@ exports = async function cosyncRefreshAsset(id){
                     let filenameSplit = asset.urlVideoPreview.split("?").shift();
                     let urlVideoPreview = asset.userId +"/"+ filenameSplit.split(asset.userId).pop();  
                     
-                    params.Key = urlVideoPreview;
-                    contentType = "image/png"
-                    params.ContentType = contentType
-                    asset.urlVideoPreview = await s3.getSignedUrlPromise('getObject', params);  
-        
+                    params.Key = urlVideoPreview; 
+                    asset.urlVideoPreview = await s3.getSignedUrlPromise('getObject', params);
+                    
                     filenameSmall = urlVideoPreview.split("-videopreview-").join("-small-");
                 }
             }
@@ -106,17 +100,14 @@ exports = async function cosyncRefreshAsset(id){
             if(filenameSmall){ 
             
                 params.Key = filenameSmall;
-                params.ContentType = contentType
                 asset.urlSmall = await s3.getSignedUrlPromise('getObject', params);   
 
                 let filenameMedium = filenameSmall.split("-small-").join("-medium-");  
                 params.Key = filenameMedium;
-                params.ContentType = contentType
                 asset.urlMedium = await s3.getSignedUrlPromise('getObject', params);   
 
                 let filenameLarge = filenameSmall.split("-small-").join("-large-");  
                 params.Key = filenameLarge;
-                params.ContentType = contentType
                 asset.urlLarge = await s3.getSignedUrlPromise('getObject', params);   
             }
         } 
