@@ -39,7 +39,7 @@ exports = async function cosyncRemoveAsset(id){
     let asset = await collectionAsset.findOne({_id: assetId});
 
     if(!asset) return false; 
-    else if(asset.uid != currentUser.id) return 'INVALID_PERMISION';
+    else if(asset.userId != currentUser.id) return 'INVALID_PERMISION';
 
     const bugketName = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
     const bugketRegion = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_REGION" : "AWS_BUCKET_REGION";
@@ -89,7 +89,7 @@ exports = async function cosyncRemoveAsset(id){
     else if(asset.contentType.indexOf('video') >= 0 && asset.urlVideoPreview){ 
         
         let filenameSplit = asset.urlVideoPreview.split("?").shift();
-        let urlVideoPreview = asset.uid +"/"+ filenameSplit.split(asset.uid).pop();  
+        let urlVideoPreview = asset.userId +"/"+ filenameSplit.split(asset.userId).pop();  
 
         s3.deleteObject({
             "Bucket": bugketName,

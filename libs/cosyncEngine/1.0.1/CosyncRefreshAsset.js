@@ -86,7 +86,7 @@ exports = async function cosyncRefreshAsset(id){
                 if(asset.urlVideoPreview){
 
                     let filenameSplit = asset.urlVideoPreview.split("?").shift();
-                    let urlVideoPreview = asset.uid +"/"+ filenameSplit.split(asset.uid).pop();  
+                    let urlVideoPreview = asset.userId +"/"+ filenameSplit.split(asset.userId).pop();  
                     
                     params.Key = urlVideoPreview;
                     contentType = "image/png"

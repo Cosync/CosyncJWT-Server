@@ -113,6 +113,12 @@ class InitVersion {
 
         this.mongodbRealmlogin(data, async function(loginResult){
                 
+            if (loginResult.error){
+                error.message = loginResult.error
+                callback(null, error);
+                return;
+            }
+
             let app = await that.getApplications(data, loginResult.access_token);
             if(!app || app.status == 'fails'){ 
                 if(app) callback(null, app); 
@@ -538,7 +544,13 @@ class InitVersion {
         let that = this;
 
         this.mongodbRealmlogin(data, async function(loginResult){
-                
+            
+            if (loginResult.error){
+                error.message = loginResult.error
+                callback(null, error);
+                return;
+            }
+
             let app = await that.getApplications(data, loginResult.access_token);
 
             if(!app || app.status == 'fails'){ 
@@ -591,7 +603,13 @@ class InitVersion {
         let that = this;
 
         this.mongodbRealmlogin(data, async function(loginResult){
-                
+
+            if (loginResult.error){
+                error.message = loginResult.error
+                callback(null, error);
+                return;
+            }
+
             let app = await that.getApplications(data, loginResult.access_token);
 
             if(!app || app.status == 'fails'){ 

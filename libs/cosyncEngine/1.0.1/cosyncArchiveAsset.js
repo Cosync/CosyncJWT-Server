@@ -38,7 +38,7 @@ exports = async function cosyncArchiveAsset(id){
     let asset = await collectionAsset.findOne({_id: assetId});
 
     if(!asset) return false; 
-    else if(asset.uid != currentUser.id) return 'INVALID_PERMISION'; 
+    else if(asset.userId != currentUser.id) return 'INVALID_PERMISION'; 
 
     let update = {
         updatedAt : new Date(),

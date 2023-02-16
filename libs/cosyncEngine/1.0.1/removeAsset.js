@@ -83,7 +83,7 @@ exports = async function removeAsset(changeEvent){
     else if(asset.contentType.indexOf('video') >= 0 && asset.urlVideoPreview){ 
         
         let filenameSplit = asset.urlVideoPreview.split("?").shift();
-        let urlVideoPreview = asset.uid +"/"+ filenameSplit.split(asset.uid).pop();  
+        let urlVideoPreview = asset.userId +"/"+ filenameSplit.split(asset.userId).pop();  
 
         s3.deleteObject({
             "Bucket": bugketName,
