@@ -82,11 +82,12 @@ exports = async function cosyncRefreshAsset(id){
                 if(asset.urlVideoPreview){
 
                     let filenameSplit = asset.urlVideoPreview.split("?").shift();
-                    let urlVideoPreview = asset.userId +"/"+ filenameSplit.split(asset.userId).pop();  
+                    
+                    let urlVideoPreview = asset.userId + filenameSplit.split(asset.userId).pop();  
                     
                     params.Key = urlVideoPreview; 
                     asset.urlVideoPreview = await s3.getSignedUrlPromise('getObject', params);
-                    
+
                     filenameSmall = urlVideoPreview.split("-videopreview-").join("-small-");
                 }
             }
