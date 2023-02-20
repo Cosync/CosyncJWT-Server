@@ -65,15 +65,25 @@ exports = async function cosyncRefreshAsset(id){
         Expires: parseInt(expReadTime)
     };
 
- 
+    let updatedAsset = { 
+        userId: asset.userId,
+        expirationHours:asset.expirationHours,
+        contentType:asset.contentType,
+        expiration:asset.expiration,
+        status:asset.status,
+        createdAt:asset.createdAt,
+        updatedAt: asset.createdAt
+    };
+
     try {  
         
-        asset.url = await s3.getSignedUrlPromise('getObject', params);   
+        updatedAsset.url = await s3.getSignedUrlPromise('getObject', params);
+        updatedAsset.expiration = new Date();
 
-        asset.expiration = new Date();
-        asset.expiration.setMilliseconds(asset.expiration.getMilliseconds() + expReadTime);
+        const timeInMillis = expReadTime * 1000;
+        updatedAsset.expiration.setTime(updatedAsset.expiration.getTime() + timeInMillis);
 
-        if(asset.contentType.indexOf('image') >= 0 || asset.contentType.indexOf('video') >= 0){
+        if(updatedAsset.contentType.indexOf('image') >= 0 || updatedAsset.contentType.indexOf('video') >= 0){
 
             let filenameSmall; 
 
@@ -86,7 +96,7 @@ exports = async function cosyncRefreshAsset(id){
                     let urlVideoPreview = asset.userId + filenameSplit.split(asset.userId).pop();  
                     
                     params.Key = urlVideoPreview; 
-                    asset.urlVideoPreview = await s3.getSignedUrlPromise('getObject', params);
+                    updatedAsset.urlVideoPreview = await s3.getSignedUrlPromise('getObject', params);
 
                     filenameSmall = urlVideoPreview.split("-videopreview-").join("-small-");
                 }
@@ -101,24 +111,26 @@ exports = async function cosyncRefreshAsset(id){
             if(filenameSmall){ 
             
                 params.Key = filenameSmall;
-                asset.urlSmall = await s3.getSignedUrlPromise('getObject', params);   
+                updatedAsset.urlSmall = await s3.getSignedUrlPromise('getObject', params);   
 
                 let filenameMedium = filenameSmall.split("-small-").join("-medium-");  
                 params.Key = filenameMedium;
-                asset.urlMedium = await s3.getSignedUrlPromise('getObject', params);   
+                updatedAsset.urlMedium = await s3.getSignedUrlPromise('getObject', params);   
 
                 let filenameLarge = filenameSmall.split("-small-").join("-large-");  
                 params.Key = filenameLarge;
-                asset.urlLarge = await s3.getSignedUrlPromise('getObject', params);   
+                updatedAsset.urlLarge = await s3.getSignedUrlPromise('getObject', params);   
             }
         } 
+
+        updatedAsset.updatedAt = new Date();
+        collectionAsset.updateOne({ "_id": assetId }, { "$set": updatedAsset });  
+        updatedAsset._id = asset._id;
+        return updatedAsset;
 
     } catch (error) {
         return false;
     }
 
-    asset.updatedAt = new Date();
-    collectionAsset.updateOne({ "_id": assetId }, { "$set": asset });  
-    
-    return asset;
+   
 }
