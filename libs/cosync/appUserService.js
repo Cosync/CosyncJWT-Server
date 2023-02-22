@@ -1503,6 +1503,39 @@ class AppUserService {
     
     
   }
+
+
+  async deleteAppUserAccount(data, callback){
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let app = await _app.findOne({ appId: data.appId });
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    }
+
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);  
+    let user = await _user.findOne({ handle: data.handle, appId:data.appId });
+    
+    if (!user){
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
+      return; 
+    }
+    else {
+
+      let validHash = await hashService.validateHash(data.password, user.password);
+      if(!validHash){
+        callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
+        return; 
+      } 
+      
+      _user.findOneAndRemove({_id: user._id}, function(err, res) {
+        callback(res, err);  
+      }); 
+     
+    }
+  }
+
   
 
   async verifyInvite(req, callback){

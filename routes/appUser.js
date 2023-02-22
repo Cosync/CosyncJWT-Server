@@ -381,6 +381,39 @@ router.post("/register", async (req, res) => {
 }); 
 
 
+router.post("/deleteAccount", async (req, res) => {
+ 
+  let valid = req.body.handle && req.body.handle && req.appId && req.body.password;
+
+  if (!valid || req.handle != req.body.handle || req.scope != 'app')
+  {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+  let data = req.body;
+  data.appId = req.appId;
+
+  appUser.deleteAppUserAccount(data, function(result, error){
+
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      error.handle = req.body.handle;
+      appLogService.addLog(data.appId, 'deleteAccount', JSON.stringify(error), 'error', 'user'); 
+     
+    } 
+    else {
+      
+      util.responseFormat(res, true);
+      let log = {
+        handle: data.handle
+      };
+      appLogService.addLog(data.appId, 'deleteAccount', JSON.stringify(log), 'success', 'user'); 
+     
+    } 
+
+  });
+
+}); 
 
 router.post("/forgotPassword", async (req, res) => {
  
