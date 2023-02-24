@@ -95,6 +95,20 @@ let deployList = [
             path: 'createPresignedURL.js',
             private: true
         }, 
+    },
+    {
+        func:{
+            name: 'CosyncEmptyUserS3Directory',
+            path: 'emptyUserS3Directory.js',
+            private: true
+        }, 
+    },
+    {
+        func:{
+            name: 'CosyncEmptyS3Directory',
+            path: 'emptyS3Directory.js',
+            private: true
+        }, 
     } 
 ];
 

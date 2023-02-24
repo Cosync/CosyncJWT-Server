@@ -34,26 +34,26 @@ exports = async function removeAsset(changeEvent){
     
     const asset = await collectionAssetUpload.findOne({_id: assetId});
     if(!asset) return false; 
-    const bugketName = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
-    const bugketRegion = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_REGION" : "AWS_BUCKET_REGION";
+    const bucketName = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
+    const bucketRegion = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_REGION" : "AWS_BUCKET_REGION";
 
     const AWS = require('aws-sdk');
     const config = {
         accessKeyId: context.values.get("CosyncAWSAccessKey"),
         secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
-        region: bugketRegion,
+        region: bucketRegion,
     };
     AWS.config.update(config);
 
     const s3 = new AWS.S3({
         signatureVersion: 'v4',
-        params: { Bucket: bugketName },
+        params: { Bucket: bucketName },
     });
     
     
 
     await s3.deleteObject({
-        "Bucket": bugketName,
+        "Bucket": bucketName,
         "Key": asset.path 
     }).promise();
     
@@ -66,17 +66,17 @@ exports = async function removeAsset(changeEvent){
         let small = asset.path.split(timestamp).join(`small-${timestamp}`);
 
         s3.deleteObject({
-            "Bucket": bugketName,
+            "Bucket": bucketName,
             "Key": large
         }); 
 
         s3.deleteObject({
-            "Bucket": bugketName,
+            "Bucket": bucketName,
             "Key": medium
         }); 
 
         s3.deleteObject({
-            "Bucket": bugketName,
+            "Bucket": bucketName,
             "Key": small
         }); 
     }
@@ -86,7 +86,7 @@ exports = async function removeAsset(changeEvent){
         let urlVideoPreview = asset.userId +"/"+ filenameSplit.split(asset.userId).pop();  
 
         s3.deleteObject({
-            "Bucket": bugketName,
+            "Bucket": bucketName,
             "Key": urlVideoPreview
         }); 
 
@@ -95,17 +95,17 @@ exports = async function removeAsset(changeEvent){
         let filenameLarge = filenameSmall.split("-small-").join("-large-");  
 
         s3.deleteObject({
-            "Bucket": bugketName,
+            "Bucket": bucketName,
             "Key": filenameSmall
         });
         
         s3.deleteObject({
-            "Bucket": bugketName,
+            "Bucket": bucketName,
             "Key": filenameMedium
         });
 
         s3.deleteObject({
-            "Bucket": bugketName,
+            "Bucket": bucketName,
             "Key": filenameLarge
         });
     } 

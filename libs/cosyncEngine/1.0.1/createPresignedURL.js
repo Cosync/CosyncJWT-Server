@@ -30,20 +30,20 @@ exports = async function createPresignedURL(path, data){
     
     const AWS = require('aws-sdk');
 
-    const bugketName = data.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
-    const bugketRegion = data.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_REGION" : "AWS_BUCKET_REGION";
+    const bucketName = data.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
+    const bucketRegion = data.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_REGION" : "AWS_BUCKET_REGION";
 
 
     const config = {
         accessKeyId: context.values.get("CosyncAWSAccessKey"),
         secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
-        region: bugketRegion,
+        region: bucketRegion,
     };
     AWS.config.update(config);
 
     const s3 = new AWS.S3({
         signatureVersion: 'v4',
-        params: { Bucket: bugketRegion },
+        params: { Bucket: bucketRegion },
     });
 
     let readUrl, expReadTime, expiration;
@@ -52,7 +52,7 @@ exports = async function createPresignedURL(path, data){
     let secondInWeek = 604800;
     
     let params = {
-        Bucket: bugketName,
+        Bucket: bucketName,
         Key: path,
         Expires: secondInDay // 1 day
     };
@@ -61,7 +61,7 @@ exports = async function createPresignedURL(path, data){
     if(data.expirationHours === 0 || !data.expirationHours){
 
         params.Key = "public/"+path; 
-        readUrl = `https://${bugketName}.s3.amazonaws.com/${params.Key}`; 
+        readUrl = `https://${bucketName}.s3.amazonaws.com/${params.Key}`; 
     } 
     else{
        
