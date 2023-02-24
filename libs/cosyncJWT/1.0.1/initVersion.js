@@ -70,15 +70,11 @@ class InitVersion {
 
             let secret = await that.getSecret(data, token.access_token, app);
 
-            if(secret) {
-
-                
-                let result = {};
-                result.status = "Duplicate";
-                result.message = `Your MongoDB Realm JWT Secret is already existed: (${secret.name})`;
-                callback(result); 
-                
+            if(secret) { 
+                error.message = `Your MongoDB Realm JWT Secret is already existed: (${secret.name}). Please remove it and try again.`;
+                callback(null, error);
                 return;
+                 
             } 
             else  {
 
@@ -92,7 +88,7 @@ class InitVersion {
                 let result = await that.createJWTAuthProvider(data, token.access_token, app);
 
                 if(!result) callback(null, error); 
-                else if(result.error.indexOf("auth provider with name") >=0 && result.error.indexOf("custom-token") >= 0 ) {
+                else if(result.error && result.error.indexOf("auth provider with name") >=0 && result.error.indexOf("custom-token") >= 0 ) {
                     that.deleteJWTAuthProvider(data, token.access_token, app, async function(){
                         let auth = await that.createJWTAuthProvider(data, token.access_token, app);
                         if(auth.error){
@@ -108,6 +104,7 @@ class InitVersion {
                     error.message = result.error;
                     callback(null, error); 
                 }
+                else callback(result, null); 
             }
            
 

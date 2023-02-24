@@ -109,17 +109,15 @@ class InitCosyncJWT {
         cosyncJWT.init(data, function(result, error){ 
 
             if(result){
+                
                 if(app.appData) app.appData = { CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: app.appData.CosyncEngineVersion};
                 else app.appData = {CosyncJWTVersion:requestedVersion.versionNumber, CosyncEngineVersion: null};
                 app.updatedAt = util.getCurrentTime(); 
                 app.save();
-
                 callback(app.appData);
-               
+                 
             }
-            else callback(result, error);
-
-            
+            else callback(null, error);
            
         });
 
