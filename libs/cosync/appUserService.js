@@ -1515,7 +1515,13 @@ class AppUserService {
     }
 
     let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);  
-    let user = await _user.findOne({ handle: data.handle, appId:data.appId });
+    let query = {
+      $or: [ { handle: data.handle, appId:app.appId }, 
+             { userName: data.handle, appId:app.appId } 
+      ]
+    };
+
+    let user = await _user.findOne(query);
     
     if (!user){
       callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
