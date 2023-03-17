@@ -564,20 +564,21 @@ router.get("/getUser", async (req, res) => {
 
 router.get("/userNameAvailable", async (req, res) => { 
   let valid = req.query.userName && req.handle;
+
   if (!valid)
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   }
- 
-    appUser.checkAvailableUserName(req, function(result, error){
-      if(error){
-        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      }
-      else {
-        util.responseFormat(res, result);
-      }
-    })
+  req.query.userName = req.query.userName.toLowerCase();
+  appUser.checkAvailableUserName(req, function(result, error){
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    }
+    else {
+      util.responseFormat(res, result);
+    }
+  })
  
 })
 
@@ -591,7 +592,7 @@ router.post("/setUserName", async (req, res) => {
   }
 
   req.body.userName = req.body.userName.toLowerCase();
-  
+
   appUser.setUserName(req, function(result, error){
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
