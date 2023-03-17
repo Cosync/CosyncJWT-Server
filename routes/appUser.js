@@ -590,6 +590,8 @@ router.post("/setUserName", async (req, res) => {
     return;
   }
 
+  req.body.userName = req.body.userName.toLowerCase();
+  
   appUser.setUserName(req, function(result, error){
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
