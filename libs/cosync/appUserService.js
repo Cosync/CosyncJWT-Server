@@ -197,14 +197,13 @@ class AppUserService {
     let tempalte = await _email.findOne({ appId: app.appId, templateName: 'signUp' }); 
     let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
      
-    let code =  oldSignup ? oldSignup.code : util.getRandomNumber(); 
+    let code =  (oldSignup && oldSignup.status != 'verified') ? oldSignup.code : util.getRandomNumber(); 
 
     let tml;
     let handle = req.body.handle.toLowerCase();
     
     let metaData;
     let finalMetadata = {};
-
 
     if(app.signupFlow == 'none'){
       try {
@@ -320,7 +319,7 @@ class AppUserService {
 
     let hashedPassword = await hashService.generateHash(req.body.password);
 
-    if(oldSignup){ 
+    if(oldSignup && oldSignup.status != 'verified'){ 
       
       oldSignup.status = 'pending';
       oldSignup.updatedAt = util.getCurrentTime();
@@ -572,11 +571,11 @@ class AppUserService {
         let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);  
         let signup = await _signup.findOne({ handle: params.handle, appId:app.appId });
         if(signup && signup.status == "pending") callback(null, util.INTERNAL_STATUS_CODE.ACCOUNT_IS_NOT_VERIFIED);
-
+        else callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
       } 
       else callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
 
-      return;
+      
     } 
     else if(user.status == 'pending'){
       callback(null, util.INTERNAL_STATUS_CODE.ACCOUNT_IS_NOT_VERIFIED);
@@ -1507,7 +1506,7 @@ class AppUserService {
 
   async deleteAppUserAccount(data, callback){
 
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.app); 
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: data.appId });
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
