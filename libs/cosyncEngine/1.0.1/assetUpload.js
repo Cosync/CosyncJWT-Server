@@ -39,6 +39,7 @@ exports = async function assetUpload(changeEvent){
             _id: docId,
             path: data.path,
             sessionId: data.sessionId,
+            transactionId: data.transactionId || "",
             expirationHours: data.expirationHours, 
             expiration: data.expiration,
             contentType: data.contentType,
@@ -54,7 +55,7 @@ exports = async function assetUpload(changeEvent){
             urlSmall: data.urlSmall,
             urlMedium: data.urlMedium,
             urlLarge: data.urlLarge,
-            urlVideoPreview: data.urlVideoPreview,
+            urlVideoPreview: data.urlVideoPreview, 
             createdAt: new Date(),
             updatedAt: new Date()
         }; 
@@ -102,7 +103,7 @@ exports = async function assetUpload(changeEvent){
             
                 let filenameSmall;
 
-                if(contentType.indexOf("video") >=0 ){ 
+                if(contentType.indexOf("video") >=0 ){
                     
                     filenameSplit.splice(filenameSplit.length - 1, 0, 'videopreview'); 
 
