@@ -181,7 +181,7 @@ exports.generateAuthJWTToken = function(user, app){
 
 	let finalMetadata = {};
 
-	if(app.metaData && user.handle.indexOf('ANON_') < 0) {
+	if(app.metaData) {
 	 
 		for (let index = 0; index < app.metaData.length; index++) {
 			const field = app.metaData[index];  
@@ -192,9 +192,9 @@ exports.generateAuthJWTToken = function(user, app){
 				}
 
 				let value = _.get(metaData, field.path);
-				if(field.required && !value){ 
-					return null;
-				}
+				if (user.handle.indexOf('ANON_') >= 0) value = `ANON_${field.fieldName}`;
+
+				if(field.required && !value) return null;
 				else if(value) _.set(finalMetadata, field.path, value);
 			}
 		} 
