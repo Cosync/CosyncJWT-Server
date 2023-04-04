@@ -835,7 +835,15 @@ class AppService {
   async searchUser(data, callback) {  
 
     let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-    let users = await _user.find({appId: data.appId, handle:{ $regex: '.*' + data.value + '.*' }}, userProjection).sort({handle: 'asc'});  
+
+    let query = {
+      appId: data.appId,
+      $or : [ { handle: { $regex: '.*' + data.value + '.*' } },
+              { userName: { $regex: '.*' + data.value + '.*' } }
+            ]
+    }
+
+    let users = await _user.find(query, userProjection).sort({handle: 'asc'});  
     callback(users);
   }
 

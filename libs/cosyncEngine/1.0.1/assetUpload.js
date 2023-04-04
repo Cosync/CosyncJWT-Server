@@ -37,6 +37,7 @@ exports = async function assetUpload(changeEvent){
 
         let asset = { 
             _id: docId,
+            title: data.title,
             path: data.path,
             sessionId: data.sessionId,
             transactionId: data.transactionId || "",
