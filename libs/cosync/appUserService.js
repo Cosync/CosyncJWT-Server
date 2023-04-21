@@ -735,9 +735,9 @@ class AppUserService {
       ]
     };
 
-    let item = await _appUserTbl.findOne(query);
+    let user = await _appUserTbl.findOne(query);
 
-    if (item) {
+    if (user) {
       callback(true);
 
       let code = util.getRandomNumber();
@@ -762,7 +762,7 @@ class AppUserService {
       tml = tml.split('%HANDLE%').join(handle);
       tml = tml.split('%APP_NAME%').join(app.name);
       let emailData = {
-        to: handle,
+        to: user.handle,
         from: tempalte.replyTo,
         subject : tempalte.subject.split('%APP_NAME%').join(app.name),
         text: `Someone has requested password reset for ${handle} account!
