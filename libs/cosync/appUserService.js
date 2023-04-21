@@ -717,13 +717,25 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     } 
+   
 
     if(!this.checkAppStatus(app, callback)) return;
 
-
     let handle = req.body.handle.toLowerCase()
+
+    if (handle.indexOf("@") < 0 && !app.userNamesEnabled){
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_USERNAME_LOGIN);
+      return;
+    }
+
     let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-    let item = await _appUserTbl.findOne({ handle: handle, appId: req.appId });
+    let query = {
+      $or: [ { handle: handle, appId:app.appId }, 
+             { userName: handle, appId:app.appId } 
+      ]
+    };
+
+    let item = await _appUserTbl.findOne(query);
 
     if (item) {
       callback(true);
@@ -1512,11 +1524,17 @@ class AppUserService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
     }
+    
+    let handle = data.handle.toLowerCase();
+    if (handle.indexOf("@") < 0 && !app.userNamesEnabled){
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_USERNAME_LOGIN);
+      return;
+    }
 
     let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);  
     let query = {
-      $or: [ { handle: data.handle, appId:app.appId }, 
-             { userName: data.handle, appId:app.appId } 
+      $or: [ { handle: handle, appId:app.appId }, 
+             { userName: handle, appId:app.appId } 
       ]
     };
 
