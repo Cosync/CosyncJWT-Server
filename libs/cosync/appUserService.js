@@ -811,8 +811,13 @@ class AppUserService {
         resetCode.remove();
 
         let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-        let user = await _appUserTbl.findOne({ handle: handle, appId: req.appId });
-        
+
+        let query = {
+          $or: [ { handle: handle, appId:app.appId }, 
+                 { userName: handle, appId:app.appId } 
+          ]
+        };
+        let user = await _appUserTbl.findOne(query);
 
         if(user){
          
