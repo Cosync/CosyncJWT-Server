@@ -385,7 +385,7 @@ router.post("/deleteAccount", async (req, res) => {
  
   let valid = req.body.handle && req.appId && req.body.password;
 
-  if (!valid || req.handle || req.scope != 'user')
+  if (!valid || req.handle != req.body.handle )
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
