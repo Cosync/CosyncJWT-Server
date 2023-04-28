@@ -391,6 +391,7 @@ router.post("/deleteAccount", async (req, res) => {
     return;
   }
   let data = req.body;
+  data.email = req.handle
   data.appId = req.appId;
 
   appUser.deleteAppUserAccount(data, function(result, error){

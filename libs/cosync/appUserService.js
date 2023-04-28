@@ -1545,7 +1545,7 @@ class AppUserService {
 
     let user = await _user.findOne(query);
     
-    if (!user){
+    if (!user || user.handle != data.email){
       callback(null, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS);
       return; 
     }
