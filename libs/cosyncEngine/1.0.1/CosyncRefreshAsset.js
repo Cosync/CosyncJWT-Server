@@ -90,6 +90,7 @@ exports = async function cosyncRefreshAsset(id){
                 expirationHours:asset.expirationHours,
                 contentType:asset.contentType,
                 expiration:asset.expiration,
+                urlVideoPreview :asset.urlVideoPreview,
                 status:asset.status,
                 createdAt:asset.createdAt,
                 updatedAt: asset.createdAt
