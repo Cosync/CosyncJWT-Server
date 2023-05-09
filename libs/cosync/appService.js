@@ -841,6 +841,16 @@ class AppService {
       $or : [ { handle: { $regex: '.*' + data.value + '.*' } },
               { userName: { $regex: '.*' + data.value + '.*' } }
             ]
+    };
+
+    if (data.hideAnonUser){
+      query = {
+        appId: data.appId,
+        handle: { $not: { $regex: "^ANON_.*" }},
+        $or : [ { handle: { $regex: '.*' + data.value + '.*' } },
+                { userName: { $regex: '.*' + data.value + '.*' } }
+              ]
+      }
     }
 
     let users = await _user.find(query, userProjection).sort({handle: 'asc'});  
@@ -1101,7 +1111,7 @@ class AppService {
       callback(null);
       return; 
     }
-
+    
 
     let offset = params.offset ? parseInt(params.offset) : 0;
     offset = offset >= 0 ? offset : 0;
@@ -1115,8 +1125,12 @@ class AppService {
 
       if(params.target == CONT.TABLE.USERS){ 
         let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-        appData.users = await _user.find({appId: params.appId}, userProjection).sort({createdAt: 'desc'}).skip(offset).limit(limit);
-        appData.totalUser = await this.countTable(_user, {appId: params.appId});
+        let query = {appId: params.appId};
+        if (params.hideAnonUser) query = {appId: params.appId, handle: {  $not: { $regex: "^ANON_.*" } }};
+
+        appData.users = await _user.find(query, userProjection).sort({createdAt: 'desc'}).skip(offset).limit(limit);
+        appData.totalUser = await this.countTable(_user, query);
+        appData.totalAnonUser = await this.countTable(_user, {appId: params.appId, handle: {  $regex: "^ANON_.*"  }});
       }
       else if(params.target == CONT.TABLE.INVITES){ 
         let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite);
@@ -1132,8 +1146,11 @@ class AppService {
     }
     else{ 
       let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-      appData.users = await _user.find({appId: params.appId}, userProjection).sort({createdAt: 'desc'}).limit(limit);
-      appData.totalUser = await this.countTable(_user, {appId: params.appId});
+      let query = {appId: params.appId};
+      if (params.hideAnonUser) query = {appId: params.appId, handle: {  $not: { $regex: "^ANON_.*" } }};
+      appData.users = await _user.find(query, userProjection).sort({createdAt: 'desc'}).limit(limit);
+      appData.totalUser = await this.countTable(_user, query);
+      appData.totalAnonUser = await this.countTable(_user, {appId: params.appId, handle: {  $regex: "^ANON_.*"  }});
 
       let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite);
       appData.invites = await _invite.find({appId: params.appId}, inviteProjection).sort({createdAt: 'desc'}).limit(limit);
