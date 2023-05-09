@@ -843,7 +843,7 @@ class AppService {
             ]
     };
 
-    if (data.hideAnonUser){
+    if (data.hideAnonUser == "true"){
       query = {
         appId: data.appId,
         handle: { $not: { $regex: "^ANON_.*" }},
@@ -1126,7 +1126,7 @@ class AppService {
       if(params.target == CONT.TABLE.USERS){ 
         let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
         let query = {appId: params.appId};
-        if (params.hideAnonUser) query = {appId: params.appId, handle: {  $not: { $regex: "^ANON_.*" } }};
+        if (params.hideAnonUser == "true") query = {appId: params.appId, handle: {  $not: { $regex: "^ANON_.*" } }};
 
         appData.users = await _user.find(query, userProjection).sort({createdAt: 'desc'}).skip(offset).limit(limit);
         appData.totalUser = await this.countTable(_user, query);
@@ -1147,7 +1147,7 @@ class AppService {
     else{ 
       let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
       let query = {appId: params.appId};
-      if (params.hideAnonUser) query = {appId: params.appId, handle: {  $not: { $regex: "^ANON_.*" } }};
+      if (params.hideAnonUser == "true") query = {appId: params.appId, handle: {  $not: { $regex: "^ANON_.*" } }};
       appData.users = await _user.find(query, userProjection).sort({createdAt: 'desc'}).limit(limit);
       appData.totalUser = await this.countTable(_user, query);
       appData.totalAnonUser = await this.countTable(_user, {appId: params.appId, handle: {  $regex: "^ANON_.*"  }});
