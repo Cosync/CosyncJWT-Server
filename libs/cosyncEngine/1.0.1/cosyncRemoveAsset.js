@@ -57,66 +57,34 @@ exports = async function cosyncRemoveAsset(id){
         params: { Bucket: bucketName },
     });
 
-    await s3.deleteObject({
-        "Bucket": bucketName,
-        "Key": asset.path 
-    }).promise();
-    
-    
-    let timestamp = asset.path.split('-').pop();
+    let deleteParams = {
+        Bucket: bucketName,
+        Delete: { Objects: [{ Key: asset.path } ]}
+    }; 
 
     if(asset.contentType.indexOf('image') >= 0){
+
+        const timestamp = asset.path.split('-').pop();
+        const large = asset.path.split(timestamp).join(`large-${timestamp}`);
+        const medium = asset.path.split(timestamp).join(`medium-${timestamp}`);
+        const small = asset.path.split(timestamp).join(`small-${timestamp}`);
+
+        deleteParams.Delete.Objects.push(...[{ Key: large }, { Key: medium }, { Key: small }] );
         
-        let large = asset.path.split(timestamp).join(`large-${timestamp}`);
-        let medium = asset.path.split(timestamp).join(`medium-${timestamp}`);
-        let small = asset.path.split(timestamp).join(`small-${timestamp}`);
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": large
-        }); 
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": medium
-        }); 
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": small
-        }); 
     }
     else if(asset.contentType.indexOf('video') >= 0 && asset.urlVideoPreview){ 
         
-        let filenameSplit = asset.urlVideoPreview.split("?").shift();
-        let urlVideoPreview = asset.userId +"/"+ filenameSplit.split(asset.userId).pop();  
+        const filenameSplit = asset.urlVideoPreview.split("?").shift();
+        const urlVideoPreview = asset.userId +"/"+ filenameSplit.split(asset.userId).pop();
+        const filenameSmall = urlVideoPreview.split("-videopreview-").join("-small-"); 
+        const filenameMedium = filenameSmall.split("-small-").join("-medium-"); 
+        const filenameLarge = filenameSmall.split("-small-").join("-large-");  
 
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": urlVideoPreview
-        }); 
-
-        let filenameSmall = urlVideoPreview.split("-videopreview-").join("-small-"); 
-        let filenameMedium = filenameSmall.split("-small-").join("-medium-"); 
-        let filenameLarge = filenameSmall.split("-small-").join("-large-");  
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": filenameSmall
-        });
-        
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": filenameMedium
-        });
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": filenameLarge
-        });
+        deleteParams.Delete.Objects.push(...[{Key: urlVideoPreview}, { Key: filenameSmall }, { Key: filenameMedium }, { Key: filenameLarge }]) 
 
     } 
 
+    await s3.deleteObjects(deleteParams).promise(); 
     collectionAsset.deleteOne({"_id":asset._id}); 
     collectionAssetUpload.deleteOne({"_id":asset._id});
     
