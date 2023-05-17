@@ -109,7 +109,22 @@ let deployList = [
             path: 'emptyS3Directory.js',
             private: true
         }, 
-    } 
+    },
+    {
+        func:{
+            name: 'CosyncCountS3DirectorySize',
+            path: 'countS3DirectorySize.js',
+            private: true
+        }, 
+    },
+    {
+        func:{
+            name: 'CosyncCountUserS3Directory',
+            path: 'countUserS3DirectorySize.js',
+            private: false
+        }, 
+    }
+    
 ];
 
 
