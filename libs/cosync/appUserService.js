@@ -1308,7 +1308,7 @@ class AppUserService {
       return;
     }
 
-    let valid = await this.validateUserMetaData(data.metaData, app);
+    let valid = await this.validateUserMetaData(data, app);
     
     if(!valid){
       callback(null, error); 
@@ -1323,14 +1323,14 @@ class AppUserService {
 
 
 
-  validateUserMetaData(metaData, app){
+  validateUserMetaData(data, app){
     return new Promise((resolve, reject) => {  
 
-      let finalMetadata = {}; 
+      let finalMetadata = data.metaData; 
 
       for (let index = 0; index < app.metaData.length; index++) {
         const field = app.metaData[index]; 
-        let value = _.get(metaData, field.path); 
+        let value = _.get(data.metaData, field.path); 
         if(value !== undefined && value != "") _.set(finalMetadata, field.path, value);
       }; 
 
@@ -1338,8 +1338,17 @@ class AppUserService {
         const field = app.metaDataInvite[index]; 
         let value = _.get(metaData, field.path); 
         if(value !== undefined && value != "") _.set(finalMetadata, field.path, value);
+        else delete finalMetadata[field.path]
       }; 
       
+      if (data.addedMetadata){
+        for (let index = 0; index < data.addedMetadata.length; index++) {
+          const item = data.addedMetadata[index];
+          if (item.path != "" && item.value != "") _.set(finalMetadata, item.path, item.value);
+          else delete finalMetadata[field.path]
+        }
+      }
+
       resolve(finalMetadata);
 
     })
