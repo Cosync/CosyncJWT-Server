@@ -179,7 +179,8 @@ exports.generateAuthJWTToken = function(user, app){
 
 	if(app.metaDataEmail)  payload.email = user.handle;
 
-	let finalMetadata = {};
+	//let finalMetadata = {}; 
+	let finalMetadata = metaData; // to save all added user metadata include admin added metadata
 
 	if(app.metaData) {
 	 
