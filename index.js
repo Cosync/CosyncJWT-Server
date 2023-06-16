@@ -45,7 +45,11 @@ else if(process.env.ENV == "prod" || process.argv[3] == "prod"){
   global.privateKey = './config/privatekey-prod.pem';
   global.__config = require('./config/config-prod.js'); 
 }
-
+else if(process.env.ENV == "dev" || process.argv[3] == "dev"){
+  global.publicKey = './config/publickey-dev.pem';
+  global.privateKey = './config/privatekey-dev.pem';
+  global.__config = require('./config/config-dev.js'); 
+}
 console.log("your server enviroment is ", process.env.ENV || process.argv[3])
 ;
 const serverPublicKey = fs.readFileSync(global.publicKey, 'utf8');
