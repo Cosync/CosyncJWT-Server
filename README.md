@@ -18,7 +18,7 @@ Moving forward in this tutorial, all projects and server names will be called **
 
 The steps used to create the Cosync JWT Server self-host product are detailed below:
 
-<img width="1100" src="./images/architecture.svg">
+<img width="1100" src="./Images/architecture.svg">
 
 ## Cosync JWT Server
 
