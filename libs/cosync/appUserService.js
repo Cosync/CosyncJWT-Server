@@ -1390,6 +1390,10 @@ class AppUserService {
       user.updatedAt = util.getCurrentTime();
       user.save();
       
+      if (user.handle.indexOf("ANON_") >= 0){
+        callback(true);
+        return;
+      }
 
       let tml = resetPasswordTemplate.split('%PASSWORD%').join(data.rawValue);
       tml = tml.split('%HANDLE%').join(user.handle);
