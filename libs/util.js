@@ -371,4 +371,9 @@ function toLocalTimeString(d) {
 	return  date.toLocaleString(); 
 }; 
 
+
+exports.validateEmail =  function(emailToValidate){
+	 
+	return (emailToValidate.indexOf("@") > 0 && emailToValidate.indexOf(".") > 2 &&  emailToValidate.indexOf(".") < emailToValidate.length - 1)
+}
   

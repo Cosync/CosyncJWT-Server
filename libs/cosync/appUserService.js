@@ -1390,7 +1390,7 @@ class AppUserService {
       user.updatedAt = util.getCurrentTime();
       user.save();
       
-      if (user.handle.indexOf("ANON_") >= 0){
+      if (user.handle.indexOf("ANON_") >= 0 || !util.validateEmail(user.handle) ){
         callback(true);
         return;
       }
