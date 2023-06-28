@@ -205,11 +205,7 @@ class InitCosyncEngine {
         let data = req.body;
   
         if(data.projectId == "" || !data.projectId ||  
-        !data.serviceId || data.serviceId == "" || 
-        !data.s3Bucket || data.s3Bucket == "" || 
-        !data.s3Region || data.s3Region == "" || 
-        !data.s3BucketPublic || data.s3BucketPublic == "" || 
-        !data.s3RegionPublic || data.s3RegionPublic == "" || 
+        !data.serviceId || data.serviceId == "" ||  
         !data.publicKey || data.publicKey == "" || 
         !data.privateKey || data.privateKey == ""){
             callback(null, error); 
