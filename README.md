@@ -1,3 +1,4 @@
+
 	
 
 # Installation process for the self-hosted Cosync JWT Server product
@@ -97,7 +98,7 @@ To start you can pick **M0 Free** and name the database **JojoDB**
 
 Once the **JojoDB** data base has been created, you will be prompted to set up security configuration in the **Security Quickstart** page. The first thing to do is to create a user name and a password. In our case, the user name is **richard** and the password is **oekztRmNEXc0H6vK**. Copy the password to the clipboard, and then hit **Create User**.
 
-The second thing to do is to add your current IP address to the valid **IP Access List**. To do this, click the button called **Add My Current IP Address**. Next go to the **Network Access Page** by clicking the link with that name. Click the **ADD IP ADDRESS** button, followed by **ALLOW ACCESS FROM ANYWHERE** (don't worry we can restrict this later on).
+The second thing to do is to add your current IP address to the valid **IP Access List**. To do this, click the button called **Add My Current IP Address**. Next go to the **Network Access Page** by clicking the link with that name. Click the **ADD IP ADDRESS** button, followed by **ALLOW ACCESS FROM ANYWHERE** (don't worry we can restrict this later on). To fix this security risk, consult the last section of this document. For the purpose of getting your Cosync JWT self hosted server up and running add **ALLOW ACCESS FROM ANYWHERE**.
 
 <img src="./Images/projects4.png"  width="800" style="border: 2px solid black">
 
@@ -283,5 +284,22 @@ You are now ready to create your first application, go into the host and you sho
 Hit submit to create your app.
 
 <img src="./Images/host5.png"  width="850" style="border: 2px solid black">
+
+## Restrict MongoDB account to outbound Azure IP addresses
+
+By configuring our MongoDB Atlas cluster to enable the self-hosted Cosync JWT server, we inadvertently introduced a significant security vulnerability. To facilitate the setup of your self-hosted server, we made the MongoDB Atlas cluster accessible from any location. However, in this final step, it is crucial to address this vulnerability by restricting IP access solely to the outbound IP addresses associated with the Azure App Service that powers the Cosync JWT server. The good news is that implementing this restriction is a straightforward process.
+
+To fix this security issue, you will need to remove the **ALLOW ACCESS FROM ANYWHERE** from the **Network Access** tab in the MongoDB Atlas portal under **Data Services**. You will then need to add the outbound IP addresses from your Azure App Service that hosts the Cosync JWT self hosted server to MongoDB. 
+
+To delete **ALLOW ACCESS FROM ANYWHERE**, simply remove the *0.0.0.0/0* row from the **Network Access** table, by pressing the **DELETE** button. 
+
+<img src="./Images/whitelist1.png"  width="931" style="border: 2px solid black">
+
+In the next step, you need to retrieve the list of outbound IP addresses for your Azure App Service that is hosting the Cosync JWT Server application. Go to the App Service tab, and scroll down to the **Networking** section as shown below. Make sure to retrieve *Additional Outbound IP addresses* as well.
+
+<img src="./Images/whitelist2.png"  width="557" style="border: 2px solid black">
+
+For each IP address that is listed, make sure that you add it to MongoDB **Network Access**, to white list access from Azure to MongoDB. Once you are done, you are guarenteed that only your App Service will be able to access MongoDB Atlas, and no one else. 
+
 
 
