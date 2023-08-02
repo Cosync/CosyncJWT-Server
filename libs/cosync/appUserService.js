@@ -193,8 +193,7 @@ class AppUserService {
    */
   async createSignup(req, app, oldSignup, callback){
      
-    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
-    let tempalte = await _email.findOne({ appId: app.appId, templateName: 'signUp' }); 
+    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate); 
     let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
      
     let code =  (oldSignup && oldSignup.status != 'verified') ? oldSignup.code : util.getRandomNumber(); 
@@ -204,33 +203,34 @@ class AppUserService {
     
     let metaData;
     let finalMetadata = {};
+    let missingMetadata = false;
+
+    try {
+
+      if(app.metaData && app.metaData.length){
+
+        if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
+
+        app.metaData.forEach(field => {
+          let value = _.get(metaData, field.path);
+          if(value !== undefined) _.set(finalMetadata, field.path, value); 
+          if(field.required && value === undefined){
+            missingMetadata = true; 
+            return;
+          } 
+        });
+      } 
+    } catch (error) {
+      missingMetadata = true;  
+    }  
+
+    if (missingMetadata){
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
+      return;
+    }
 
     if(app.signupFlow == 'none'){
-      try {
-        
-        try {
-          
-          if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
-
-          if(app.metaData && app.metaData.length){
-            app.metaData.forEach(field => {
-              let value = _.get(metaData, field.path);
-
-              if(value !== undefined) _.set(finalMetadata, field.path, value); 
-
-              if(field.required && value === undefined){ 
-                callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
-                return;
-              }
-
-            });
-          }
-
-
-        } catch (error) {
-          callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
-          return;
-        }  
+      try { 
 
         let hashedPassword = await hashService.generateHash(req.body.password);
         
@@ -261,60 +261,49 @@ class AppUserService {
       return; // no need email for signup flow NONE
     } 
 
+    let tempalte, emailData;
+    
     if(app.signupFlow == 'code'){
-      tml = tempalte.htmlTemplate.split('%CODE%').join(code);
-      tml = tml.split('%HANDLE%').join(handle);
-      tml = tml.split('%APP_NAME%').join(app.name);
+      let emailTemplate = await _email.findOne({ appId: app.appId, templateName: 'signUp' }); 
+      tempalte = emailTemplate.htmlTemplate.split('%CODE%').join(code);
+      tempalte = tempalte.split('%HANDLE%').join(handle);
+      tempalte = tempalte.split('%APP_NAME%').join(app.name);
+
+      emailData = {
+        emailExtensionAPIKey: app.emailExtensionAPIKey,
+        to: handle, 
+        from: tempalte.replyTo,
+        subject : tempalte.subject.split('%APP_NAME%').join(app.name),
+        text: `Thanks for verifying your ${handle} account!
+        Your code is: ${code}
+        Sincerely,
+        ${app.name}`,
+        html: tempalte
+      }; 
+
+
     }
     else{
+      let emailTemplate = await _email.findOne({ appId: app.appId, templateName: 'clickThrough' }); 
       let modifiedEmail = handle.replace(/\+/g, "%2B");
       let link = `${global.__config.apiUrl}/api/appuser/completeSignup?appToken=${app.appToken}&handle=${modifiedEmail}&code=${code}`;
 
-      tml = tempalte.htmlTemplate.split('%CODE%').join(`Please <a href="${link}">click here</a> to verify your sign up.`);
-      tml = tml.split('%HANDLE%').join(handle); 
-      tml = tml.split('%APP_NAME%').join(app.name);
-    } 
+      tempalte = emailTemplate.htmlTemplate.split('%LINK%').join(`<a href="${link}">LINK</a>`);
+      tempalte = tempalte.split('%HANDLE%').join(handle); 
+      tempalte = tempalte.split('%APP_NAME%').join(app.name); 
 
-    let emailData = {
-      to: handle, 
-      from: tempalte.replyTo,
-      subject : tempalte.subject.split('%APP_NAME%').join(app.name),
-      text: `Thanks for verifying your ${handle} account!
-      Your code is: ${code}
-      Sincerely,
-      ${app.name}`,
-      html: tml
-    }; 
-
-    try {
-      
-      if(req.body.metaData) metaData = JSON.parse(req.body.metaData); 
-
-      if(app.metaData && app.metaData.length){
-        
-        for (let index = 0; index < app.metaData.length; index++) {
-          const field = app.metaData[index]; 
-
-          let value = _.get(metaData, field.path);
-
-          if(value !== undefined) _.set(finalMetadata, field.path, value);
-
-          if(field.required && value === undefined){ 
-            callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
-              
-            return;
-          }
-
-        };
-      }
-
-
-    } catch (error) {
-      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
-      return;
-    }
-
-   
+      emailData = {
+        emailExtensionAPIKey: app.emailExtensionAPIKey,
+        to: handle, 
+        from: tempalte.replyTo,
+        subject : tempalte.subject.split('%APP_NAME%').join(app.name),
+        text: `Thanks for verifying your ${handle} account!
+        please press this link: ${link}
+        Sincerely,
+        ${app.name}`,
+        html: tempalte
+      }; 
+    }  
 
 
     let hashedPassword = await hashService.generateHash(req.body.password);

@@ -388,6 +388,17 @@ class AppService {
     let template = new _email(signUp); 
     template.save();
 
+    let signUpLink = {
+      appId: app.appId,
+      templateName: 'signUpLink',
+      subject: "Verify your account for %APP_NAME%",
+      replyTo:'',
+      htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Please verify your email address: </p>\n<p>Please click this <b>%LINK%</b> to verify your sign up.</p>\n<p>If you didn’t ask to verify this address, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+    } 
+
+    template = new _email(signUpLink); 
+    template.save(); 
+
 
     let clickThrough = {
       appId: app.appId,
@@ -395,12 +406,10 @@ class AppService {
       subject: "clickThrough",
       replyTo:'',
       htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have successfully signup.</p>\n<p><b>Please login to %APP_NAME% Application</b></p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
-    } 
+   } 
 
     template = new _email(clickThrough); 
     template.save(); 
-
-
 
     let resetPassword = {
       appId: app.appId,
@@ -1215,6 +1224,21 @@ class AppService {
     emailTemplates.forEach(element => {
       data[element.templateName] = element;
     });
+
+    if (!emailTemplates.signUpLink || emailTemplates.signUpLink == undefined){
+
+      let signUpLink = {
+        appId: app.appId,
+        templateName: 'signUpLink',
+        subject: "Verify your account for %APP_NAME%",
+        replyTo:'',
+        htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Please verify your email address: </p>\n<p>Please click this <b>%LINK%</b> to verify your sign up.</p>\n<p>If you didn’t ask to verify this address, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+      } 
+      
+      let template = new _email(signUpLink);   
+      data['signUpLink'] = await template.save();
+    }
+
     callback(data)
   }
 
