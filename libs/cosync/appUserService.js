@@ -261,24 +261,24 @@ class AppUserService {
       return; // no need email for signup flow NONE
     } 
 
-    let tempalte, emailData;
+    let template, emailData;
     
     if(app.signupFlow == 'code'){
       let emailTemplate = await _email.findOne({ appId: app.appId, templateName: 'signUp' }); 
-      tempalte = emailTemplate.htmlTemplate.split('%CODE%').join(code);
-      tempalte = tempalte.split('%HANDLE%').join(handle);
-      tempalte = tempalte.split('%APP_NAME%').join(app.name);
+      template = emailTemplate.htmlTemplate.split('%CODE%').join(code);
+      template = template.split('%HANDLE%').join(handle);
+      template = template.split('%APP_NAME%').join(app.name);
 
       emailData = {
         emailExtensionAPIKey: app.emailExtensionAPIKey,
         to: handle, 
-        from: tempalte.replyTo,
-        subject : tempalte.subject.split('%APP_NAME%').join(app.name),
+        from: emailTemplate.replyTo,
+        subject : emailTemplate.subject.split('%APP_NAME%').join(app.name),
         text: `Thanks for verifying your ${handle} account!
         Your code is: ${code}
         Sincerely,
         ${app.name}`,
-        html: tempalte
+        html: template
       }; 
 
 
@@ -288,20 +288,20 @@ class AppUserService {
       let modifiedEmail = handle.replace(/\+/g, "%2B");
       let link = `${global.__config.apiUrl}/api/appuser/completeSignup?appToken=${app.appToken}&handle=${modifiedEmail}&code=${code}`;
 
-      tempalte = emailTemplate.htmlTemplate.split('%LINK%').join(`<a href="${link}">LINK</a>`);
-      tempalte = tempalte.split('%HANDLE%').join(handle); 
-      tempalte = tempalte.split('%APP_NAME%').join(app.name); 
+      template = emailTemplate.htmlTemplate.split('%LINK%').join(`<a href="${link}">LINK</a>`);
+      template = template.split('%HANDLE%').join(handle); 
+      template = template.split('%APP_NAME%').join(app.name); 
 
       emailData = {
         emailExtensionAPIKey: app.emailExtensionAPIKey,
         to: handle, 
-        from: tempalte.replyTo,
-        subject : tempalte.subject.split('%APP_NAME%').join(app.name),
+        from: emailTemplate.replyTo,
+        subject : emailTemplate.subject.split('%APP_NAME%').join(app.name),
         text: `Thanks for verifying your ${handle} account!
         please press this link: ${link}
         Sincerely,
         ${app.name}`,
-        html: tempalte
+        html: template
       }; 
     }  
 
@@ -745,15 +745,15 @@ class AppUserService {
       result.save(); 
     
       let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
-      let tempalte = await _email.findOne({ appId: req.appId, templateName: 'resetPassword' }); 
+      let template = await _email.findOne({ appId: req.appId, templateName: 'resetPassword' }); 
 
-      let tml = tempalte.htmlTemplate.split('%CODE%').join(code);
+      let tml = template.htmlTemplate.split('%CODE%').join(code);
       tml = tml.split('%HANDLE%').join(handle);
       tml = tml.split('%APP_NAME%').join(app.name);
       let emailData = {
         to: user.handle,
-        from: tempalte.replyTo,
-        subject : tempalte.subject.split('%APP_NAME%').join(app.name),
+        from: template.replyTo,
+        subject : template.subject.split('%APP_NAME%').join(app.name),
         text: `Someone has requested password reset for ${handle} account!
         Here is your reset key: ${code}
         Sincerely,
@@ -1172,18 +1172,18 @@ class AppUserService {
           user.twoFactorGoogleVerification = true;
 
           let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate); 
-          let tempalte = await _email.findOne({ appId: app.appId, templateName: 'qrCode' }); 
+          let template = await _email.findOne({ appId: app.appId, templateName: 'qrCode' }); 
 
           twoFactorService.generateAppUserKeyQRImage(user, app, function(twoFactor){
 
-            let tml = tempalte.htmlTemplate.split('%APP_NAME%').join(app.name);
+            let tml = template.htmlTemplate.split('%APP_NAME%').join(app.name);
             tml = tml.split('%HANDLE%').join(user.handle);
             tml = tml.split('%CODE%').join(twoFactor.googleSecretKey); 
             
             let emailData = {
               to: user.handle,
-              from: tempalte.replyTo,
-              subject : tempalte.subject.split('%APP_NAME%').join(app.name),
+              from: template.replyTo,
+              subject : template.subject.split('%APP_NAME%').join(app.name),
               html: tml
             }; 
 
@@ -1481,16 +1481,16 @@ class AppUserService {
     if(invite && invite.code) code = invite.code;
 
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
-    let tempalte = await _email.findOne({ appId: req.appId, templateName: 'invite' }); 
+    let template = await _email.findOne({ appId: req.appId, templateName: 'invite' }); 
 
-    let tml = tempalte.htmlTemplate.split('%CODE%').join(code);
+    let tml = template.htmlTemplate.split('%CODE%').join(code);
     tml = tml.split('%HANDLE%').join(handle);
     tml = tml.split('%APP_NAME%').join(app.name);
    
     let emailData = {
       to: handle, 
-      from: tempalte.replyTo,
-      subject : tempalte.subject.split('%APP_NAME%').join(app.name),
+      from: template.replyTo,
+      subject : template.subject.split('%APP_NAME%').join(app.name),
       text: `Someone has invited your ${handle} account!
       Here is your register key: ${code}
       Sincerely,
