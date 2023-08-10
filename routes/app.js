@@ -962,11 +962,29 @@ router.post("/remoteNotification", async function (req, res) {
     }
     else  console.log("notificationHubService apns error ", error);
      
-  });
-
-
-
-
+  }); 
 })
+
+
+
+router.post("/patchAppLocales", async function (req, res) {
+  if (req.scope != 'server')
+  {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  } 
+ 
+  appService.patchAppLocales(function(result, error){
+    if(error){
+      appLogService.addLog(req.query.appId, 'patchAppLocales', JSON.stringify(error),  'error', 'app'); 
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    } 
+    else { 
+      appLogService.addLog("", 'patchAppLocales', 'true',  'success', 'app');  
+    }
+  });
+ 
+})
+
 
 module.exports = router;

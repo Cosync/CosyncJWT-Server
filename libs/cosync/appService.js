@@ -31,10 +31,10 @@ const mongoose = require('mongoose');
 const nrsa = require('node-rsa');  
 const util = require('../util'); 
 const CONT = require('../../config/constants');
-const SCHEMA = require('../../config/schema');  
+const SCHEMA = require('../../config/schema');
+const LOCALES = require('../../config/locales.json'); 
 const twilioService = require('./twilioService');
-const appUserService = require('./appUserService');
-let appLogService = require('./appLogsService');
+const appUserService = require('./appUserService'); 
 let emailService = require('./emailService'); 
 const hashService  = require('./hashService');
 const fs = require('fs');
@@ -104,6 +104,7 @@ class AppService {
         appPublicKey: publicKey64,
         handle: 'email',
         status:'active',
+        locales: ["EN"],
         invitationEnabled: true,
         signupEnabled: true, 
         metaDataEmail: true,
@@ -124,7 +125,7 @@ class AppService {
       let app = new _app(item); 
       app.save();
       
-      this.createAppEmailTemplate(app); 
+      this.createAppEmailTemplate(app, "EN"); 
     }
     
   }
@@ -373,8 +374,60 @@ class AppService {
   }
 
 
+  async addRemoveAppLocaleEmailTemplate(data, callback){ 
+    let error = {status: 'fails', message: 'Invalid Data'};
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
+    let app = await _app.findOne({ appId: data.appId, developerUid:data.uid });
+    
+    if(!app){
+      callback(null, error); 
+      return;
+    } 
 
-  async createAppEmailTemplate(app){
+    app.locales = app.locales || ["EN"];
+
+    for (let index = 0; index < data.locales.length; index++) {
+      const locale = data.locales[index]; 
+      const found = app.locales.find((element) => element === locale);
+      const valid = LOCALES.list.find((element) => element.code === locale);
+      if(!found && locale != "EN" && valid){
+        this.createAppEmailTemplate(app, locale)
+      }
+    }
+
+   
+    for (let index = 0; index < app.locales.length; index++) {
+      const oldLocale = app.locales[index]; 
+      const found = data.locales.find((element) => element === oldLocale);
+      if(!found && oldLocale != "EN"){
+        this.removeAppEmailTemplate(app, oldLocale)
+      }
+    }
+
+    app.updatedAt = util.getCurrentTime();
+    app.locales = data.locales;
+
+    const found = app.locales.find((element) => element === "EN");
+    if (!found) app.locales.unshift("EN");
+
+    app.save().then(res => { 
+      this.emailTemplates(data, callback)  
+    });
+   
+  }
+
+  removeAppEmailTemplate(app, locale){
+    if (locale == "EN" || locale == "") return;
+
+    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate); 
+    _email.deleteMany({ "appId": app.appId, "locale": locale }, function (err) {});
+    
+  }
+
+
+  async createAppEmailTemplate(app, locale){
+
+    locale = locale ? locale : "EN";
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
     
     let signUp = {
@@ -382,6 +435,7 @@ class AppService {
       templateName: 'signUp',
       subject: "Verify your email for %APP_NAME%",
       replyTo:'',
+      locale:locale,
       htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Please verify your email address: </p>\n<p><b>%CODE%</b></p>\n<p>If you didn’t ask to verify this address, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
     }
 
@@ -393,6 +447,8 @@ class AppService {
       templateName: 'signUpLink',
       subject: "Verify your account for %APP_NAME%",
       replyTo:'',
+      locale:locale,
+      localeLinkText:"LINK",
       htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Please verify your email address: </p>\n<p>Please click this <b>%LINK%</b> to verify your sign up.</p>\n<p>If you didn’t ask to verify this address, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
     } 
 
@@ -405,8 +461,9 @@ class AppService {
       templateName: 'clickThrough',
       subject: "clickThrough",
       replyTo:'',
+      locale:locale,
       htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have successfully signup.</p>\n<p><b>Please login to %APP_NAME% Application</b></p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
-   } 
+    } 
 
     template = new _email(clickThrough); 
     template.save(); 
@@ -416,6 +473,7 @@ class AppService {
       templateName: 'resetPassword',
       subject: "Reset your password for %APP_NAME%",
       replyTo:'',
+      locale:locale,
       htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Here is your code to reset your %APP_NAME% password for your %HANDLE% account.</p>\n<p><b>%CODE%</b></p>\n<p>If you didn’t ask to reset your password, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
     } 
 
@@ -427,6 +485,7 @@ class AppService {
       templateName: 'invite',
       subject: "Account invitation for %APP_NAME%",
       replyTo:'',
+      locale:locale,
       htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Someone has invited your %HANDLE%!.</p>\n<p>Here is your register key: <b>%CODE%</b></p>\n<p> If you don't recognize the %APP_NAME% account, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
     } 
 
@@ -439,6 +498,7 @@ class AppService {
       templateName: 'qrCode',
       subject: "QR Code for login two step verification of %APP_NAME%",
       replyTo:'',
+      locale:locale,
       htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have asked for Two Factor Login Verification QR Code for %HANDLE%!.</p>\n<p>Plase scan the QR code or enter the secret key in Google Authenticato</p>\n<p>Here is your secret key: <b>%CODE%</b></p>\n<p> If you don't recognize the %APP_NAME% account, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
     } 
 
@@ -450,6 +510,7 @@ class AppService {
       templateName: 'sms',
       subject: "SMS for login two step verification of %APP_NAME%",
       replyTo:'',
+      locale:locale,
       htmlTemplate:"%CODE% is your verification code for %APP_NAME%."
     } 
 
@@ -1739,6 +1800,7 @@ class AppService {
         {id: 'metaDataInvite', title: 'metaDataInvite'},
         {id: 'metaData', title: 'metaData'},
         {id: 'metaDataEmail', title: 'metaDataEmail'}, 
+        {id: 'locales', title: 'locales'},
         {id: 'createdAt', title: 'createdAt'},
         {id: 'updatedAt', title: 'updatedAt'}
       ]
@@ -1775,6 +1837,7 @@ class AppService {
         {id: 'phoneCode', title: 'phoneCode'},
         {id: 'metaData', title: 'metaData'},
         {id: 'lastLogin', title: 'lastLogin'},
+        {id: 'locale', title: 'locale'},
         {id: 'createdAt', title: 'createdAt'},
         {id: 'updatedAt', title: 'updatedAt'}
       ]
@@ -1794,6 +1857,7 @@ class AppService {
         {id: 'status', title: 'status'},
         {id: 'appId', title: 'appId'}, 
         {id: 'code', title: 'code'}, 
+        {id: 'locale', title: 'locale'},
         {id: 'metaData', title: 'metaData'}, 
         {id: 'createdAt', title: 'createdAt'},
         {id: 'updatedAt', title: 'updatedAt'}
@@ -1832,6 +1896,8 @@ class AppService {
         {id: 'replyTo', title: 'replyTo'},
         {id: 'templateName', title: 'templateName'}, 
         {id: 'htmlTemplate', title: 'htmlTemplate'}, 
+        {id: 'locale', title: 'locale'}, 
+        {id: 'htmlTemplate', title: 'htmlTemplate'}, 
         {id: 'createdAt', title: 'createdAt'},
         {id: 'updatedAt', title: 'updatedAt'}
       ]
@@ -1869,6 +1935,48 @@ class AppService {
  
 
  
+  async patchAppLocales(callback){
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+    
+    // add locale field to old emails
+    await _email.updateMany({ $or: [ { locale: "" }, { locale: { $exists : false } } ] }, { $set: { locale: 'EN' } });
+
+     // add locales field to old app
+    await _app.updateMany({ $or: [ { locales: [] }, { locales: ['en'] }, { locales: { $exists : false } } ] }, { $set: { locales: ['EN'] } });
+    let apps = await _app.find({}); 
+    let appIds = [];
+
+    let foundTemplates = await _email.find({ templateName: 'signUpLink'});
+    if (foundTemplates.length > 0){
+        appIds = foundTemplates.map(item => (item.appId)); 
+    }
+    
+
+    for (let index = 0; index < apps.length; index++) {
+
+        const app = apps[index];  
+        
+
+        if (appIds.indexOf(app.appId) < 0) {
+            let signUpLink = {
+                appId: app.appId,
+                templateName: 'signUpLink',
+                locale: 'EN',
+                localeLinkText: 'LINK',
+                subject: "Verify your account for %APP_NAME%",
+                replyTo:'',
+                htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Please verify your email address: </p>\n<p>Please click this <b>%LINK%</b> to verify your sign up.</p>\n<p>If you didn’t ask to verify this address, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+            };
+            
+            let template = new _email(signUpLink);  
+            template.save(); 
+        }
+    }
+
+        callback(true)
+  }
  
 
 

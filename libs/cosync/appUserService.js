@@ -387,6 +387,7 @@ class AppUserService {
       signup.updatedAt = util.getCurrentTime();
       signup.save();
 
+      signUpData.locale = signup.locale || "EN";
       signUpData.metaData = signup.metaData; 
       signUpData.password = signup.password; // already hashed
 
@@ -464,6 +465,7 @@ class AppUserService {
         handle: data.handle,
         password: data.password,
         appId: app.appId,
+        locale: data.locale,
         status: 'active', 
         createdAt: util.getCurrentTime(),
         updatedAt: util.getCurrentTime(),
@@ -923,6 +925,42 @@ class AppUserService {
     else callback({available:true})
 
   }
+
+
+  async setUserLocale(data, callback){
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: data.appId });
+    if(!app ) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    }
+
+    if(!this.checkAppStatus(app, callback)) return; 
+
+    if (data.locale == "EN"){ // good to go
+
+    } 
+    else if( !app.locales || app.locales.length == 0 || app.locales.indexOf(data.locale) < 0) {
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      return;
+    } 
+
+    let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let user = await _appUserTbl.findOne({ handle: data.handle, appId: data.appId});
+    if (!user) {
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      return;
+    }  
+    
+    user.locale = data.locale;
+    user.updatedAt = util.getCurrentTime()
+    user.save()
+    callback(true); 
+
+    
+  }
+
 
   async setUserName(req, callback){
 
@@ -1599,7 +1637,8 @@ class AppUserService {
       data.appId = req.appId; 
       data.senderHandle = invite.senderHandle;
       data.senderUserId = invite.senderUserId;
-        
+      data.locale = data.locale || "EN";
+
       let valid = true;
       let finalMetadata = {};
       let metaData = {};

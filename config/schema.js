@@ -192,6 +192,9 @@ module.exports.application = new mongooseSchema({
     comment: "jwt authentication meta data (array of metaDataField object)", 
   }, 
   metaDataEmail: Boolean,
+  locales:{
+    type: Array
+  }, 
   createdAt: { 
       type: Date,
       default: new Date().toUTCString()
@@ -322,6 +325,9 @@ module.exports.signup = new mongooseSchema({
       default: 'pending',
       index: true 
     }, 
+    locale: {
+      type: String 
+    }, 
     createdAt: { 
       type: Date,
       default: new Date().toUTCString()
@@ -351,6 +357,9 @@ module.exports.user = new mongooseSchema({
       comment: 'username of the user.',
       index: true 
     },
+    locale: {
+      type: String 
+    }, 
     appId: {
       required: true,
       type: String,
@@ -448,9 +457,6 @@ module.exports.resetPassword = new mongooseSchema({
   }
 });
 
- 
-
-
 
 module.exports.emailTemplate = new mongooseSchema({
   appId: { 
@@ -477,6 +483,12 @@ module.exports.emailTemplate = new mongooseSchema({
     type: String,
     index: true 
   },  
+  locale: {
+    type: String 
+  }, 
+  localeLinkText: {
+    type: String 
+  }, 
   createdAt: { 
     type: Date,
     default: new Date().toUTCString()

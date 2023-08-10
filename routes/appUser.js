@@ -583,6 +583,41 @@ router.get("/userNameAvailable", async (req, res) => {
  
 })
 
+
+router.post("/setLocale", async (req, res) => { 
+  let valid = req.body.locale && req.handle;
+  if (!valid)
+  {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  let params = req.body;
+  params.handle = req.handle;
+  params.appId = req.appId;
+
+  appUser.setUserLocale(params, function(result, error){ 
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+
+      error.handle = params.handle;
+      error.locale =  params.locale;
+      appLogService.addLog(params.appId, 'setLocale', JSON.stringify(error), 'error', 'user');
+    } 
+    else{
+      let log = { 
+        handle: params.handle,
+        data: params,
+        status: true
+      }; 
+      appLogService.addLog(req.appId, 'setLocale', JSON.stringify(log), 'success', 'user');
+      util.responseFormat(res, result);
+    }
+  })
+
+})
+
+
 router.post("/setUserName", async (req, res) => {  
 
   let valid = req.body.userName && req.handle;
