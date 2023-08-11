@@ -741,7 +741,7 @@ class AppUserService {
 
     if (user) {
       callback(true);
-
+       
       let code = util.getRandomNumber();
       let _resetTbl = mongoose.model(CONT.TABLE.RESET_PASSWORDS, SCHEMA.resetPassword); 
 
@@ -756,9 +756,9 @@ class AppUserService {
 
       let result = new _resetTbl(data);
       result.save(); 
-    
+      let userLocale = user.locale ? user.locale : "EN";
       let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
-      let template = await _email.findOne({ appId: req.appId, templateName: 'resetPassword' }); 
+      let template = await _email.findOne({ appId: req.appId, templateName: 'resetPassword', locale: userLocale }); 
 
       let tml = template.htmlTemplate.split('%CODE%').join(code);
       tml = tml.split('%HANDLE%').join(handle);
@@ -1219,9 +1219,9 @@ class AppUserService {
         if(app.twoFactorVerification == 'google'){
 
           user.twoFactorGoogleVerification = true;
-
+          let userLocale = user.locale ? user.locale : "EN";
           let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate); 
-          let template = await _email.findOne({ appId: app.appId, templateName: 'qrCode' }); 
+          let template = await _email.findOne({ appId: app.appId, templateName: 'qrCode', locale : userLocale.toUpperCase() }); 
 
           twoFactorService.generateAppUserKeyQRImage(user, app, function(twoFactor){
 
@@ -1528,9 +1528,9 @@ class AppUserService {
     let _inviteTbl = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite); 
     let invite = await _inviteTbl.findOne({ appId: req.appId,  handle: handle, senderHandle: req.handle});
     if(invite && invite.code) code = invite.code;
-
+    let userLocale = user.locale ? user.locale : "EN";
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
-    let template = await _email.findOne({ appId: req.appId, templateName: 'invite' }); 
+    let template = await _email.findOne({ appId: req.appId, templateName: 'invite', locale : userLocale.toUpperCase() }); 
 
     let tml = template.htmlTemplate.split('%CODE%').join(code);
     tml = tml.split('%HANDLE%').join(handle);

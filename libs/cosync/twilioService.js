@@ -56,9 +56,9 @@ class TwilioService {
             }
 
             let twoFactorCode = util.getRandomNumber();
-
+            let userLocale = user.locale ? user.locale : "EN";
             let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate); 
-            let template = await _email.findOne({appId: app.appId, templateName: 'sms' }); 
+            let template = await _email.findOne({appId: app.appId, templateName: 'sms', locale : userLocale.toUpperCase() }); 
 
             let message = template.htmlTemplate.split('%CODE%').join(twoFactorCode);
             message = message.split('%APP_NAME%').join(app.name);
