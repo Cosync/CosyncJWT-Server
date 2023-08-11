@@ -377,7 +377,7 @@ class AppService {
   async addRemoveAppLocaleEmailTemplate(data, callback){ 
     let error = {status: 'fails', message: 'Invalid Data'};
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-    let app = await _app.findOne({ appId: data.appId, developerUid:data.uid });
+    let app = await _app.findOne({ appId: data.appId });
     
     if(!app){
       callback(null, error); 
@@ -437,7 +437,7 @@ class AppService {
     locale = locale ? locale : "EN";
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
     
-    let email = await _email.findOne({ appId: req.query.appId, locale : locale });
+    let email = await _email.findOne({ appId: app.appId, locale : locale });
     if (email) return;
 
     let signUp = {
@@ -472,7 +472,7 @@ class AppService {
       subject: "clickThrough",
       replyTo:'',
       locale:locale,
-      htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have successfully signup.</p>\n<p><b>Please login to %APP_NAME% Application</b></p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+      htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have successfully signed up.</p>\n<p><b>Please login to %APP_NAME% Application</b></p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
     } 
 
     template = new _email(clickThrough); 
@@ -1285,17 +1285,17 @@ class AppService {
     callback(emailTemplate)
   }
 
-  async emailTemplates(req, callback) { 
+  async emailTemplates(params, callback) { 
 
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
-    var app = await _app.findOne({ appId: req.query.appId });
+    var app = await _app.findOne({ appId: params.appId });
     if (!app || app.status != "active") {
       callback(null);
       return; 
     }
 
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
-    let emailTemplates = await _email.find({appId: req.query.appId}); 
+    let emailTemplates = await _email.find({appId: params.appId}); 
     let data = {
       "EN" : []
     };
@@ -1748,7 +1748,7 @@ class AppService {
     let error = {status: 'Fails', message: 'Invalid Data'};  
    
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-    let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
+    let app = await _app.findOne({ appId: data.appId });
 
     if(!app ) {
       callback(null, error); 

@@ -757,12 +757,46 @@ router.get("/emailTemplates", async function (req, res) {
     return;
   }
 
-  appService.emailTemplates(req, function(data, err){
+  appService.emailTemplates(req.query, function(data, err){
     if(data) util.responseFormat(res, data);
     else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
   });
 });
 
+
+
+
+router.post("/addRemoveAppLocale", async function (req, res) {
+  if (req.scope != 'server')
+  { 
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+  let valid = req.body.appId && req.body.locales;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  let params = req.body; 
+
+  appService.addRemoveAppLocaleEmailTemplate(params, function(data, error){
+
+    if(error){
+      util.responseFormat(res, error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      appLogService.addLog(req.body.appId, 'addRemoveLocaleEmailTemplate', JSON.stringify(error),  'error', 'app'); 
+    } 
+    else{
+      params.localesTemplate = data
+      appLogService.addLog(req.body.appId, 'addRemoveLocaleEmailTemplate', JSON.stringify(params.locales),  'success', 'app'); 
+      util.responseFormat(res, params);
+    } 
+ 
+  });
+
+
+})
 
 router.post("/updateEmailTemplate", async function (req, res) {
   if (req.scope != 'server')

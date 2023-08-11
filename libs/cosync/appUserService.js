@@ -1330,7 +1330,7 @@ class AppUserService {
     let error = {status: 'Fails', message: 'Invalid Data'};
 
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application);
-    let app = await _app.findOne({ appId: data.appId, developerUid:req.uid });
+    let app = await _app.findOne({ appId: data.appId});
 
     if(!app ) {
       callback(null, error); 
