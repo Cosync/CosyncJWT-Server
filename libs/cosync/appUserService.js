@@ -31,6 +31,7 @@ const mongoose = require('mongoose');
 const util = require('../util'); 
 const CONT = require('../../config/constants');
 const SCHEMA = require('../../config/schema');  
+const LOCALES = require('../../config/locales.json'); 
 let twoFactorService = require('./authenticatorService');
 let emailService = require('./emailService'); 
 let twilioService = require('./twilioService');
@@ -198,9 +199,14 @@ class AppUserService {
      
     let code =  (oldSignup && oldSignup.status != 'verified') ? oldSignup.code : util.getRandomNumber(); 
 
-    let tml;
+    let locale = req.body.locale || "EN"; 
+    locale = locale.toUpperCase();
+    const valid = LOCALES.list.find((element) => element.code === locale);
+    if(!valid) locale = "EN";
+   
+
     let handle = req.body.handle.toLowerCase();
-    
+   
     let metaData;
     let finalMetadata = {};
     let missingMetadata = false;
@@ -241,6 +247,7 @@ class AppUserService {
           metaData: finalMetadata,
           status: 'active',
           code: code,
+          locale: locale,
           createdAt: util.getCurrentTime(),
           updatedAt: util.getCurrentTime(),
         };
@@ -264,7 +271,8 @@ class AppUserService {
     let template, emailData;
     
     if(app.signupFlow == 'code'){
-      let emailTemplate = await _email.findOne({ appId: app.appId, templateName: 'signUp' }); 
+
+      let emailTemplate = await _email.findOne({ appId: app.appId, templateName: 'signUp', locale:locale  }); 
       template = emailTemplate.htmlTemplate.split('%CODE%').join(code);
       template = template.split('%HANDLE%').join(handle);
       template = template.split('%APP_NAME%').join(app.name);
@@ -284,11 +292,12 @@ class AppUserService {
 
     }
     else{
-      let emailTemplate = await _email.findOne({ appId: app.appId, templateName: 'clickThrough' }); 
+
+      let emailTemplate = await _email.findOne({ appId: app.appId, templateName: 'signUpLink', locale:locale });
       let modifiedEmail = handle.replace(/\+/g, "%2B");
       let link = `${global.__config.apiUrl}/api/appuser/completeSignup?appToken=${app.appToken}&handle=${modifiedEmail}&code=${code}`;
 
-      template = emailTemplate.htmlTemplate.split('%LINK%').join(`<a href="${link}">LINK</a>`);
+      template = emailTemplate.htmlTemplate.split('%LINK%').join(`<a href="${link}">${emailTemplate.localeLinkText}</a>`);
       template = template.split('%HANDLE%').join(handle); 
       template = template.split('%APP_NAME%').join(app.name); 
 
@@ -323,6 +332,7 @@ class AppUserService {
         handle: handle, 
         password: hashedPassword,
         appId: req.appId,
+        locale : locale,
         metaData: finalMetadata,
         status: 'pending',
         code: code,
@@ -400,7 +410,7 @@ class AppUserService {
 
       if(app.signupFlow == 'link'){
         let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
-        let emailTemplate = await _email.findOne({appId: signUpData.appId, templateName: 'clickThrough'}); 
+        let emailTemplate = await _email.findOne({appId: signUpData.appId, templateName: 'clickThrough', locale: signUpData.locale}); 
 
         let template = emailTemplate.htmlTemplate.split('%APP_NAME%').join(app.name);
         template = template.split('%HANDLE%').join(signup.handle);
@@ -431,6 +441,7 @@ class AppUserService {
           password: hashedPassword,
           appId: app.appId,
           status: 'active', 
+          locale: data.locale || "EN",
           createdAt: util.getCurrentTime(),
           updatedAt: util.getCurrentTime(),
         };

@@ -385,11 +385,18 @@ class AppService {
     } 
 
     app.locales = app.locales || ["EN"];
+    let validLocales = [];
 
     for (let index = 0; index < data.locales.length; index++) {
-      const locale = data.locales[index]; 
+      let locale = data.locales[index]; 
+      locale = locale.toUpperCase();
+
       const found = app.locales.find((element) => element === locale);
+      
       const valid = LOCALES.list.find((element) => element.code === locale);
+
+      if (valid) validLocales.push(locale);
+
       if(!found && locale != "EN" && valid){
         this.createAppEmailTemplate(app, locale)
       }
@@ -405,7 +412,7 @@ class AppService {
     }
 
     app.updatedAt = util.getCurrentTime();
-    app.locales = data.locales;
+    app.locales = validLocales;
 
     const found = app.locales.find((element) => element === "EN");
     if (!found) app.locales.unshift("EN");
@@ -430,6 +437,9 @@ class AppService {
     locale = locale ? locale : "EN";
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
     
+    let email = await _email.findOne({ appId: req.query.appId, locale : locale });
+    if (email) return;
+
     let signUp = {
       appId: app.appId,
       templateName: 'signUp',
@@ -1263,6 +1273,11 @@ class AppService {
       emailTemplate.replyTo = template.replyTo;
       emailTemplate.subject = template.subject;
       emailTemplate.htmlTemplate = template.htmlTemplate;
+
+      if (template.localeLinkText){
+        emailTemplate.localeLinkText = template.localeLinkText;
+      }
+
       emailTemplate.updatedAt = util.getCurrentTime();
       emailTemplate.save();
     } 
@@ -1281,25 +1296,25 @@ class AppService {
 
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
     let emailTemplates = await _email.find({appId: req.query.appId}); 
-    let data = {};
-    emailTemplates.forEach(element => {
-      data[element.templateName] = element;
-    });
+    let data = {
+      "EN" : []
+    };
 
-    if (!emailTemplates.signUpLink || emailTemplates.signUpLink == undefined){
+    if (app.locales.length > 0){
 
-      let signUpLink = {
-        appId: app.appId,
-        templateName: 'signUpLink',
-        subject: "Verify your account for %APP_NAME%",
-        replyTo:'',
-        htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Please verify your email address: </p>\n<p>Please click this <b>%LINK%</b> to verify your sign up.</p>\n<p>If you didn’t ask to verify this address, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
-      } 
-      
-      let template = new _email(signUpLink);   
-      data['signUpLink'] = await template.save();
-    }
+      for (let index = 0; index < app.locales.length; index++) {
+        const locale = app.locales[index];
+        data[locale] = [];
 
+        emailTemplates.forEach(element => {
+          if (element.locale.toLowerCase() == locale.toLowerCase()){
+            data[locale].push(element);
+          }
+        });
+
+      }
+    } 
+ 
     callback(data)
   }
 
