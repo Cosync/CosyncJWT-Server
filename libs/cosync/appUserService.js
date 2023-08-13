@@ -201,12 +201,16 @@ class AppUserService {
 
     let locale = req.body.locale || "EN"; 
     locale = locale.toUpperCase();
-    const valid = LOCALES.list.find((element) => element.code === locale);
-    if(!valid) locale = "EN";
-   
+
+    const validLocale = app.locales.find((element) => element.code === locale); 
+
+    if(!validLocale) {
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      return;
+    }
 
     let handle = req.body.handle.toLowerCase();
-   
+  
     let metaData;
     let finalMetadata = {};
     let missingMetadata = false;
@@ -898,7 +902,7 @@ class AppUserService {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         handle: user.handle,
-        locale: user.locale,
+        locale: user.locale || "EN",
         userName: user.userName,
         twoFactorPhoneVerification: user.twoFactorPhoneVerification || false,
         twoFactorGoogleVerification: user.twoFactorGoogleVerification || false,
@@ -1649,7 +1653,13 @@ class AppUserService {
       data.appId = req.appId; 
       data.senderHandle = invite.senderHandle;
       data.senderUserId = invite.senderUserId;
+
       data.locale = data.locale || "EN";
+      let locale = app.locales.find((element) => element.code === data.locale); 
+      if(!locale) {
+        callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+        return;
+      }
 
       let valid = true;
       let finalMetadata = {};
