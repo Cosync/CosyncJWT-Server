@@ -898,6 +898,7 @@ class AppUserService {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         handle: user.handle,
+        locale: user.locale,
         userName: user.userName,
         twoFactorPhoneVerification: user.twoFactorPhoneVerification || false,
         twoFactorGoogleVerification: user.twoFactorGoogleVerification || false,
