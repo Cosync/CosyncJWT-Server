@@ -193,7 +193,8 @@ module.exports.application = new mongooseSchema({
   }, 
   metaDataEmail: Boolean,
   locales:{
-    type: Array
+    type: Array,
+    default: ["EN"]
   }, 
   createdAt: { 
       type: Date,
