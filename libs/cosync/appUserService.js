@@ -202,7 +202,7 @@ class AppUserService {
     let locale = req.body.locale || "EN"; 
     locale = locale.toUpperCase();
 
-    const validLocale = app.locales.find((element) => element.code === locale); 
+    const validLocale = app.locales.find((element) => element === locale); 
 
     if(!validLocale) {
       callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
@@ -1655,7 +1655,7 @@ class AppUserService {
       data.senderUserId = invite.senderUserId;
 
       data.locale = data.locale || "EN";
-      let locale = app.locales.find((element) => element.code === data.locale); 
+      let locale = app.locales.find((element) => element === data.locale); 
       if(!locale) {
         callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
         return;
