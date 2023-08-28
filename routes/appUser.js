@@ -53,7 +53,9 @@ router.post("/login", async (req, res) => {
 
   let data = req.body;
   data.appId = req.appId;
-  
+  data.handle = data.handle.toLowerCase();
+  data.handle = data.handle.trim();
+
   appUser.getAppUserAuth(data, function(result, error){
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -183,8 +185,9 @@ router.post("/signup", async (req, res) => {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_DATA, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   }
+  req.body.handle = req.body.handle.toLowerCase();
+  req.body.handle = req.body.handle.trim();
 
-  
   appUser.signup(req, function(result, error){ 
     
     if(result){
@@ -225,8 +228,7 @@ router.post("/completeSignup", async (req, res) => {
   }
 
   let signUpData = req.body;
-  signUpData.appId = req.appId;
-  signUpData.handle = signUpData.handle.toLowerCase();  
+  signUpData.appId = req.appId; 
 
   appUser.completeSignup(signUpData, function(result, error){ 
     
@@ -281,7 +283,7 @@ router.get("/completeSignup", async (req, res) => {
   
   let signUpData = req.query;
   signUpData.appId = req.appId;
-  signUpData.handle = signUpData.handle.toLowerCase(); 
+
 
   appUser.completeSignup(signUpData, function(result, error){ 
     
@@ -572,6 +574,8 @@ router.get("/userNameAvailable", async (req, res) => {
     return;
   }
   req.query.userName = req.query.userName.toLowerCase();
+  req.query.userName = req.query.userName.trim()
+
   appUser.checkAvailableUserName(req, function(result, error){
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -628,7 +632,7 @@ router.post("/setUserName", async (req, res) => {
   }
 
   req.body.userName = req.body.userName.toLowerCase();
-
+  req.body.userName = req.body.userName.trim();
   appUser.setUserName(req, function(result, error){
     if(error){
       util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);

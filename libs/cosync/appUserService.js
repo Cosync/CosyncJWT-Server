@@ -223,7 +223,7 @@ class AppUserService {
 
         app.metaData.forEach(field => {
           let value = _.get(metaData, field.path);
-          if(value !== undefined) _.set(finalMetadata, field.path, value); 
+          if(value !== undefined) _.set(finalMetadata, field.path, value.trim()); 
           if(field.required && value === undefined){
             missingMetadata = true; 
             return;
@@ -365,6 +365,8 @@ class AppUserService {
 
   async completeSignup(signUpData, callback){
     let that = this;
+    signUpData.handle = signUpData.handle.toLowerCase(); 
+    signUpData.handle = signUpData.handle.trim(); 
 
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: signUpData.appId });
@@ -1055,7 +1057,7 @@ class AppUserService {
           
           let value = _.get(metaData, field.path);
 
-          if(value && field.canEdit === true) _.set(finalMetadata, field.path, value);  
+          if(value && field.canEdit === true) _.set(finalMetadata, field.path, value.trim());  
           else if (value && !field.canEdit){
             callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
             return;
@@ -1072,7 +1074,7 @@ class AppUserService {
         for (let index = 0; index < app.metaDataInvite.length; index++) {
           const field = app.metaDataInvite[index]; 
           let value = _.get(user.metaData, field.path); 
-          if(value) _.set(finalMetadata, field.path, value);  
+          if(value) _.set(finalMetadata, field.path, value.trim());  
         }; 
       }
 
@@ -1374,20 +1376,20 @@ class AppUserService {
       for (let index = 0; index < app.metaData.length; index++) {
         const field = app.metaData[index]; 
         let value = _.get(data.metaData, field.path); 
-        if(value !== undefined && value != "") _.set(finalMetadata, field.path, value);
+        if(value !== undefined && value != "") _.set(finalMetadata, field.path, value.trim());
       }; 
 
       for (let index = 0; index < app.metaDataInvite.length; index++) {
         const field = app.metaDataInvite[index]; 
-        let value = _.get(metaData, field.path); 
-        if(value !== undefined && value != "") _.set(finalMetadata, field.path, value);
+        let value = _.get(data.metaData, field.path); 
+        if(value !== undefined && value != "") _.set(finalMetadata, field.path, value.trim());
         else delete finalMetadata[field.path]
       }; 
       
       if (data.addedMetadata){
         for (let index = 0; index < data.addedMetadata.length; index++) {
           const item = data.addedMetadata[index];
-          if (item.path != "" && item.value != "") _.set(finalMetadata, item.path, item.value);
+          if (item.path != "" && item.value != "") _.set(finalMetadata, item.path, item.value.trim());
           else delete finalMetadata[field.path]
         }
       }
@@ -1499,7 +1501,7 @@ class AppUserService {
         let field = app.metaDataInvite[index];
         let value = _.get(metaData, field.path);
 
-        if(value !== undefined) _.set(finalMetadata, field.path, value); 
+        if(value !== undefined) _.set(finalMetadata, field.path, value.trim()); 
 
         if(field.required && value === undefined){ 
           valid = false;
@@ -1518,6 +1520,7 @@ class AppUserService {
   async createInvite(req, app, metaData, callback){ 
 
     let handle = req.body.handle.toLowerCase();
+    handle = handle.trim();
     let senderUserId = req.body.senderUserId;
     let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user); 
     let user = await _user.findOne({ appId: req.appId,  handle: handle});
@@ -1587,6 +1590,7 @@ class AppUserService {
     }
     
     let handle = data.handle.toLowerCase();
+    handle = handle.trim();
     if (handle.indexOf("@") < 0 && !app.userNamesEnabled){
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_USERNAME_LOGIN);
       return;
@@ -1674,7 +1678,7 @@ class AppUserService {
             let field = app.metaData[index];
             let value = _.get(metaData, field.path);
 
-            if(value !== undefined) _.set(finalMetadata, field.path, value); 
+            if(value !== undefined) _.set(finalMetadata, field.path, value.trim()); 
 
             if(field.required && value === undefined){ 
               valid = false;
