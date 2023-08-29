@@ -1587,10 +1587,9 @@ class AppUserService {
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
-    }
+    } 
+    let handle = data.handle;
     
-    let handle = data.handle.toLowerCase();
-    handle = handle.trim();
     if (handle.indexOf("@") < 0 && !app.userNamesEnabled){
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_USERNAME_LOGIN);
       return;

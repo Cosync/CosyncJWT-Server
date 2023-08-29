@@ -385,16 +385,25 @@ router.post("/register", async (req, res) => {
 
 router.post("/deleteAccount", async (req, res) => {
  
-  let valid = req.body.handle && req.appId && req.body.password;
-
-  if (!valid || req.handle != req.body.handle )
+  let valid = req.body.handle && req.appId && req.body.password && req.handle;
+  if (!valid)
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   }
-  let data = req.body;
+  let data = req.body; 
+
+  data.handle = data.handle.toLowerCase();
+  data.handle = data.handle.trim();
+
   data.email = req.handle
-  data.appId = req.appId;
+  data.appId = req.appId; 
+
+  if (data.handle.indexOf("@") > 0 && data.handle !=  data.email){
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
 
   appUser.deleteAppUserAccount(data, function(result, error){
 
