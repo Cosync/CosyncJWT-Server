@@ -185,7 +185,7 @@ app.use((req, res, next) => {
     }
 
     if (!req.scope || req.scope === undefined){
-      util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
+      util.responseFormat(res, "Welcome to CosyncJWT Server Service");
       return;
     }
         
