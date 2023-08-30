@@ -183,6 +183,11 @@ app.use((req, res, next) => {
       util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
       return;
     }
+
+    if (!req.scope || req.scope === undefined){
+      util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
+      return;
+    }
         
     next();
     
