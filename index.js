@@ -172,22 +172,12 @@ app.use((req, res, next) => {
           util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
           return;
         }
-        
       }
-      // else {
-      //   util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
-      //   return;
-      // }
     
     } catch (error) {
       util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
       return;
-    }
-
-    if (!req.scope || req.scope === undefined){
-      util.responseFormat(res, "Welcome to CosyncJWT Server Service");
-      return;
-    }
+    } 
         
     next();
     

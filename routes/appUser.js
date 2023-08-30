@@ -78,7 +78,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/loginComplete", async (req, res) => {
  
-  let valid = req.body.code && req.body.loginToken; 
+  let valid = req.body.code && req.body.loginToken && req.appId; 
   if (!valid)
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -173,7 +173,7 @@ router.post("/signup", async (req, res) => {
   }
 
 
-  let valid = req.body.handle && req.body.password;
+  let valid = req.body.handle && req.body.password && req.appId;
 
   if (!valid)
   {
@@ -429,7 +429,7 @@ router.post("/deleteAccount", async (req, res) => {
 
 router.post("/forgotPassword", async (req, res) => {
  
-  let valid = req.body.handle; 
+  let valid = req.body.handle && req.appId; 
   if (!valid && req.scope != 'app')
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -463,7 +463,7 @@ router.post("/forgotPassword", async (req, res) => {
 
 router.post("/resetPassword", async (req, res) => {
  
-  let valid = req.body.handle && req.body.password && req.body.code; 
+  let valid = req.body.handle && req.body.password && req.body.code && req.appId; 
   if (!valid)
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -503,7 +503,7 @@ router.post("/resetPassword", async (req, res) => {
 
 router.post("/changePassword", async (req, res) => {
  
-  let valid = req.body.password && req.body.newPassword; 
+  let valid = req.body.password && req.body.newPassword && req.appId; 
   if (!valid || !req.handle || req.body.password == req.body.newPassword)
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_DATA, util.HTTP_STATUS_CODE.BAD_REQUEST);
@@ -663,6 +663,13 @@ router.post("/setUserName", async (req, res) => {
 })
 
 router.post("/setUserMetadata", async (req, res) => {  
+
+  let valid = req.handle;
+  if (!valid)
+  {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
 
   appUser.setUserMetadata(req, function(result, error){
     if(error){

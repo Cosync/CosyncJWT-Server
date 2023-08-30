@@ -47,23 +47,23 @@ if (global.__config.azureNotification ){
 let _error = {status: 'Fails', message: 'Invalid Data'};
 
 router.post("/", async (req, res) => {
+  
+  let valid = req.body.name;
+  if(!valid || req.scope != 'server') { 
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
 
-    let valid = req.body.name;
-    if(!valid) { 
-      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      return;
-    }
-
-    appService.addApp(req.body, function(result, err){
-        if(err){  
-          util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
-          //appLogService.addLog("undefined", 'create', JSON.stringify(_error), 'error', 'app'); 
-        } 
-        else{
-          appLogService.addLog(result.appId, 'create', true, 'success', 'app'); 
-          util.responseFormat(res, result);
-        } 
-      });
+  appService.addApp(req.body, function(result, err){
+      if(err){  
+        util.responseFormat(res, err, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        //appLogService.addLog("undefined", 'create', JSON.stringify(_error), 'error', 'app'); 
+      } 
+      else{
+        appLogService.addLog(result.appId, 'create', true, 'success', 'app'); 
+        util.responseFormat(res, result);
+      } 
+    });
 });
 
 
@@ -233,7 +233,7 @@ router.post("/update", async (req, res) => {
 router.post("/deleteMetadata", async (req, res) => { 
 
   let valid = req.body.appId && req.body.index && req.body.type;
-  if(!valid && req.scope != 'server') {
+  if(!valid || req.scope != 'server') {
     util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   } 
@@ -261,7 +261,7 @@ router.delete("/:appId",
   async function (req, res) {
      
     let valid = req.params.appId
-    if(!valid && req.scope != 'server') {
+    if(!valid || req.scope != 'server') {
       util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
       return;
     }
