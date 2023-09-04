@@ -638,6 +638,7 @@ class AppUserService {
         twilioService.sendSMS(user, app, function(result, err){
           if(result){
             user.twoFactorCode = result.twoFactorCode;
+            user.updatedAt = util.getCurrentTime();
             user.save();
             resolve({'login-token': signToken});
           }
@@ -649,6 +650,7 @@ class AppUserService {
         const jwtToken = util.generateAuthJWTToken(user, app); 
         let accessToken = util.generateAccessToken(user);
         user.lastLogin = util.getCurrentTime();
+        user.updatedAt = util.getCurrentTime();
         user.save(); 
         resolve({'jwt':jwtToken, 'access-token':accessToken}); 
       }
@@ -694,6 +696,7 @@ class AppUserService {
     let accessToken = util.generateAccessToken(user); 
     user.lastLogin = util.getCurrentTime();
     user.twoFactorCode = '';
+    user.updatedAt = util.getCurrentTime();
     user.save();
 
     callback({'jwt':jwtToken, 'access-token':accessToken});
@@ -1079,6 +1082,7 @@ class AppUserService {
       }
 
       user.metaData = finalMetadata;
+      user.updatedAt = util.getCurrentTime();
       user.save();
 
       callback(true);
@@ -1242,9 +1246,9 @@ class AppUserService {
               subject : template.subject.split('%APP_NAME%').join(app.name),
               html: tml
             }; 
-
+           
             let QRimage = {
-              qrImage: twoFactor.imageBuffer,
+              buffers: twoFactor.imageBuffer,
               type: 'image',
               filename: "QRCode.png"
             }
@@ -1254,6 +1258,7 @@ class AppUserService {
           
             
             user.googleSecretKey = twoFactor.googleSecretKey;
+            user.updatedAt = util.getCurrentTime();
             user.save();
 
             callback({googleSecretKey:twoFactor.googleSecretKey,  QRDataImage: twoFactor.QRDataImage}); 
@@ -1263,6 +1268,7 @@ class AppUserService {
             
           if(user.phoneVerified){
             user.twoFactorPhoneVerification = true;
+            user.updatedAt = util.getCurrentTime();
             user.save();
             callback(true); 
           }
@@ -1273,6 +1279,8 @@ class AppUserService {
       else{
         if(app.twoFactorVerification == 'google') user.twoFactorGoogleVerification = false;
         else if(app.twoFactorVerification == 'phone') user.twoFactorPhoneVerification = false;
+
+        user.updatedAt = util.getCurrentTime();
         user.save();
         callback(true);
       } 
@@ -1313,6 +1321,7 @@ class AppUserService {
         let verified = twoFactorService.verifyCode(user, req.body.twoFactorCode);
         if(verified){
           user.twoFactorVerification = true;
+          user.updatedAt = util.getCurrentTime();
           user.save();
           callback(true);
         }
@@ -1732,14 +1741,7 @@ class AppUserService {
     if(result.jwt) callback(result, null);
     else callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
   
-  }
-
-
-  
-
-
-
-      
+  }   
 
 }
 
