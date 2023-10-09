@@ -101,19 +101,27 @@ exports.INTERNAL_STATUS_CODE = {
 	PHONE_NUMBER_ALREADY_IN_USE:{code:412, message:"phone number already in use"},
 	APP_IS_MIGRATED:{code:413, message:"app is migrated"},
 	APP_ISNOT_ANONYMOUS_LOGIN:{code:414, message:"app does not support anonymous login"},
-	
+	APP_ISNOT_APPLE_AUTHENTICATION:{code:415, message:"app does not support Apple Authentication"},
+	APP_ISNOT_GOOGLE_AUTHENTICATION:{code:416, message:"app does not support Google Authentication"},
+
 	ACCESS_TOKEN_EXPRIRED:{code:501, message:"access token expired"},
 	INTERNAL_SERVER_ERROR:{code:500, message:"internal server error"}, 
 	INVALID_CREDENTIALS:{code:600, message:"invalid login credentials"},
 	HANDLE_ALREADY_REGISTERED:{code:601, message:"handle already registered"},
 	INVALID_DATA:{code:602, message:"invalid data"},
-	EMAIL_NOT_EXIST:{code:603, message:"email does not exist"},
+	ACCOUNT_NOT_EXIST:{code:603, message:"account does not exist"},
 	INVALID_METADATA:{code:604, message:"invalid metadata"},
 	USERNAME_ALREADY_IN_USE:{code:605, message:"user name already assigned"},
 	APP_ISNOT_USERNAME_LOGIN:{code:606, message:"app does not support username login"},
 	USERNAME_DOES_NOT_EXIST:{code:607, message:"user name deos not exist"},
-	ACCOUNT_IS_NOT_VERIFIED:{code:608, message:"account has not been verified"}
+	ACCOUNT_IS_NOT_VERIFIED:{code:608, message:"account has not been verified"},
+	INVALID_LOCALE:{code:609, message:"invalid locale"},
+	EMAIL_ACCOUNT_ALREADY_EXIST:{code:610, message:"email account already exist"},
+	APPLE_ACCOUNT_ALREADY_EXIST:{code:611, message:"Apple account already exist"},
+	GOOGLE_ACCOUNT_ALREADY_EXIST:{code:612, message:"Google account already exist"},
+	TOKEN_IS_INVALID:{code:613, message:"token is invalid"} 
 };
+ 
 
 
 exports.getCurrentTime = function() { 

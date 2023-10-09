@@ -527,6 +527,18 @@ class AppService {
     template = new _email(sms); 
     template.save();
 
+    let signUpSuccess = {
+      appId: app.appId,
+      templateName: 'signUpSuccess',
+      subject: "Welcome to %APP_NAME%",
+      replyTo:'',
+      locale:locale,
+      htmlTemplate:"You have successfully signup for your account %HANDLE%."
+    } 
+
+    template = new _email(signUpSuccess); 
+    template.save();
+
   }
 
 
@@ -819,7 +831,74 @@ class AppService {
    
   
             break; 
+          case 'appleLogin':
+           
+            if(app.appleLoginEnabled == data.appleLoginEnabled || typeof(data.appleLoginEnabled) != "boolean"){
+             
+              error.appleLoginEnabled = data.appleLoginEnabled;
+              callback(null, error);
+             
+              return;
+            } 
 
+            app.appleLoginEnabled = data.appleLoginEnabled;
+            app.updatedAt = util.getCurrentTime();
+            app.save(); 
+            delete app.appPrivateKey;
+            delete app.appSecret;
+            callback(app);  
+
+            break;
+
+        case 'appleBundleId':
+           
+            if(app.appleLoginEnabled && !data.appleBundleId || data.appleBundleId == ""){ 
+              callback(null, error);
+              return;
+            } 
+
+            app.appleBundleId = data.appleBundleId;
+            app.updatedAt = util.getCurrentTime();
+            app.save(); 
+            delete app.appPrivateKey;
+            delete app.appSecret;
+            callback(app);  
+
+            break;
+        case 'googleLogin':
+           
+            if(app.googleLoginEnabled == data.googleLoginEnabled || typeof(data.googleLoginEnabled) != "boolean"){
+             
+              error.googleLoginEnabled = data.googleLoginEnabled;
+              callback(null, error);
+             
+              return;
+            } 
+
+            app.googleLoginEnabled = data.googleLoginEnabled;
+            app.updatedAt = util.getCurrentTime();
+            app.save(); 
+            delete app.appPrivateKey;
+            delete app.appSecret;
+            callback(app);  
+
+            break;
+
+        case 'googleClientId':
+           
+            if(app.googleLoginEnabled && !data.googleClientId || data.googleClientId == ""){ 
+              callback(null, error);
+              return;
+            } 
+
+            app.googleClientId = data.googleClientId;
+            app.updatedAt = util.getCurrentTime();
+            app.save(); 
+            delete app.appPrivateKey;
+            delete app.appSecret;
+            callback(app);  
+
+            break;
         default:
           callback(null, error);
         break;

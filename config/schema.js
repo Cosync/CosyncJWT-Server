@@ -66,6 +66,26 @@ module.exports.application = new mongooseSchema({
     comment: 'Allow username login',
     index: true 
   }, 
+  appleLoginEnabled: {
+    default: false,
+    type: Boolean,
+    comment: 'Allow user to login with Apple ID',
+    
+  },
+  appleBundleId: { 
+    type: String,
+    comment: "Apple App Bundle ID for Apple ID Button"
+  },
+  googleLoginEnabled: {
+    default: false,
+    type: Boolean,
+    comment: 'Allow user to login with Google Button',
+    
+  },
+  googleClientId: { 
+    type: String,
+    comment: "Google client ID for Google Login"
+  },
   emailExtension: {
     default: false,
     type: Boolean,
@@ -325,6 +345,10 @@ module.exports.signup = new mongooseSchema({
       type: String,
       default: 'pending',
       index: true 
+    },
+    signupProvider: {
+      type: String, 
+      index: true 
     }, 
     locale: {
       type: String 
@@ -407,7 +431,15 @@ module.exports.user = new mongooseSchema({
       index: true ,
       comment: 'TRUE when is verify.',
     },
-    
+    loginProvider: { 
+      type: String,
+      index: true, 
+      default: ''
+    },
+    socialUserId: { 
+      type: String,
+      index: true 
+    },
     metaData: { 
       type: Object
     }, 
