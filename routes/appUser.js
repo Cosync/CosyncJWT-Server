@@ -526,45 +526,77 @@ router.post("/register", async (req, res) => {
 
 router.post("/deleteAccount", async (req, res) => {
  
-  let valid = req.body.handle && req.appId && req.body.password && req.handle;
+  let valid =  req.appId && req.handle;
   if (!valid)
   {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   }
+
   let data = req.body; 
 
-  data.handle = data.handle.toLowerCase();
-  data.handle = data.handle.trim();
+  if (!data.token && !data.handle && !data.password){
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
 
   data.email = req.handle
   data.appId = req.appId; 
 
-  if (data.handle.indexOf("@") > 0 && data.handle !=  data.email){
-    util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    return;
-  }
+  if(data.handle && data.password) {
+    data.handle = data.handle.toLowerCase();
+    data.handle = data.handle.trim(); 
 
+    if (data.handle.indexOf("@") > 0 && data.handle !=  data.email){
+      util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_CREDENTIALS, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+    appUser.deleteAppUserAccount(data, function(result, error){
 
-  appUser.deleteAppUserAccount(data, function(result, error){
-
-    if(error){
-      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      error.handle = req.body.handle;
-      appLogService.addLog(data.appId, 'deleteAccount', JSON.stringify(error), 'error', 'user'); 
-     
-    } 
-    else {
+      if(error){
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        error.handle = req.body.handle;
+        appLogService.addLog(data.appId, 'deleteAccount', JSON.stringify(error), 'error', 'user'); 
       
-      util.responseFormat(res, true);
-      let log = {
-        handle: data.handle
-      };
-      appLogService.addLog(data.appId, 'deleteAccount', JSON.stringify(log), 'success', 'user'); 
-     
-    } 
+      } 
+      else {
+        
+        util.responseFormat(res, true);
+        let log = {
+          handle: data.handle
+        };
+        appLogService.addLog(data.appId, 'deleteAccount', JSON.stringify(log), 'success', 'user'); 
+      
+      } 
 
-  });
+    });
+  } 
+  else if (data.loginProvider == "apple" || data.loginProvider == "google"){
+
+    appUser.deleteAppUserAccountWithToken(data, function(result, error){
+
+      if(error){
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        error.handle = data.email;
+        appLogService.addLog(data.appId, 'deleteAccount', JSON.stringify(error), 'error', 'user'); 
+       
+      } 
+      else {
+        
+        util.responseFormat(res, true);
+        let log = {
+          email: data.email
+        };
+        appLogService.addLog(data.appId, 'deleteAccount', JSON.stringify(log), 'success', 'user'); 
+       
+      } 
+  
+    });
+
+  }
+  else {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_DATA, util.HTTP_STATUS_CODE.BAD_REQUEST); 
+  }
 
 }); 
 

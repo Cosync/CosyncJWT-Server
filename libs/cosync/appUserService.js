@@ -360,7 +360,7 @@ class AppUserService {
         subject: "Welcome to %APP_NAME%",
         locale: locale || 'EN',
         replyTo:'', 
-        htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have successfully signup for your account %HANDLE%.</p>\n<p>If you didn’t ask to verify this address, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+        htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have successfully signup for your account %HANDLE%.</p>\n<p>If you don't recognize the %APP_NAME% account, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
       }
 
       let templateSignUpSuccess = new _email(signUpSuccess);
@@ -383,7 +383,7 @@ class AppUserService {
 
     let emailData = {
       emailExtensionAPIKey: app.emailExtensionAPIKey,
-      to: handle, 
+      to: data.handle, 
       from: emailTemplate.replyTo,
       subject : emailTemplate.subject.split('%APP_NAME%').join(app.name),
       text: `Thanks for verifying your ${data.handle} account! 
@@ -508,9 +508,7 @@ class AppUserService {
       if(data.metaData) user.metaData = data.metaData;
 
       let appUser = new _appUserTbl(user);
-      appUser.save().then(res => {
-        that.countAppUser(app);
-      }); 
+      appUser.save();
  
       const accessToken = util.generateAccessToken(user, null);
       const jwtToken = util.generateAuthJWTToken(user, app); 
@@ -1298,6 +1296,7 @@ class AppUserService {
         phone: user.phone,
         phoneVerified: user.phoneVerified,
         metaData:user.metaData,
+        loginProvider: user.loginProvider,
         lastLogin: user.lastLogin
       }; 
 
@@ -1966,9 +1965,61 @@ class AppUserService {
       };
       let result = new _inviteTbl(inviteData);
       result.save();
+    } 
+    
+  } 
+ 
+  async deleteAppUserAccountWithToken(params, callback){
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: params.appId });
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    } 
+
+    if(!app.appleLoginEnabled && params.loginProvider == "apple") {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_APPLE_AUTHENTICATION);
+      return;
+    } 
+    else if(!app.googleLoginEnabled && params.loginProvider == "google") {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_GOOGLE_AUTHENTICATION);
+      return;
+    } 
+
+   
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+
+    if (params.loginProvider == "apple") {
+      let data = {idToken:params.token, appleBundleId: app.appleBundleId};
+      appleLoginService.verifyToken(data, async function(result, error){
+        if (error) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
+        else { 
+
+          _user.findOneAndRemove({ socialUserId: result.sub, appId:app.appId }, function(err, res) {
+            callback(true);  
+          }); 
+        }
+      }) 
+
     }
-    
-    
+    else if (params.loginProvider == "google"){
+
+      let data = {idToken:params.token, googleClientId: app.googleClientId};
+      googleLoginService.verifyToken(data, async function(result, error){
+        if (error) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
+        else { 
+          
+          _user.findOneAndRemove({ socialUserId: result.sub, appId:app.appId }, function(err, res) {
+            callback(true);  
+          }); 
+        }
+      })  
+    }
+    else {
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+    }
+
   }
 
 
@@ -2014,6 +2065,7 @@ class AppUserService {
      
     }
   }
+ 
 
   
 

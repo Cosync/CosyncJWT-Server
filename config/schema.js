@@ -327,13 +327,11 @@ module.exports.signup = new mongooseSchema({
       index: true 
     },
     password: {
-      required: true,
       type: String,
       comment: 'password of the user.',
       index: true 
     },  
     code: {
-      required: true,
       type: Number,
       index: true 
     }, 

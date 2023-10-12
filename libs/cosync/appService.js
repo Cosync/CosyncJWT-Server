@@ -533,7 +533,7 @@ class AppService {
       subject: "Welcome to %APP_NAME%",
       replyTo:'',
       locale:locale,
-      htmlTemplate:"You have successfully signup for your account %HANDLE%."
+      htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have successfully signup for your account %HANDLE%.</p>\n<p>If you don't recognize the %APP_NAME% account, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
     } 
 
     template = new _email(signUpSuccess); 
