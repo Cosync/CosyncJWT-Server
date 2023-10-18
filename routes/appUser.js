@@ -571,7 +571,7 @@ router.post("/deleteAccount", async (req, res) => {
 
     });
   } 
-  else if (data.loginProvider == "apple" || data.loginProvider == "google"){
+  else if (data.token){
 
     appUser.deleteAppUserAccountWithToken(data, function(result, error){
 

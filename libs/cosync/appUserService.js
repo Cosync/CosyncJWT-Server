@@ -1978,19 +1978,24 @@ class AppUserService {
       return;
     } 
 
-    if(!app.appleLoginEnabled && params.loginProvider == "apple") {
+    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
+    let user = await _user.findOne({ appId: params.appId, handle: params.email });
+    if (!user){
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA); 
+      return;
+    }
+
+    if(!app.appleLoginEnabled && user.loginProvider == "apple") {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_APPLE_AUTHENTICATION);
       return;
     } 
-    else if(!app.googleLoginEnabled && params.loginProvider == "google") {
+    else if(!app.googleLoginEnabled && user.loginProvider == "google") {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_GOOGLE_AUTHENTICATION);
       return;
-    } 
+    }  
+  
 
-   
-    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-
-    if (params.loginProvider == "apple") {
+    if (user.loginProvider == "apple") {
       let data = {idToken:params.token, appleBundleId: app.appleBundleId};
       appleLoginService.verifyToken(data, async function(result, error){
         if (error) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
@@ -2003,7 +2008,7 @@ class AppUserService {
       }) 
 
     }
-    else if (params.loginProvider == "google"){
+    else if (user.loginProvider == "google"){
 
       let data = {idToken:params.token, googleClientId: app.googleClientId};
       googleLoginService.verifyToken(data, async function(result, error){
