@@ -27,7 +27,7 @@
  * For questions about this license, you may write to mailto:info@cosync.io
 */
  
-
+  
 const jwt = require("jsonwebtoken");
 const jwksClient = require("jwks-rsa");  
 const APPLE_BASE_URL = "https://appleid.apple.com";
@@ -85,6 +85,16 @@ class AppleLoginService {
         }
     
     } 
+
+
+    verifyTokenAsync(data){
+        return new Promise((resolve, reject) => { 
+            this.verifyToken(data, function(res, err){
+                resolve(res)
+            })
+        })
+    }
+ 
 }
 
 

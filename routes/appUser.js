@@ -309,148 +309,93 @@ router.get("/completeSignup", async (req, res) => {
 }); 
 
 
-
-router.post("/googleLogin", async (req, res) => {
+router.post("/socialLogin", async (req, res) => {
  
-  let valid = req.body.token && req.appId; 
-  if (!valid)
-  {
+  let valid = req.body.token && req.body.provider && req.appId; 
+  if (!valid){
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   }
- 
-   
-  appUser.googleLogin(req, function(result, error){
+  let data = req.body;
+  data.appId = req.appId;
 
-    if(error){
-      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      error.token = req.body.token;
-      appLogService.addLog(req.appId, 'googleLogin', JSON.stringify(error), 'error', 'user'); 
-     
-    } 
-    else{
-      util.responseFormat(res, result);
-      let log = { 
-        status: true
-      };
-      appLogService.addLog(req.appId, 'googleLogin', JSON.stringify(log), 'success', 'user'); 
-     
-    } 
+  if (data.provider == "apple" || data.provider == "google"){
 
-  });
-});
+    appUser.socialLogin(req, function(result, error){
+      if(error){
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        error.token = data.token;
+        error.provider = data.provider;
 
+        appLogService.addLog(data.appId, 'socialLogin', JSON.stringify(error), 'error', 'user'); 
+      
+      } 
+      else {
+        util.responseFormat(res, {'jwt':result.jwt, 'access-token':result['access-token']});
 
-
-router.post("/appleLogin", async (req, res) => {
- 
-  let valid = req.body.token && req.appId; 
-  if (!valid)
-  {
-    util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    return;
-  }
- 
-   
-  appUser.appleLogin(req, function(result, error){
-
-    if(error){
-      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-      error.token = req.body.token;
-      appLogService.addLog(req.appId, 'appleLogin', JSON.stringify(error), 'error', 'user'); 
-     
-    } 
-    else{
-      util.responseFormat(res, result);
-      let log = { 
-        status: true
-      };
-      appLogService.addLog(req.appId, 'appleLogin', JSON.stringify(log), 'success', 'user'); 
-     
-    } 
-
-  });
-});
-
-
-
-router.post("/appleSignup", async (req, res) => {
-  if (req.scope != "app")
-  {
-    util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    return;
-  }
-
-  let valid = req.body.token && req.appId && req.body.handle;
-
-  if (!valid)
-  {
-    util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    return;
+        let log = { 
+          status: true,
+          provider : req.body.provider,
+          handle: result.handle
+        };
+        appLogService.addLog(data.appId, 'socialLogin', JSON.stringify(log), 'success', 'user'); 
+      }
+    })
   } 
+  else {
+    util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_DATA, util.HTTP_STATUS_CODE.BAD_REQUEST);
+  }
 
-  appUser.appleSignUp(req, function(result, error) {
+});
 
-    if(error){
 
-      error.handle = req.body.handle;
-      appLogService.addLog(req.appId, 'appleSignup', JSON.stringify(error), 'error', 'user');
 
-      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    } 
-    else {
-
-      let log = { 
-        handle: req.body.handle, 
-        status: true
-      }; 
-      appLogService.addLog(req.appId, 'appleSignup', JSON.stringify(log), 'success', 'user');
-      util.responseFormat(res, result);
-    }
-     
-  })
-  
-})
-
-router.post("/googleSignup", async (req, res) => {
-  if (req.scope != "app")
-  {
+router.post("/socialSignup", async (req, res) => {
+  if (req.scope != "app"){
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   }
 
-  let valid = req.body.token && req.body.handle && req.appId;
+  let valid = req.body.token && req.body.provider && req.appId && req.body.handle;
 
-  if (!valid)
-  {
+  if (!valid) {
     util.responseFormat(res, util.INTERNAL_STATUS_CODE.MISSING_PARAM, util.HTTP_STATUS_CODE.BAD_REQUEST);
     return;
   } 
 
 
+  if (req.body.provider == "apple" || req.body.provider == "google") {
 
-  appUser.googleSignUp(req, function(result, error) {
+    appUser.socialSignup(req, function(result, error) {
 
-    if(error){
+      if(error){
 
-      error.handle = req.body.handle;
-      appLogService.addLog(req.appId, 'googleSignUp', JSON.stringify(error), 'error', 'user');
+        error.handle = req.body.handle;
+        error.provider = req.body.provider;
+        appLogService.addLog(req.appId, 'socialSignup', JSON.stringify(error), 'error', 'user');
 
-      util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
-    } 
-    else {
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      } 
+      else {
 
-      let log = { 
-        handle: req.body.handle, 
-        status: true
-      }; 
-      appLogService.addLog(req.appId, 'googleSignUp', JSON.stringify(log), 'success', 'user');
-      util.responseFormat(res, result);
-    }
-     
-  })
+        util.responseFormat(res, result);
 
+        let log = { 
+          handle: req.body.handle, 
+          provider : req.body.provider,
+          status: true
+        }; 
+        appLogService.addLog(req.appId, 'socialSignup', JSON.stringify(log), 'success', 'user');
+       
+      } 
+    })
+ 
+  }
+  else {
+    util.responseFormat(res,  util.INTERNAL_STATUS_CODE.INVALID_DATA, util.HTTP_STATUS_CODE.BAD_REQUEST);
+  }
 })
+ 
 
 router.post("/invite", async (req, res) => {
  

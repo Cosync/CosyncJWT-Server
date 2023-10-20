@@ -143,7 +143,7 @@ class AppUserService {
   constructor() {
   }
 
-  async appleSignUp(req, callback){
+  async socialSignup(req, callback){
 
     let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
@@ -151,15 +151,19 @@ class AppUserService {
     if(!app ) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
-    } 
+    }  
 
-    if(!app.signupEnabled) {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_SIGNUPABLE);
+    let loginProvider = req.body.provider;
+    if (loginProvider != "apple" && loginProvider != "google"){
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      return;
+    }
+    else if(loginProvider == "apple" && (!app.appleLoginEnabled || app.appleBundleId == "" || !app.appleBundleId)) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_APPLE_AUTHENTICATION);
       return;
     } 
-
-    if(!app.appleLoginEnabled || app.appleBundleId == "" || !app.appleBundleId) {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_APPLE_AUTHENTICATION);
+    else if(loginProvider == "google" && (!app.googleLoginEnabled || app.googleClientId == "" || !app.googleClientId)) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_GOOGLE_AUTHENTICATION);
       return;
     } 
 
@@ -182,26 +186,29 @@ class AppUserService {
       return
     }
 
-    let data = {idToken:req.body.token, appleBundleId: app.appleBundleId};
+    let validToken;
+    if (loginProvider == "apple"){
+      validToken = await appleLoginService.verifyTokenAsync({idToken:req.body.token, appleBundleId: app.appleBundleId});
+    }
+    else  if (loginProvider == "google"){
+      validToken = await googleLoginService.verifyTokenAsync({idToken:req.body.token, googleClientId: app.googleClientId});
+    }
 
-    appleLoginService.verifyToken(data, async function(result, error){
-      if (error) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
-      else {
-          let signData = req.body;
-          signData.appId = req.appId;
-          signData.socialUserId = result.sub;
-          signData.metaData = checkData;
-          signData.loginProvider = "apple";
-          signData.locale = req.body.locale || "EN";
-          that.createSocialSignup(signData, app, callback)
-         
-      }
-    }) 
-     
+    if (!validToken) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
+    else if (validToken.email != req.body.handle) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
+    else {
+      let signData = req.body;
+      signData.appId = req.appId;
+      signData.socialUserId = validToken.sub;
+      signData.metaData = checkData;
+      signData.loginProvider = loginProvider;
+      signData.locale = req.body.locale || "EN";
+      that.createSocialSignup(signData, app, callback)
+    } 
 
   }
 
-  async appleLogin(req, callback){
+  async socialLogin(req, callback){
 
     let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
@@ -211,146 +218,58 @@ class AppUserService {
       return;
     }
 
-    if(!app.appleLoginEnabled || app.appleBundleId == "" || !app.appleBundleId) {
+    let loginProvider = req.body.provider;
+    if (loginProvider != "apple" && loginProvider != "google"){
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      return;
+    }
+    else if(loginProvider == "apple" && (!app.appleLoginEnabled || app.appleBundleId == "" || !app.appleBundleId)) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_APPLE_AUTHENTICATION);
       return;
     } 
-
-    let data = {idToken:req.body.token, appleBundleId: app.appleBundleId};
-
-    appleLoginService.verifyToken(data, async function(result, error){
-
-      if (error) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
-      else{
-       
-        let user = await _appUserTbl.findOne({ handle: result.email, appId: req.appId });
-        if (user && user.loginProvider == "apple") {
-
-          const jwtToken = util.generateAuthJWTToken(user, app); 
-          let accessToken = util.generateAccessToken(user);
-          user.lastLogin = util.getCurrentTime();
-          user.save(); 
-          callback({'jwt':jwtToken, 'access-token':accessToken}); 
-        }
-        else if(user && user.loginProvider == "google") {
-          callback(null, util.INTERNAL_STATUS_CODE.GOOGLE_ACCOUNT_ALREADY_EXIST);
-          return;
-        }
-        else if(user) {
-          callback(null, util.INTERNAL_STATUS_CODE.EMAIL_ACCOUNT_ALREADY_EXIST);
-          return;
-        }
-        else { 
-          callback(null, util.INTERNAL_STATUS_CODE.ACCOUNT_NOT_EXIST);
-          return;
-        }
-      }
-    })
-
-  }
-
-  async googleSignUp(req, callback){
-    let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
-    let app = await _app.findOne({ appId: req.appId });
-    if(!app ) {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
-      return;
-    } 
-
-    if(!app.signupEnabled) {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_SIGNUPABLE);
-      return;
-    } 
-
-    if(!app.googleLoginEnabled || app.googleClientId == "" || !app.googleClientId) {
+    else if(loginProvider == "google" && (!app.googleLoginEnabled || app.googleClientId == "" || !app.googleClientId)) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_GOOGLE_AUTHENTICATION);
       return;
-    }
-
-    let user = await _appUserTbl.findOne({ handle: req.body.handle, appId: req.appId });
-    if (user) {
-      if (user.loginProvider == "google") callback(null, util.INTERNAL_STATUS_CODE.GOOGLE_ACCOUNT_ALREADY_EXIST);
-      else if (user.loginProvider == "apple") callback(null, util.INTERNAL_STATUS_CODE.APPLE_ACCOUNT_ALREADY_EXIST);
-      else callback(null, util.INTERNAL_STATUS_CODE.EMAIL_ACCOUNT_ALREADY_EXIST); 
-      return
-    }
-
-    let that = this; 
-    let checkData = await that.validateSignUpData(req.body, app);
-    if (checkData === false){
-      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
-      return
-    }
-    else if (checkData && checkData.invalidMetadata){
-      callback(null, util.INTERNAL_STATUS_CODE.INVALID_METADATA);
-      return
-    }
-
-    let data = {idToken:req.body.token, googleClientId: app.googleClientId};
-    googleLoginService.verifyToken(data, function(result, error){
-      if (error) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
-      else {
-          let signData = req.body;
-          signData.appId = req.appId;
-          signData.metaData = checkData;
-          signData.loginProvider = "google";
-          signData.locale = req.body.locale || "EN";
-          signData.socialUserId = result.sub;
-          that.createSocialSignup(signData, app, callback)
-          
-      }
-    })
-
-    
-  }
-
-
-  async googleLogin(req, callback){
-    let _appUserTbl = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
-    let app = await _app.findOne({ appId: req.appId });
-    if(!app ) {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
-      return;
     } 
-
-    if(!app.appleLoginEnabled || app.appleBundleId == "" || !app.appleBundleId) {
-      callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_APPLE_AUTHENTICATION);
-      return;
-    } 
- 
-    let data = {idToken:req.body.token, googleClientId: app.googleClientId}; 
-    googleLoginService.verifyToken(data, async function(result, error){
-      if (error) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
-      else{
+    let validToken;
        
-        let user = await _appUserTbl.findOne({ handle: result.email, appId: req.appId });
+    if (loginProvider == "apple"){
+      validToken = await appleLoginService.verifyTokenAsync({idToken:req.body.token, appleBundleId: app.appleBundleId});
+    }
+    else if (loginProvider == "google"){
+      validToken = await googleLoginService.verifyTokenAsync({idToken:req.body.token, googleClientId: app.googleClientId});
+    }
 
-        if (user && user.loginProvider == "google") {
-          const jwtToken = util.generateAuthJWTToken(user, app); 
-          let accessToken = util.generateAccessToken(user);
-          user.lastLogin = util.getCurrentTime();
-          user.save(); 
-          callback({'jwt':jwtToken, 'access-token':accessToken}); 
-        }
-        else if(user && user.loginProvider == "apple") {
-          callback(null, util.INTERNAL_STATUS_CODE.APPLE_ACCOUNT_ALREADY_EXIST);
-          return;
-        }
-        else if(user) {
-          callback(null, util.INTERNAL_STATUS_CODE.EMAIL_ACCOUNT_ALREADY_EXIST);
-          return;
-        }
-        else { 
-          callback(null, util.INTERNAL_STATUS_CODE.ACCOUNT_NOT_EXIST);
-          return;
-        }
+    if (!validToken) callback(null, util.INTERNAL_STATUS_CODE.TOKEN_IS_INVALID);
+    else {
+
+      let query = {
+        appId: req.appId,
+        $or : [ { handle: validToken.email },
+                { socialUserId: validToken.sub }
+              ]
+      };
+      let user = await _appUserTbl.findOne(query);
+       
+      if (!user) {
+        callback(null, util.INTERNAL_STATUS_CODE.ACCOUNT_NOT_EXIST);
       }
-    })
+      else if (user.loginProvider != loginProvider){
+        if(user.loginProvider == "google") callback(null, util.INTERNAL_STATUS_CODE.GOOGLE_ACCOUNT_ALREADY_EXIST);
+        else if(user.loginProvider == "apple") callback(null, util.INTERNAL_STATUS_CODE.APPLE_ACCOUNT_ALREADY_EXIST);
+        else callback(null, util.INTERNAL_STATUS_CODE.EMAIL_ACCOUNT_ALREADY_EXIST);
+      }
+      else {
 
-  }
+        const jwtToken = util.generateAuthJWTToken(user, app); 
+        let accessToken = util.generateAccessToken(user);
+        user.lastLogin = util.getCurrentTime();
+        user.save(); 
+        callback({'jwt':jwtToken, 'access-token':accessToken, handle:user.handle}); 
+      }
+    } 
 
+  } 
 
   createSignupSuccessEmail(app, _email, locale){ 
     return new Promise((resolve, reject) =>{
@@ -397,9 +316,8 @@ class AppUserService {
   }
 
 
-  async createSocialSignup(data, app, callback){
-
-    let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
+  async createSocialSignup(data, app, callback){ 
+   
     let _signupTbl = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup);
 
     try { 
@@ -844,9 +762,8 @@ class AppUserService {
 
         const accessToken = util.generateAccessToken(user , data.owner);
         const jwtToken = util.generateAuthJWTToken(user, app); 
-        const signToken = util.generateSignToken(data, app); 
         
-        resolve({'jwt':jwtToken, 'access-token':accessToken, 'signed-user-token':signToken});  
+        resolve({'jwt':jwtToken, 'access-token':accessToken});  
       });
     });
   }
@@ -879,10 +796,9 @@ class AppUserService {
       data.uid = user.uid;
 
       const accessToken = util.generateAccessToken(user , data.owner);
-      const jwtToken = util.generateAuthJWTToken(user, app); 
-      const signToken = util.generateSignToken(data, app); 
+      const jwtToken = util.generateAuthJWTToken(user, app);  
       
-      resolve({'jwt':jwtToken, 'access-token':accessToken, 'signed-user-token':signToken});  
+      resolve({'jwt':jwtToken, 'access-token':accessToken});  
     
     });
   }
@@ -907,8 +823,7 @@ class AppUserService {
     
     if(!user){
       //params.password = "";
-      let tokenData = await this.addAppUserDataSkipPasswordHash(params, app); 
-      delete tokenData['signed-user-token']
+      let tokenData = await this.addAppUserDataSkipPasswordHash(params, app);  
       
       callback(tokenData)
     }
@@ -1976,8 +1891,8 @@ class AppUserService {
     if(!app) {
       callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
       return;
-    } 
-
+    }
+    
     let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
     let user = await _user.findOne({ appId: params.appId, handle: params.email });
     if (!user){
@@ -1985,16 +1900,15 @@ class AppUserService {
       return;
     }
 
-    if(!app.appleLoginEnabled && user.loginProvider == "apple") {
+    if(!app.appleLoginEnabled && _user.loginProvider == "apple") {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_APPLE_AUTHENTICATION);
       return;
     } 
-    else if(!app.googleLoginEnabled && user.loginProvider == "google") {
+    else if(!app.googleLoginEnabled && _user.loginProvider == "google") {
       callback(null, util.INTERNAL_STATUS_CODE.APP_ISNOT_GOOGLE_AUTHENTICATION);
       return;
-    }  
-  
-
+    } 
+   
     if (user.loginProvider == "apple") {
       let data = {idToken:params.token, appleBundleId: app.appleBundleId};
       appleLoginService.verifyToken(data, async function(result, error){

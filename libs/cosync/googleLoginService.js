@@ -60,6 +60,15 @@ class GoogleLoginService {
         }
 
     }
+
+
+    verifyTokenAsync(data){
+        return new Promise((resolve, reject) => { 
+            this.verifyToken(data, function(res, err){
+                resolve(res)
+            })
+        })
+    }
   
 }
 
