@@ -42,7 +42,7 @@ const DIR = 'temp';
 const zipper = require('zip-local');
 const csv = require('csv-parser');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter; 
-
+const _ = require('lodash');
 const appProjection = {
   __v: false,
   _id: false,
@@ -1028,7 +1028,7 @@ class AppService {
 
 
 
-  async removeAppSignup(req, data, callback) {
+  async removeAppSignup( data, callback) {
 
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: data.appId });
@@ -1044,7 +1044,7 @@ class AppService {
 
 
     let _signup = mongoose.model(CONT.TABLE.SIGNUPS, SCHEMA.signup); 
-    _signup.findOneAndRemove({appId: data.appId, handle:data.handle}, function(err, res) {
+    _signup.findOneAndDelete({appId: data.appId, _id:data._id}, function(err, res) {
       callback(res, err);
     }); 
       
@@ -1052,7 +1052,7 @@ class AppService {
   }
 
   
-  async removeAppInvite(req, data, callback) {
+  async removeAppInvite(data, callback) {
 
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: data.appId });
@@ -1068,14 +1068,18 @@ class AppService {
 
 
     let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite); 
-    _invite.findOneAndRemove({appId: data.appId, handle:data.handle}, function(err, res) {
+    _invite.findOneAndDelete({appId: data.appId, handle:data.handle}, function(err, res) {
       callback(res, err);
     }); 
     
     
   }
 
-  async createAppInvite(req, data, callback) { 
+  /*.
+    data.appId
+    data.handle
+  ..*/
+  async createAppInvite(data, callback) { 
     
     let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
     let app = await _app.findOne({ appId: data.appId });
@@ -1088,21 +1092,99 @@ class AppService {
       callback(null, util.INTERNAL_STATUS_CODE.APP_IS_SUSPENDED);
       return;
     }  
+     
     
     let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user);
-    let user = await _user.findOne({ appId: data.appId, handle: data.handle });
-    if (user) {
-      callback(null, {message:"Handle already registerred."});
-      return; 
+    let _invite = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite);
+
+    let emails = data.handle.split(",");
+    emails = emails.map(email =>  email.trim());
+    emails =  _.uniq(emails);
+
+    let queryInvite = {
+      handle: {$in:emails}, 
+      appId: app.appId,
+    };
+    
+    let foundInvites = await _invite.find(queryInvite); 
+    foundInvites = foundInvites || [];
+
+    let query = {
+      handle: {$in:emails}, 
+      appId: app.appId 
+    };
+
+    let foundUsers = await _user.find(query); 
+    foundUsers = foundUsers || [];
+    let countSkip = [];
+    let addedInvite = [];
+
+    for (let index = 0; index < emails.length; index++) {
+      const email = emails[index];
+   
+      if (foundUsers.find(({ handle }) => handle === email)){
+        countSkip.push(email)
+      }
+      else if (!foundInvites.find(({ handle }) => handle === email)){
+
+        let inviteData = {
+          handle: email.trim(),
+          appId: data.appId,
+          senderHandle: "superuser",
+          senderUserId: "superuser",
+          status: 'pending', 
+          locale: data.locale,
+          createdAt: util.getCurrentTime(),
+          updatedAt: util.getCurrentTime(),
+        };
+
+        addedInvite.push(inviteData)
+    
+        appUserService.createInvite(inviteData, app, {}, function(){});  
+      } 
+      else countSkip.push(email)
+       
+      
+    } 
+    
+    let result = {
+      invites : addedInvite,
+      exists : countSkip
+    };
+
+    callback(result);
+     
+  }
+
+
+
+  /*.. 
+    data.appId
+    data.inviteId 
+  .*/ 
+  async resendInvite(data, callback) { 
+ 
+
+    let _app = mongoose.model(CONT.TABLE.APPS, SCHEMA.application); 
+    let app = await _app.findOne({ appId: data.appId });
+    
+    if(!app) {
+      callback(null, util.INTERNAL_STATUS_CODE.APP_NOT_FOUND);
+      return;
+    } 
+ 
+    let _inviteTbl = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite);
+    let foundInvite = await _inviteTbl.findOne({ appId: data.appId, handle:data.handle });
+    if (!foundInvite){
+      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
     }
-    req.appId = app.appId;
-    req.body.senderUserId = 'superuser';
-    appUserService.createInvite(req, app, {}, function(data){
-      callback(data);
-    });
-    
-    
-    
+    else { 
+      appUserService.createInvite(foundInvite, app, {}, function(){
+
+      });  
+
+      callback(true);
+    }
   }
 
  
@@ -2050,8 +2132,20 @@ class AppService {
 
     for (let index = 0; index < apps.length; index++) {
 
-        const app = apps[index];  
+        const app = apps[index];
+
+        let signUpSuccess = {
+          appId: app.appId,
+          templateName: 'signUpSuccess',
+          locale: 'EN',
+          localeLinkText: '',
+          subject: "Welcome to %APP_NAME%",
+          replyTo:'',
+          htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>You have successfully signup for your account %HANDLE%.</p>\n<p>If you don't recognize the %APP_NAME% account, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
+        };
         
+        let template = new _email(signUpSuccess);  
+        template.save(); 
 
         if (appIds.indexOf(app.appId) < 0) {
             let signUpLink = {
@@ -2064,7 +2158,7 @@ class AppService {
                 htmlTemplate:"<p>Hello %HANDLE%,</p>\n<p>Please verify your email address: </p>\n<p>Please click this <b>%LINK%</b> to verify your sign up.</p>\n<p>If you didn’t ask to verify this address, you can ignore this email.</p>\n<p>Thanks,</p>\n<p>Your %APP_NAME% team</p>"
             };
             
-            let template = new _email(signUpLink);  
+            template = new _email(signUpLink);  
             template.save(); 
         }
     }

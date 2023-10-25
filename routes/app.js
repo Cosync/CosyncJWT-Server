@@ -154,9 +154,7 @@ router.get("/searchUser",
       else util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
     });
   }
-);
-
-
+); 
  
 
 router.get("/searchSingUp",
@@ -180,6 +178,31 @@ router.get("/searchSingUp",
   }
 );
 
+
+
+router.post("/removeAppSignup",
+  async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid = req.body.appId && req.body.handle;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    appService.removeAppSignup(req.body, function(data, err){
+      if(data) util.responseFormat(res, data);
+      else{
+        _error.message = err.message;
+        util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      } 
+    });
+  }
+);
 
 
 router.get("/searchInvite",
@@ -851,6 +874,89 @@ router.post("/updateAppMetaData", async (req, res) => {
     util.responseFormat(res, _error, util.HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR); 
   }
 });
+
+
+router.post("/createAppInvite", async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid =  req.body.appId && req.body.handle;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    appService.createAppInvite(req.body, function(result, error){
+      if(error){
+        util.responseFormat(res, error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+        appLogService.addLog(req.body.appId, 'createAppInvite', JSON.stringify(error),  'error', 'app'); 
+      } 
+      else{
+        appLogService.addLog(req.body.appId, 'createAppInvite', JSON.stringify(result),  'success', 'app'); 
+        util.responseFormat(res, result);
+      } 
+    });
+  }
+);
+
+
+router.post("/resendAppInvite", async function (req, res) {
+  if (req.scope != 'server')
+  { 
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    return;
+  }
+
+  let valid = req.body.appId && req.body.handle;
+  if(!valid) {
+    util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+    return;
+  }
+
+  let params = req.body; 
+
+  appService.resendInvite(params, function(data, err){
+    if(data) util.responseFormat(res, data);
+    else{
+      _error.message = err.message;
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+    } 
+  });
+}
+);
+
+
+
+
+
+router.post("/removeAppInvite",
+  async function (req, res) {
+    if (req.scope != 'server')
+    { 
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      return;
+    }
+
+    let valid = req.body.appId && req.body.handle;
+    if(!valid) {
+      util.responseFormat(res, _error, util.HTTP_STATUS_CODE.BAD_REQUEST);
+      return;
+    }
+
+    let params = req.body; 
+
+    appService.removeAppInvite(params, function(data, err){
+      if(data) util.responseFormat(res, data);
+      else{
+        _error.message = err ? err.message : "Invalid Invite"
+        util.responseFormat(res, _error, util.HTTP_STATUS_CODE.FORBIDDEN);
+      } 
+    });
+  }
+);
 
 
 

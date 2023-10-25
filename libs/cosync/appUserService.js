@@ -297,8 +297,8 @@ class AppUserService {
       emailTemplate = await this.createSignupSuccessEmail(app, _email, data.locale);
     }
 
-    let tempalte =  emailTemplate.htmlTemplate.split('%HANDLE%').join(data.handle);
-    tempalte = tempalte.split('%APP_NAME%').join(app.name);
+    let template =  emailTemplate.htmlTemplate.split('%HANDLE%').join(data.handle);
+    template = template.split('%APP_NAME%').join(app.name);
 
     let emailData = {
       emailExtensionAPIKey: app.emailExtensionAPIKey,
@@ -308,7 +308,7 @@ class AppUserService {
       text: `Thanks for verifying your ${data.handle} account! 
       Sincerely,
       ${app.name}`,
-      html: tempalte
+      html: template
     };  
    
     if(app.emailExtensionAPIKey && app.emailExtension) await emailService.sendAppMail(emailData, null, app); 
@@ -756,10 +756,7 @@ class AppUserService {
         if(data.metaData) user.metaData = data.metaData;
 
         let appUser = new _appUserTbl(user);
-        appUser.save();
-
-        data.uid = user.uid;
-
+        appUser.save(); 
         const accessToken = util.generateAccessToken(user , data.owner);
         const jwtToken = util.generateAuthJWTToken(user, app); 
         
@@ -791,9 +788,7 @@ class AppUserService {
       if(data.metaData) user.metaData = data.metaData;
 
       let appUser = new _appUserTbl(user);
-      appUser.save();
-
-      data.uid = user.uid;
+      appUser.save(); 
 
       const accessToken = util.generateAccessToken(user , data.owner);
       const jwtToken = util.generateAuthJWTToken(user, app);  
@@ -1823,29 +1818,25 @@ class AppUserService {
   }
 
 
-  async createInvite(req, app, metaData, callback){ 
+  async createInvite(data, app, metaData, callback){ 
 
-    let handle = req.body.handle.toLowerCase();
-    handle = handle.trim();
-    let senderUserId = req.body.senderUserId;
-    let _user = mongoose.model(CONT.TABLE.USERS, SCHEMA.user); 
-    let user = await _user.findOne({ appId: req.appId,  handle: handle});
-    if(user){
-      callback(null, util.INTERNAL_STATUS_CODE.HANDLE_ALREADY_REGISTERED);
-      return;
-    }
+    let handle = data.handle.toLowerCase();
+    handle = handle.trim(); 
 
     callback(true); 
 
     let code = util.getRandomNumber();
 
     let _inviteTbl = mongoose.model(CONT.TABLE.INVITES, SCHEMA.invite); 
-    let invite = await _inviteTbl.findOne({ appId: req.appId,  handle: handle, senderHandle: req.handle});
+    let invite = await _inviteTbl.findOne({ appId: data.appId,  handle: handle, senderHandle: data.senderHandle});
     if(invite && invite.code) code = invite.code;
-    let userLocale = user.locale ? user.locale : "EN";
+    let locale = data.locale || "EN";
     let _email = mongoose.model(CONT.TABLE.EMAIL_TEMPLATES, SCHEMA.emailTemplate);
-    let template = await _email.findOne({ appId: req.appId, templateName: 'invite', locale : userLocale.toUpperCase() }); 
-
+    let template = await _email.findOne({ appId: data.appId, templateName: 'invite', locale : locale.toUpperCase() }); 
+    if (!template){
+      template = await _email.findOne({ appId: data.appId, templateName: 'invite'}); 
+    }
+    
     let tml = template.htmlTemplate.split('%CODE%').join(code);
     tml = tml.split('%HANDLE%').join(handle);
     tml = tml.split('%APP_NAME%').join(app.name);
@@ -1865,13 +1856,16 @@ class AppUserService {
     if(app.emailExtensionAPIKey && app.emailExtension) emailService.sendAppMail(emailData, null, app);
     else emailService.send(emailData, null, app);
 
-    if(invite && invite.code) invite.save();
+    if(invite && invite.code){
+      invite.updatedAt = util.getCurrentTime();
+      invite.save();
+    } 
     else{
       let inviteData = {
         handle: handle, 
-        appId: req.appId,
-        senderHandle: req.handle,
-        senderUserId: senderUserId,
+        appId: data.appId,
+        senderHandle: data.senderHandle,
+        senderUserId: data.senderUserId,
         status: 'pending',
         code: code, 
         metaData: metaData,
