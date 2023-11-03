@@ -28,24 +28,7 @@
 exports = async function cosyncRefreshAsset(id){
    
     const mongodb = context.services.get("mongodb-atlas"); 
-    const collectionAsset = mongodb.db("DATABASE_NAME").collection("CosyncAsset");
-    const AWS = require('aws-sdk');
-    const config = {
-        accessKeyId: context.values.get("CosyncAWSAccessKey"),
-        secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
-        region: "AWS_BUCKET_REGION",
-    };
-    AWS.config.update(config);
-
-    const s3 = new AWS.S3({
-        signatureVersion: 'v4',
-        params: { Bucket: "AWS_BUCKET_NAME" },
-    });
-    
-     
-    let secondInHour = 3600;
-    let secondInDay = 86400;
-    let secondInWeek = 604800; 
+    const collectionAsset = mongodb.db("DATABASE_NAME").collection("CosyncAsset"); 
 
     if(!id) return false;
     let assetIds = [];
@@ -72,16 +55,7 @@ exports = async function cosyncRefreshAsset(id){
  
     for (let index = 0; index < assets.length; index++) {
         const asset = assets[index]; 
-
-        let expReadTime = asset.expirationHours ? ( parseFloat(asset.expirationHours) * secondInHour ) : secondInDay;
-        expReadTime = expReadTime > secondInWeek ? secondInWeek : expReadTime;
-        
-        
-        let params = {
-            Bucket: "AWS_BUCKET_NAME",
-            Key: asset.path,
-            Expires: parseInt(expReadTime)
-        };
+ 
 
         try {
 
@@ -95,54 +69,26 @@ exports = async function cosyncRefreshAsset(id){
                 createdAt:asset.createdAt,
                 updatedAt: asset.createdAt
             };
-            
-            updatedAsset.url = await s3.getSignedUrlPromise('getObject', params);
 
-            updatedAsset.expiration = new Date();
-            const timeInMillis = expReadTime * 1000;
-            updatedAsset.expiration.setTime(updatedAsset.expiration.getTime() + timeInMillis);
-
-            if(updatedAsset.contentType.indexOf('image') >= 0 || updatedAsset.contentType.indexOf('video') >= 0){
-
-                let filenameSmall; 
-
-                if(updatedAsset.contentType.indexOf("video") >=0){
-
-                    if(updatedAsset.urlVideoPreview){
-
-                        let filenameSplit = asset.urlVideoPreview.split("?").shift();
-                        let urlVideoPreview = asset.userId + filenameSplit.split(asset.userId).pop();  
-                        
-                        params.Key = urlVideoPreview;
-                        updatedAsset.urlVideoPreview = await s3.getSignedUrlPromise('getObject', params); 
-            
-                        filenameSmall = urlVideoPreview.split("-videopreview-").join("-small-");
-                    }
-                }
-                else{
-                    let filenameSplit = asset.path.split("-");
-                    filenameSplit.splice(filenameSplit.length - 1, 0, 'small'); 
-                    filenameSmall = filenameSplit.toString();
-                    filenameSmall = filenameSmall.split(",").join("-");
-                }
-
-                if(filenameSmall){ 
-                
-                    params.Key = filenameSmall;
-                    updatedAsset.urlSmall = await s3.getSignedUrlPromise('getObject', params);   
-
-                    let filenameMedium = filenameSmall.split("-small-").join("-medium-");  
-                    params.Key = filenameMedium;
-                    updatedAsset.urlMedium = await s3.getSignedUrlPromise('getObject', params);   
-
-                    let filenameLarge = filenameSmall.split("-small-").join("-large-");  
-                    params.Key = filenameLarge;
-                    updatedAsset.urlLarge = await s3.getSignedUrlPromise('getObject', params);   
-                
-                }
+            let assetURL = await context.functions.execute("CosyncGetAssetUrl", asset.path, asset.contentType, asset.expirationHours); 
+            if(assetURL.error){
+                return false;
             }
-            
+
+            updatedAsset.url = assetURL.url 
+
+            if (assetURL.expiration) updatedAsset.expiration = assetURL.expiration;
+            if (assetURL.urlVideoPreview) updatedAsset.urlVideoPreview = assetURL.urlVideoPreview;
+
+            if(assetURL.urlSmall){ 
+                updatedAsset.expiration = assetURL.expiration; 
+                updatedAsset.urlSmall = assetURL.urlSmall
+                updatedAsset.urlMedium = assetURL.urlMedium
+                updatedAsset.urlLarge = assetURL.urlLarge  
+            }
+
             updatedAsset.updatedAt = new Date();
+
             collectionAsset.updateOne({ "_id": asset._id }, { "$set": updatedAsset });  
             updatedAsset._id = asset._id;
             updatedAssetList.push(updatedAsset)

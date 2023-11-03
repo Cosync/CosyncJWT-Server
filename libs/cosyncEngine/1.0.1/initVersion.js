@@ -34,19 +34,21 @@ const AWS_S3_SECRET_KEY_NAME = "CosyncAWSSecretAccessKey";
 const AWS_S3_KEY_NAME = "CosyncAWSAccessKey";
 
 let deployList = [
+   
     {
         func:{
-            name: 'CosyncAssetUpload',
-            path: 'assetUpload.js',
-            private: true
-        },
-        trigger:{
-            name: 'CosyncAssetUploadTrigger',
-            collection: "CosyncAssetUpload",
-            operation_types: ['INSERT', 'UPDATE', 'REPLACE'],
-            type: "DATABASE" 
-        }
-    }, 
+            name: 'CosyncInitAsset',
+            path: 'cosyncInitAsset.js',
+            private: false
+        } 
+    },
+    {
+        func:{
+            name: 'CosyncCreateAsset',
+            path: 'cosyncCreateAsset.js',
+            private: false
+        } 
+    },
     {
         func:{
             name: 'CosyncRefreshAsset',
@@ -64,24 +66,18 @@ let deployList = [
         trigger:{
             name: 'CosyncRemoveAssetTrigger',
             collection: "CosyncAsset",
-            operation_types: ['DELETE'],
+            operation_types: ['UPDATE'],
             type: "DATABASE" 
         }
     },
     {
         func:{
-            name: 'CosyncRemoveAsset',
-            path: 'cosyncRemoveAsset.js',
-            private: false
+            name: 'CosyncGetAssetUrl',
+            path: 'cosyncGetAssetUrl.js',
+            private: true
         } 
     },
-    {
-        func:{
-            name: 'CosyncArchiveAsset',
-            path: 'cosyncArchiveAsset.js',
-            private: false
-        } 
-    }, 
+    
     {
         func:{
             name: 'CosyncSanitizeFileName',

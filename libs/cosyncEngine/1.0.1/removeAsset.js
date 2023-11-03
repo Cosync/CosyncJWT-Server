@@ -29,11 +29,25 @@
 exports = async function removeAsset(changeEvent){ 
 
     const mongodb = context.services.get("mongodb-atlas"); 
-    const collectionAssetUpload = mongodb.db("DATABASE_NAME").collection("CosyncAssetUpload"); 
-    const assetId = changeEvent.documentKey._id;  
-    
-    const asset = await collectionAssetUpload.findOne({_id: assetId});
+    const collectionAsset = mongodb.db("DATABASE_NAME").collection("CosyncAsset");  
+    const { updateDescription, fullDocument } = changeEvent;  
+    const assetId = changeEvent.documentKey._id;
+    let assetStatus;
+    if(updateDescription){
+        const updatedFields = Object.keys(updateDescription.updatedFields);
+        assetStatus = updatedFields.some(field =>
+            field.match(/status/)
+        );
+       
+    }
+
+    if (assetStatus != "deleted") {
+        return;
+    }
+
+    const asset = await collectionAsset.findOne({_id: assetId});
     if(!asset) return false; 
+    
     const bucketName = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
     const bucketRegion = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_REGION" : "AWS_BUCKET_REGION";
 
@@ -110,6 +124,6 @@ exports = async function removeAsset(changeEvent){
         });
     } 
     
-    collectionAssetUpload.deleteOne({"_id":assetId});
+    collectionAsset.deleteOne({"_id":assetId});
 
 }

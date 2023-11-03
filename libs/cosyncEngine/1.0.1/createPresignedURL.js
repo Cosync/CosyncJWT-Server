@@ -26,59 +26,63 @@
  * For questions about this license, you may write to mailto:info@cosync.io
 */
  
-exports = async function createPresignedURL(path, data){ 
+exports = async function createPresignedURL(path, contentType, expirationHours){ 
     
     const AWS = require('aws-sdk');
+    expirationHours = expirationHours || 0;
+    contentType = contentType || "image/png";
+    const bucketName = expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
+    const bucketRegion = expirationHours == 0 ? "AWS_PUBLIC_BUCKET_REGION" : "AWS_BUCKET_REGION";
 
-    const bucketName = data.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
-    const bucketRegion = data.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_REGION" : "AWS_BUCKET_REGION";
+    try { 
+        const config = {
+            accessKeyId: context.values.get("CosyncAWSAccessKey"),
+            secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
+            region: bucketRegion,
+        };
+        AWS.config.update(config);
+   
+        const s3 = new AWS.S3({
+            signatureVersion: 'v4',
+            params: { Bucket: bucketRegion },
+        });
 
-
-    const config = {
-        accessKeyId: context.values.get("CosyncAWSAccessKey"),
-        secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
-        region: bucketRegion,
-    };
-    AWS.config.update(config);
-
-    const s3 = new AWS.S3({
-        signatureVersion: 'v4',
-        params: { Bucket: bucketRegion },
-    });
-
-    let readUrl, expReadTime, expiration;
-    let secondInHour = 3600;
-    let secondInDay = 86400;
-    let secondInWeek = 604800;
+        let readUrl, expReadTime, expiration;
+        let secondInHour = 3600;
+        let secondInDay = 86400;
+        let secondInWeek = 604800;
+        
+        let params = {
+            Bucket: bucketName,
+            Key: path,
+            Expires: secondInDay // 1 day
+        };
     
-    let params = {
-        Bucket: bucketName,
-        Key: path,
-        Expires: secondInDay // 1 day
-    };
+        if(expirationHours === 0 || !expirationHours){
 
-
-    if(data.expirationHours === 0 || !data.expirationHours){
-
-        params.Key = "public/"+path; 
-        readUrl = `https://${bucketName}.s3.amazonaws.com/${params.Key}`; 
-    } 
-    else{
-       
-        expReadTime = data.expirationHours ? ( parseFloat(data.expirationHours) * secondInHour ) : secondInDay;
-        expReadTime = expReadTime > secondInWeek ? secondInWeek : expReadTime;
-
-        params.Expires = parseInt(expReadTime)
-        readUrl =  await s3.getSignedUrlPromise('getObject', params); 
+            params.Key = "public/"+path; 
+            readUrl = `https://${bucketName}.s3.amazonaws.com/${params.Key}`; 
+        } 
+        else{
         
+            expReadTime = expirationHours ? ( parseFloat(expirationHours) * secondInHour ) : secondInDay;
+            expReadTime = expReadTime > secondInWeek ? secondInWeek : expReadTime;
 
-        expiration = new Date();
-        expiration.setSeconds(expiration.getSeconds() + expReadTime);
-        
-    } 
-    params.ContentType = data.contentType;
-    params.Expires = secondInDay;
-    const writeUrl = await s3.getSignedUrlPromise('putObject', params); 
- 
-    return { readUrl: readUrl,  writeUrl: writeUrl, path: params.Key, expiration: expiration};
+            params.Expires = parseInt(expReadTime)
+            readUrl =  await s3.getSignedUrlPromise('getObject', params); 
+
+            expiration = new Date();
+            expiration.setSeconds(expiration.getSeconds() + expReadTime);
+            
+        }
+
+        params.ContentType = contentType;
+        params.Expires = secondInDay;
+        const writeUrl = await s3.getSignedUrlPromise('putObject', params); 
+    
+        return { readUrl: readUrl,  writeUrl: writeUrl, path: params.Key, expiration: expiration};
+
+    } catch (error) {
+        return { error: error};
+    }
 }

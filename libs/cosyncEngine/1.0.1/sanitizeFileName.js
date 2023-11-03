@@ -24,18 +24,13 @@
  * @Editor Tola VOEUNG  
  * For questions about this license, you may write to mailto:info@cosync.io
 */
- 
 
-exports = function(filePath, type){
-    let ext = filePath.split('.').pop();
-    type = type ? "-"+type : "";
-    let time = Date.now();
-    
-    let path = filePath.split('\\ ').join('-'); 
-    path = path.split('\\').join('');
-    path = path.split(`.${ext}`).join(`${type}-${time}.${ext}`);
-    path = path.split('---').join('-');
-    path = path.split('--').join('-');
 
-    return path;
+exports = function(filePath, contentId){
+
+    let time = contentId || Date.now(); 
+    filePath = filePath.replace(/([^a-z0-9./]+)/gi, '-'); // remove any special charactor, keep . and white space
+    let ext = filePath.split('.').pop();  
+    let path = filePath.split(`.${ext}`).join(`-${time}.${ext}`); 
+    return {path:path, contentId:time};
 };
