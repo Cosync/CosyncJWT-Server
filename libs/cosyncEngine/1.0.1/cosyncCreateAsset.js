@@ -77,10 +77,9 @@ exports = async function cosyncCreateAsset(filePath, contentId, contentType, exp
         updatedAt: new Date()
     };
 
-    collectionAsset.insertOne(cosyncAsset);
-    
-    return JSON.stringify({
-        statusCode: 200,
-        assetId: cosyncAsset._id
-    });
+    returnedData.statusCode = 200;
+    returnedData.asset = cosyncAsset
+
+    // It is the responsibility of the caller to commit the asset
+    return JSON.stringify(returnedData);
 }

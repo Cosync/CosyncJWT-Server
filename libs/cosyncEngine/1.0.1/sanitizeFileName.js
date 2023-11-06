@@ -29,7 +29,7 @@
 exports = function(filePath, contentId){
 
     let time = contentId || Date.now(); 
-    filePath = filePath.replace(/([^a-z0-9./]+)/gi, '-'); // remove any special charactor, keep . and white space
+    filePath = filePath.replace(/([^a-z0-9./]+)/gi, '-'); // replace any special charactor with -, keep . and white space
     let ext = filePath.split('.').pop();  
     let path = filePath.split(`.${ext}`).join(`-${time}.${ext}`); 
     return {path:path, contentId:time};

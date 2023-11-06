@@ -27,8 +27,7 @@
 */
  
 exports = async function cosyncGetAssetUrl(path, contentType, expirationHours){ 
- 
-        
+
     
     const AWS = require('aws-sdk');
     const bucketName = expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
@@ -54,36 +53,45 @@ exports = async function cosyncGetAssetUrl(path, contentType, expirationHours){
         expiration: null
     };  
 
+    let filenameSplit = path.split("-"); 
+    let filenameSmall, previewImagePath;  
+    
+    if(contentType.indexOf('image') >= 0 || contentType.indexOf('video') >= 0){
+        
+        
+        if(contentType.indexOf("video") >=0){ 
+
+            filenameSplit.splice(filenameSplit.length - 1, 0, 'videopreview');  
+            let urlVideoPreview = filenameSplit.toString(); 
+            urlVideoPreview = urlVideoPreview.split(",").join("-");
+
+            let newPath = urlVideoPreview.split(".");
+            newPath[newPath.length - 1] = '.png';
+
+            previewImagePath = newPath.toString(); 
+            previewImagePath = previewImagePath.split(",").join("-");   
+            filenameSmall = previewImagePath.split("-videopreview-").join("-small-");
+
+        }
+        else{
+        
+            filenameSplit.splice(filenameSplit.length - 1, 0, 'small'); 
+            filenameSmall = filenameSplit.toString();
+            filenameSmall = filenameSmall.split(",").join("-");
+        }
+    }
+
     if (!expirationHours || expirationHours == 0){
 
         let baseURL = `https://${bucketName}.s3.amazonaws.com/public`;
         assetURL.url = `${baseURL}/${path}`;
 
         if(contentType.indexOf('image') >= 0 || contentType.indexOf('video') >= 0){
-            let filenameSplit = path.split("-"); 
-            let filenameSmall;  
-            if(contentType.indexOf("video") >=0){ 
-
-                filenameSplit.splice(filenameSplit.length - 1, 0, 'videopreview');  
-                let urlVideoPreview = filenameSplit.toString(); 
-                urlVideoPreview = urlVideoPreview.split(",").join("-");
-
-                let newPath = urlVideoPreview.split(".");
-                newPath[newPath.length - 1] = '.png';
-
-                let previewImagePath = newPath.toString(); 
-                previewImagePath = previewImagePath.split(",").join("-");  
-                assetURL.urlVideoPreview = `${baseURL}/${previewImagePath}`;  
-
-                filenameSmall = previewImagePath.split("-videopreview-").join("-small-");
-
-            }
-            else{
             
-                filenameSplit.splice(filenameSplit.length - 1, 0, 'small'); 
-                filenameSmall = filenameSplit.toString();
-                filenameSmall = filenameSmall.split(",").join("-");
+            if(contentType.indexOf("video") >=0){  
+                assetURL.urlVideoPreview = `${baseURL}/${previewImagePath}`;   
             }
+            
 
             assetURL.urlSmall = `${baseURL}/${filenameSmall}`;  
 
@@ -120,33 +128,13 @@ exports = async function cosyncGetAssetUrl(path, contentType, expirationHours){
 
         if(contentType.indexOf('image') >= 0 || contentType.indexOf('video') >= 0){
 
-            let filenameSplit = path.split("-");
-
-            let filenameSmall; 
-
-            if(contentType.indexOf("video") >=0){
-                
-                filenameSplit.splice(filenameSplit.length - 1, 0, 'videopreview'); 
-
-                let urlVideoPreview = filenameSplit.toString(); 
-                urlVideoPreview = urlVideoPreview.split(",").join("-");
-
-                let newPath = urlVideoPreview.split(".");
-                newPath[newPath.length - 1] = '.png';
-
-                let previewImagePath = newPath.toString(); 
-                previewImagePath = previewImagePath.split(",").join("-"); 
+            
+            if(contentType.indexOf("video") >=0){ 
                 
                 params.Key = previewImagePath;
                 assetURL.urlVideoPreview = await s3.getSignedUrlPromise('getObject', params); 
 
-            }
-            else{
-                
-                filenameSplit.splice(filenameSplit.length - 1, 0, 'small'); 
-                filenameSmall = filenameSplit.toString();
-                filenameSmall = filenameSmall.split(",").join("-");
-            }
+            } 
 
             if(filenameSmall){ 
             
