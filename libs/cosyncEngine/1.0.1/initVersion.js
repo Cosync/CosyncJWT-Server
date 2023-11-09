@@ -106,6 +106,7 @@ let deployList = [
             private: true
         }, 
     },
+
     {
         func:{
             name: 'CosyncCountS3DirectorySize',
@@ -119,7 +120,21 @@ let deployList = [
             path: 'countUserS3DirectorySize.js',
             private: false
         }, 
-    }
+    },
+    {
+        func:{
+            name: 'CosyncRemoveS3File',
+            path: 'removeS3File.js',
+            private: true
+        }, 
+    },
+    {
+        func:{
+            name: 'CosyncClearAsset',
+            path: 'cosyncClearAsset.js',
+            private: false
+        }, 
+    },
     
 ];
 
@@ -358,6 +373,33 @@ class InitVersion {
             else  if(body && body.error) callback(null, `MongoDB Realm Trigger: ${body.error}`);
             else callback(null);
         })
+    }
+
+    createSecret(name, value, token, app, projectId){
+        return new Promise((resolve, reject) => {  
+
+            let item ={
+                "name": name,
+                "value": value
+            };
+
+            const options = {
+                method: 'POST',
+                url: `${REALM_API_URL}/groups/${projectId}/apps/${app._id}/secrets`,
+                headers: {
+                    "content-type": "application/json", 
+                    "Authorization": `Bearer ${token}`
+                },
+                body:JSON.stringify(item) 
+            } 
+
+
+            request(options, async function(error, response, body){  
+                let data = JSON.parse(body);
+                resolve(data)
+            })
+
+        });
     }
 
 

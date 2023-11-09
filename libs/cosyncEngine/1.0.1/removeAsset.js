@@ -41,88 +41,14 @@ exports = async function removeAsset(changeEvent){
        
     }
 
-    if (assetStatus != "deleted") {
+    if (!assetStatus || fullDocument.status != "deleted") {
         return;
     }
 
     const asset = await collectionAsset.findOne({_id: assetId});
     if(!asset) return false; 
-    
-    const bucketName = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_NAME" : "AWS_BUCKET_NAME";
-    const bucketRegion = asset.expirationHours == 0 ? "AWS_PUBLIC_BUCKET_REGION" : "AWS_BUCKET_REGION";
-
-    const AWS = require('aws-sdk');
-    const config = {
-        accessKeyId: context.values.get("CosyncAWSAccessKey"),
-        secretAccessKey: context.values.get("CosyncAWSSecretAccessKey"),
-        region: bucketRegion,
-    };
-    AWS.config.update(config);
-
-    const s3 = new AWS.S3({
-        signatureVersion: 'v4',
-        params: { Bucket: bucketName },
-    });
-    
-    
-
-    await s3.deleteObject({
-        "Bucket": bucketName,
-        "Key": asset.path 
-    }).promise();
-    
-    let timestamp = asset.path.split('-').pop();
-
-    if(asset.contentType.indexOf('image') >= 0){
-        
-        let large = asset.path.split(timestamp).join(`large-${timestamp}`);
-        let medium = asset.path.split(timestamp).join(`medium-${timestamp}`);
-        let small = asset.path.split(timestamp).join(`small-${timestamp}`);
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": large
-        }); 
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": medium
-        }); 
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": small
-        }); 
-    }
-    else if(asset.contentType.indexOf('video') >= 0 && asset.urlVideoPreview){ 
-        
-        let filenameSplit = asset.urlVideoPreview.split("?").shift();
-        let urlVideoPreview = asset.userId +"/"+ filenameSplit.split(asset.userId).pop();  
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": urlVideoPreview
-        }); 
-
-        let filenameSmall = urlVideoPreview.split("-videopreview-").join("-small-"); 
-        let filenameMedium = filenameSmall.split("-small-").join("-medium-"); 
-        let filenameLarge = filenameSmall.split("-small-").join("-large-");  
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": filenameSmall
-        });
-        
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": filenameMedium
-        });
-
-        s3.deleteObject({
-            "Bucket": bucketName,
-            "Key": filenameLarge
-        });
-    } 
+     
+    await context.functions.execute("CosyncRemoveS3File", asset.path, asset.contentType, asset.expirationHours); 
     
     collectionAsset.deleteOne({"_id":assetId});
 
