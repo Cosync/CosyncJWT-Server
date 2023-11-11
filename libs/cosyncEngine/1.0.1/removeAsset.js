@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Copyright 2021 Cosync, Inc. All Rights Reserved.
+ * Copyright 2023 Cosync, Inc. All Rights Reserved.
  * For questions about this license, you may write to mailto:info@cosync.io
  * 
  * This program is free software: you can redistribute it and/or modify 
