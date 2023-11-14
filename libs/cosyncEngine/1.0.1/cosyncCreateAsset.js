@@ -67,7 +67,7 @@ exports = async function cosyncCreateAsset(filePath, contentId, contentType, exp
         xRes: xRes,
         yRes: yRes,
         caption: caption,
-        url: assetURL.readUrl,
+        url: assetURL.url,
         urlVideoPreview: assetURL.urlVideoPreview,
         urlSmall: assetURL.urlSmall,
         urlMedium: assetURL.urlMedium,
