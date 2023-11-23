@@ -109,11 +109,11 @@ app.use((req, res, next) => {
             req.scope = 'server';
           } 
           else{
-            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.BAD_REQUEST); 
             return;
           } 
         } catch (error) {
-          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INTERNAL_SERVER_ERROR, util.HTTP_STATUS_CODE.BAD_REQUEST); 
           return;
         }
         
@@ -127,11 +127,11 @@ app.use((req, res, next) => {
             req.appId = verified.appId;
           } 
           else{
-            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST); 
             return;
           } 
         } catch (error) {
-          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST); 
           return;
         }
         
@@ -146,11 +146,11 @@ app.use((req, res, next) => {
             req.handle = verified.handle;
           } 
           else{
-            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_ACCESS_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST); 
             return;
           } 
         } catch (error) {
-          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_ACCESS_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST); 
           return;
         }
         
@@ -165,11 +165,11 @@ app.use((req, res, next) => {
             req.appId = verified.appId; 
           } 
           else{
-            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+            util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST); 
             return;
           } 
         } catch (error) {
-          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_SERVER_TOKEN, util.HTTP_STATUS_CODE.FORBIDDEN); 
+          util.responseFormat(res, util.INTERNAL_STATUS_CODE.INVALID_APP_TOKEN, util.HTTP_STATUS_CODE.BAD_REQUEST); 
           return;
         }
       }

@@ -1080,7 +1080,7 @@ class AppUserService {
       else emailService.send(emailData, null, app);
     }
     else{
-      callback(null, util.INTERNAL_STATUS_CODE.INVALID_DATA);
+      callback(null, util.INTERNAL_STATUS_CODE.ACCOUNT_NOT_EXIST);
     } 
 
 
