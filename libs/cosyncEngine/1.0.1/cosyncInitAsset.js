@@ -81,7 +81,7 @@ exports = async function cosyncInitAsset(filePath, expirationHours, contentType)
                 previewImagePath = previewImagePath.split(",").join("-");  
                
                 let previewImage = await context.functions.execute("CosyncCreatePresignedURL", previewImagePath, 'image/png', expirationHours);
-                returnedData.writeUrls.writeUrlVideoPreview = previewImage.writeUrlVideoPreview;
+                returnedData.writeUrls.writeUrlVideoPreview = previewImage.writeUrl;
                 filenameSmall = previewImagePath.split("-videopreview-").join("-small-"); 
             }
             else{
