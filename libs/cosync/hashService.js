@@ -56,10 +56,10 @@ class HashService {
     }
 
 
-    aesEncrypt(plaintext){
+    aesEncrypt(plaintext, encode){
 
         if(!global.__config.encryptKey) return plaintext;
-
+        encode = encode ? encode : 'base64';
         if(!plaintext) return null;
         
         let sha256 = crypto.createHash('sha256');
@@ -69,36 +69,39 @@ class HashService {
         let cipher = crypto.createCipheriv(CIPHER_ALGORITHM, sha256.digest(), iv);
 
         let ciphertext = cipher.update(Buffer.from(plaintext));
-        let encrypted = Buffer.concat([iv, ciphertext, cipher.final()]).toString('base64');
+        let encrypted = Buffer.concat([iv, ciphertext, cipher.final()]).toString(encode);
 
         return encrypted;
         
     }
 
-    aesDecrypt(encrypted){
+    aesDecrypt(encrypted, encode){
         
         if(!global.__config.encryptKey) return encrypted;
 
         if(!encrypted || encrypted == "") return null;
+        encode = encode ? encode : 'base64';
 
         var sha256 = crypto.createHash('sha256');
         sha256.update(global.__config.encryptKey);
          
-        var input = Buffer.from(encrypted, 'base64');
+        var input = Buffer.from(encrypted, encode);
 
-        if (input.length < 17) {
+        if (input.length < 17)  return null;
+        try {
+            // Initialization Vector
+            var iv = input.slice(0, 16);
+            var decipher = crypto.createDecipheriv(CIPHER_ALGORITHM, sha256.digest(), iv);
+
+            var ciphertext = input.slice(16);
+            var plaintext = decipher.update(ciphertext) + decipher.final();
+
+            return plaintext;
             
+        } catch (error) {
             return null;
         }
-
-        // Initialization Vector
-        var iv = input.slice(0, 16);
-        var decipher = crypto.createDecipheriv(CIPHER_ALGORITHM, sha256.digest(), iv);
-
-        var ciphertext = input.slice(16);
-        var plaintext = decipher.update(ciphertext) + decipher.final();
-
-        return plaintext;
+        
     }
  
 }
