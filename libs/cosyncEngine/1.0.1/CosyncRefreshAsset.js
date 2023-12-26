@@ -66,6 +66,7 @@ exports = async function cosyncRefreshAsset(id){
                 expiration:asset.expiration,
                 urlVideoPreview :asset.urlVideoPreview,
                 status:asset.status,
+                size: asset.size,
                 createdAt:asset.createdAt,
                 updatedAt: asset.createdAt
             };
