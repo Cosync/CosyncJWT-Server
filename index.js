@@ -85,11 +85,35 @@ if (!fs.existsSync('temp')) {
   fs.mkdirSync('temp');
 }
 
-const app = express(); 
+
+const app = express();  
+const allowedOrigins = global.__config.allowOriginDomain;
+let corsOptions = {
+  origin: '*'
+};
+
+if (allowedOrigins != "*"){ 
+  corsOptions.origin = (origin, callback) => {
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  };
+}
+else {
+  corsOptions.origin = "*";
+}
+
+let cors = require('cors');
+app.use(cors(corsOptions)); 
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 const port = normalizePort(global.__config.serverPort);
 app.listen(port); 
 console.log("server is starting at port: ", port); 
-
 
 app.use(function(req, res, next){
   next();
@@ -181,17 +205,8 @@ app.use((req, res, next) => {
         
     next();
     
-})
-  
-
-
-
-let cors = require('cors');
-app.use(cors()); 
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));  
-
+}) 
+ 
 app.use(function(req, res, next) { 
    
   //res.header("Access-Control-Allow-Origin", global.__config.allowOriginDomain);

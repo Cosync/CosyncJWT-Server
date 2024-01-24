@@ -26,6 +26,7 @@
  
 
 module.exports  = {
+  allowOriginDomain: "*", // value can be "*" for public access or ["https://yourdomain.com", "http://localhost:3000", "..."] for private access
   noreplyEmail:'email to send out',
   serverName: 'your server name', 
   apiUrl:"your RESTful API url",
