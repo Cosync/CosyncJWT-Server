@@ -27,8 +27,6 @@
  
 exports = async function cosyncCreateAsset(filePath, contentId, contentType, expirationHours, size, duration, color, xRes, yRes, caption, extra){
     
-    const mongodb = context.services.get("mongodb-atlas"); 
-    const collectionAsset = mongodb.db("DATABASE_NAME").collection("CosyncAsset"); 
     const currentUser = context.user;
 
     let returnedData = {
@@ -73,6 +71,7 @@ exports = async function cosyncCreateAsset(filePath, contentId, contentType, exp
         urlMedium: assetURL.urlMedium,
         urlLarge: assetURL.urlLarge,
         status: "active",
+        refCount: 1,
         createdAt: new Date(),
         updatedAt: new Date()
     };

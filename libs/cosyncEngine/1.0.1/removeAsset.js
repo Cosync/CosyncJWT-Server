@@ -32,24 +32,28 @@ exports = async function removeAsset(changeEvent){
     const collectionAsset = mongodb.db("DATABASE_NAME").collection("CosyncAsset");  
     const { updateDescription, fullDocument } = changeEvent;  
     const assetId = changeEvent.documentKey._id;
-    let assetStatus;
+    let assetStatus, refCount;
+
     if(updateDescription){
+
         const updatedFields = Object.keys(updateDescription.updatedFields);
         assetStatus = updatedFields.some(field =>
             field.match(/status/)
         );
+
+        refCount = updatedFields.some(field =>
+            field.match(/refCount/)
+        );
        
     }
 
-    if (!assetStatus || fullDocument.status != "deleted") {
-        return;
-    }
+    if (!assetStatus && !refCount ) return;
+    if (fullDocument.status != "deleted" && fullDocument.refCount != 0) return;
 
     const asset = await collectionAsset.findOne({_id: assetId});
     if(!asset) return false; 
-     
-    await context.functions.execute("CosyncRemoveS3File", asset.path, asset.contentType, asset.expirationHours); 
     
+    await context.functions.execute("CosyncRemoveS3File", asset.path, asset.contentType, asset.expirationHours); 
     collectionAsset.deleteOne({"_id":assetId});
-
+     
 }
