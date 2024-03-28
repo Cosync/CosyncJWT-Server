@@ -53,7 +53,7 @@ exports = async function removeAsset(changeEvent){
     const asset = await collectionAsset.findOne({_id: assetId});
     if(!asset) return false; 
     
-    await context.functions.execute("CosyncRemoveS3File", asset.path, asset.contentType, asset.expirationHours); 
+    await context.functions.execute("CosyncRemoveS3File",  asset.expirationHours == 0 ? "public/" + asset.path : asset.path, asset.contentType, asset.expirationHours); 
     collectionAsset.deleteOne({"_id":assetId});
      
 }

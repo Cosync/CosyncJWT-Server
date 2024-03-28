@@ -25,7 +25,7 @@
  * For questions about this license, you may write to mailto:info@cosync.io
 */
  
-exports = async function cosyncCreateAsset(filePath, contentId, contentType, expirationHours, size, duration, color, xRes, yRes, caption, extra){
+exports = async function cosyncCreateAsset(filePath, contentId, contentType, expirationHours, size, storageSize, duration, color, xRes, yRes, caption, extra){
     
     const currentUser = context.user;
 
@@ -60,6 +60,7 @@ exports = async function cosyncCreateAsset(filePath, contentId, contentType, exp
         expiration: assetURL.expiration,
         contentType: contentType,
         size: size,
+        storageSize: storageSize,
         duration: duration,
         color: color,
         xRes: xRes,
