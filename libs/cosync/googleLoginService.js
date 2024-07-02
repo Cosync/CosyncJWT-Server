@@ -38,22 +38,33 @@ class GoogleLoginService {
 
     async verifyToken(data, callback) {
         try { 
-            let error = {status:"false", message: "invalid token"};  
-            
-            const result = await oAuth2Client.verifyIdToken({
-                idToken: data.idToken,
-                audience: data.googleClientId
-            });
 
-            if (result.payload && result.payload['aud'] == data.googleClientId){
-                //console.log(`Token is verified`);
-                callback(result.payload)
-            }
-            else {
-                //console.log(`Invalid Token`);
-                callback(false, error)
-                return
-            }
+            let error = {status:"false", message: "invalid token"};  
+            let googleIDs = data.googleClientId.split(",");
+            let validToken;
+
+            for (let index = 0; index < googleIDs.length; index++) {
+
+                const googleClientId = googleIDs[index];
+                try {
+                    const result = await oAuth2Client.verifyIdToken({
+                        idToken: data.idToken,
+                        audience: googleClientId
+                    });
+    
+                    if (result.payload && result.payload['aud'] == googleClientId){
+                        //console.log(`Token is verified`);
+                        validToken = result.payload
+                        break;
+                    }
+                } catch (error) {
+                    console.log("google login service verifyToken error ", error)
+                }
+                
+
+            } 
+          
+            callback(validToken, error) 
 
         } catch (error) { 
             callback(false, error) 

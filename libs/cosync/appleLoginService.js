@@ -64,7 +64,7 @@ class AppleLoginService {
 
     async verifyToken(data, callback){  
 
-        const appleAppId = data.appleBundleId; 
+        const appleAppIds = data.appleBundleId.split(",");
 
         let error = {status:"false", message: "invalid token"}; 
         try {
@@ -74,7 +74,7 @@ class AppleLoginService {
 
             const jwtClaims = jwt.verify(data.idToken, applePublicKey, {algorithms: [alg]});
         
-            if (jwtClaims?.iss !== APPLE_BASE_URL || jwtClaims?.aud !== appleAppId)  callback(null, error) 
+            if (jwtClaims?.iss !== APPLE_BASE_URL || appleAppIds.indexOf(jwtClaims?.aud) < 0)  callback(null, error) 
             else callback(jwtClaims)
             
 
@@ -83,6 +83,7 @@ class AppleLoginService {
             callback(null, err)
             return
         }
+    
     
     } 
 
